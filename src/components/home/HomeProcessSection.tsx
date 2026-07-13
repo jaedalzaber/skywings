@@ -86,7 +86,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
       gsap.registerPlugin(ScrollTrigger)
       trigger = ScrollTrigger.create({
         anticipatePin: 1,
-        end: () => `+=${window.innerHeight * 0.05}`,
+        end: () => `+=${window.innerHeight * 0.1}`,
         invalidateOnRefresh: true,
         onEnter: () => setNavigationState(true),
         onEnterBack: () => setNavigationState(true),
