@@ -1,10 +1,14 @@
 import type { Footer, Header, Media, SiteSetting } from '@/payload-types'
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 
 import { getPayloadClient } from './payload'
 
 export type HeaderNavigationItem = NonNullable<Header['navigation']>[number]
 export type HeaderCTA = NonNullable<Header['cta']>[number]
 export type FooterLinkGroup = NonNullable<Footer['linkGroups']>[number]
+export type FooterAddress = NonNullable<Footer['addresses']>[number]
+export type FooterLegalLink = NonNullable<Footer['legalLinks']>[number]
 
 export type SiteHeaderData = {
   brandName: string
@@ -15,10 +19,20 @@ export type SiteHeaderData = {
 }
 
 export type SiteFooterData = {
+  addresses: FooterAddress[]
   copyright: string
+  emailAddress: string
+  emailLabel: string
+  headline: string
+  legalLinks: FooterLegalLink[]
   linkGroups: FooterLinkGroup[]
-  logo?: Media | null
-  tagline: string
+  newsletterButtonLabel: string
+  newsletterHeading: string
+  newsletterPlaceholder: string
+  newsletterPrivacyLinks: FooterLegalLink[]
+  newsletterPrivacyText: string
+  phoneLabel: string
+  phoneNumbers: string[]
 }
 
 export type SiteMetadataData = {
@@ -51,27 +65,56 @@ export const defaultHeaderData: SiteHeaderData = {
 }
 
 export const defaultFooterData: SiteFooterData = {
-  copyright: `(c) ${new Date().getFullYear()} Sky Wings Engineering Industries LLC`,
+  addresses: [
+    {
+      address: 'A2, Plot No. 10576 015-3, Sajja Industrial Area, Sharjah, UAE',
+      phone: '+971 509 469 979',
+    },
+    {
+      address: 'Plot No. D-81, Thoban Industrial Area, Fujairah, UAE',
+      phone: '+971 505 389 979',
+    },
+  ],
+  copyright: `© ${new Date().getFullYear()} Skywings. All rights reserved.`,
+  emailAddress: 'info@skywings.ae',
+  emailLabel: 'Send email',
+  headline: 'Let’s talk',
+  legalLinks: [
+    { label: 'Cookie Policy', href: '/cookie-policy' },
+    { label: 'Privacy Policy', href: '/privacy-policy' },
+  ],
   linkGroups: [
     {
-      heading: 'Explore',
+      heading: 'Explore products and resources',
       links: [
-        { label: 'Capabilities', href: '/capabilities' },
-        { label: 'Industries', href: '/industries' },
         { label: 'Products', href: '/products' },
-        { label: 'Brochures', href: '/brochures' },
+        { label: 'Industries', href: '/industries' },
+        { label: 'Resources', href: '/brochures' },
+        { label: 'Guides', href: '/brochures' },
+        { label: 'Blogs', href: '/blog' },
       ],
     },
     {
       heading: 'Company',
       links: [
-        { label: 'Blog', href: '/blog' },
-        { label: 'Request Quote', href: '/contact' },
+        { label: 'About', href: '/#about' },
+        { label: 'Our Machines', href: '/products' },
+        { label: 'Career', href: '/careers' },
+        { label: 'Contact', href: '/contact' },
       ],
     },
   ],
-  tagline:
-    'End-to-end metal manufacturing for construction, infrastructure, industrial, architecture, aviation, and marine sectors.',
+  newsletterButtonLabel: 'Subscribe',
+  newsletterHeading: 'Subscribe to get the latest news of our products in your inbox',
+  newsletterPlaceholder: 'Enter your email address',
+  newsletterPrivacyLinks: [
+    { label: 'Privacy Policy', href: 'https://policies.google.com/privacy' },
+    { label: 'Terms of Service', href: 'https://policies.google.com/terms' },
+  ],
+  newsletterPrivacyText:
+    'The privacy policy is available at the following link. The site is protected by reCAPTCHA and Google policies apply.',
+  phoneLabel: 'Call now',
+  phoneNumbers: ['06 883 8036', '+971 54 242 9624', '+971 50 946 9979', '+971 50 538 9979'],
 }
 
 export const defaultSiteMetadata: SiteMetadataData = {
@@ -81,8 +124,25 @@ export const defaultSiteMetadata: SiteMetadataData = {
   title: 'Sky Wings Engineering Industries LLC',
 }
 
-function getMedia(value: Footer['logo'] | Header['logo'] | SiteSetting['favicon']): Media | null {
+function getMedia(value: Header['logo'] | SiteSetting['favicon']): Media | null {
   return typeof value === 'object' && value ? value : null
+}
+
+function getResolvableFaviconHref(media: Media | null): string {
+  if (!media?.url) {
+    return defaultSiteMetadata.faviconHref
+  }
+
+  const localMediaPrefix = '/api/media/file/'
+
+  if (!media.url.startsWith(localMediaPrefix)) {
+    return media.url
+  }
+
+  const filename = decodeURIComponent(media.url.slice(localMediaPrefix.length))
+  const localFilePath = path.join(process.cwd(), 'media', filename)
+
+  return existsSync(localFilePath) ? media.url : defaultSiteMetadata.faviconHref
 }
 
 export async function getSiteHeader(): Promise<SiteHeaderData> {
@@ -117,10 +177,27 @@ export async function getSiteFooter(): Promise<SiteFooterData> {
     })
 
     return {
+      addresses: footer.addresses?.length ? footer.addresses : defaultFooterData.addresses,
       copyright: footer.copyright || defaultFooterData.copyright,
+      emailAddress: footer.emailAddress || defaultFooterData.emailAddress,
+      emailLabel: footer.emailLabel || defaultFooterData.emailLabel,
+      headline: footer.headline || defaultFooterData.headline,
+      legalLinks: footer.legalLinks?.length ? footer.legalLinks : defaultFooterData.legalLinks,
       linkGroups: footer.linkGroups?.length ? footer.linkGroups : defaultFooterData.linkGroups,
-      logo: getMedia(footer.logo),
-      tagline: footer.tagline || defaultFooterData.tagline,
+      newsletterButtonLabel:
+        footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
+      newsletterHeading: footer.newsletterHeading || defaultFooterData.newsletterHeading,
+      newsletterPlaceholder:
+        footer.newsletterPlaceholder || defaultFooterData.newsletterPlaceholder,
+      newsletterPrivacyLinks: footer.newsletterPrivacyLinks?.length
+        ? footer.newsletterPrivacyLinks
+        : defaultFooterData.newsletterPrivacyLinks,
+      newsletterPrivacyText:
+        footer.newsletterPrivacyText || defaultFooterData.newsletterPrivacyText,
+      phoneLabel: footer.phoneLabel || defaultFooterData.phoneLabel,
+      phoneNumbers: footer.phoneNumbers?.length
+        ? footer.phoneNumbers.map(({ number }) => number)
+        : defaultFooterData.phoneNumbers,
     }
   } catch (error) {
     console.error('Unable to load Payload footer global', error)
@@ -151,7 +228,7 @@ export async function getSiteMetadata(): Promise<SiteMetadataData> {
     return {
       description:
         seoDefaults.defaultDescription || siteSettings.tagline || defaultSiteMetadata.description,
-      faviconHref: favicon?.url || defaultSiteMetadata.faviconHref,
+      faviconHref: getResolvableFaviconHref(favicon),
       title: seoDefaults.defaultTitle || siteSettings.siteName || defaultSiteMetadata.title,
     }
   } catch (error) {

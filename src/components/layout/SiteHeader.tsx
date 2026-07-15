@@ -2,6 +2,8 @@ import Image from 'next/image'
 
 import type { SiteHeaderData } from '@/data/site'
 
+import { HeaderSurfaceController } from './HeaderSurfaceController'
+
 type SiteHeaderProps = {
   header: SiteHeaderData
 }
@@ -13,6 +15,7 @@ export function SiteHeader(props: SiteHeaderProps) {
 
   return (
     <header className="nav-container" aria-label="Primary navigation">
+      <HeaderSurfaceController />
       <div className="nav-spacer" aria-hidden="true" />
       <div className="topbar">
         <a className="brand" href="/" aria-label={`${header.brandName} home`}>

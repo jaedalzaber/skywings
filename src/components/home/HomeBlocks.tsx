@@ -1,22 +1,16 @@
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { Eyebrow } from '@/components/atoms/Eyebrow'
-import { NumberLabel } from '@/components/atoms/NumberLabel'
-import { SectionHeading } from '@/components/atoms/SectionHeading'
 import {
-  type HomeCapabilitiesLayoutBlock,
-  type HomeConfiguratorLayoutBlock,
   type HomeHeroLayoutBlock,
   type HomeIndustriesLayoutBlock,
   type HomeLayout,
   type HomeProcessLayoutBlock,
-  type HomeProductMapLayoutBlock,
 } from '@/data/home'
 
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
 import { HomeGlobeSection } from './HomeGlobeSection'
 import { HomeProcessSection } from './HomeProcessSection'
 import { HomeServicesScroller } from './HomeServicesScroller'
-import { ConfiguratorWireframe, ProductWireframe } from './HomeWireframes'
 
 function optionalText(value: string | null | undefined, fallback = '') {
   return value || fallback
@@ -41,7 +35,13 @@ export function HomeBlockRenderer(props: { blocks: HomeLayout }) {
   const heroRendersIndustries =
     props.blocks.some((block) => block.blockType === 'homeHero') && Boolean(industriesBlock)
 
-  return <>{props.blocks.map((block, index) => renderHomeBlock(block, index, industriesBlock, processBlock, heroRendersIndustries))}</>
+  return (
+    <>
+      {props.blocks.map((block, index) =>
+        renderHomeBlock(block, index, industriesBlock, processBlock, heroRendersIndustries),
+      )}
+    </>
+  )
 }
 
 function renderHomeBlock(
@@ -55,22 +55,23 @@ function renderHomeBlock(
 
   switch (block.blockType) {
     case 'homeHero':
-      return <HomeHero key={key} block={block} industriesBlock={industriesBlock} processBlock={processBlock} />
-    case 'homeCapabilities':
-      return <HomeCapabilities key={key} block={block} />
+      return (
+        <HomeHero
+          key={key}
+          block={block}
+          industriesBlock={industriesBlock}
+          processBlock={processBlock}
+        />
+      )
     case 'homeIndustries':
       if (heroRendersIndustries && industriesBlock === block) {
         return null
       }
 
       return <HomeIndustries key={key} block={block} />
-    case 'homeProductMap':
-      return <HomeProductMap key={key} block={block} />
     case 'homeProcess':
       if (heroRendersIndustries && processBlock === block) return null
       return <HomeProcess key={key} block={block} />
-    case 'homeConfigurator':
-      return <HomeConfigurator key={key} block={block} />
     default:
       return null
   }
@@ -141,71 +142,12 @@ function HomeHero(props: {
   )
 }
 
-function HomeCapabilities(props: { block: HomeCapabilitiesLayoutBlock }) {
-  const { block } = props
-
-  return (
-    <section className="section-block" id="capabilities">
-      <SectionHeading eyebrow={block.eyebrow} heading={block.heading} />
-      <div className="capability-grid">
-        {block.items.map((item, itemIndex) => (
-          <article className="system-card" key={item.id ?? item.title}>
-            <NumberLabel value={itemIndex + 1} />
-            <h3>{item.title}</h3>
-            <p>{optionalText(item.description)}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function HomeIndustries(props: { block: HomeIndustriesLayoutBlock }) {
   const { block } = props
 
   return <HomeIndustriesAccordion block={block} />
 }
 
-function HomeProductMap(props: { block: HomeProductMapLayoutBlock }) {
-  const { block } = props
-
-  return (
-    <section className="section-block muted-band" id="products">
-      <SectionHeading eyebrow={block.eyebrow} heading={block.heading} wide />
-      <div className="product-map">
-        {block.items.map((product, itemIndex) => (
-          <article className="product-card" key={product.id ?? product.title}>
-            <ProductWireframe />
-            <NumberLabel value={itemIndex + 1} />
-            <h3>{product.title}</h3>
-            <p>{optionalText(product.description)}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function HomeProcess(props: { block: HomeProcessLayoutBlock }) {
   return <HomeProcessSection block={props.block} />
-}
-
-function HomeConfigurator(props: { block: HomeConfiguratorLayoutBlock }) {
-  const { block } = props
-
-  return (
-    <section className="rfq-section" id="rfq">
-      <ConfiguratorWireframe />
-      <div className="rfq-copy">
-        <Eyebrow>{block.eyebrow}</Eyebrow>
-        <h2>{block.heading}</h2>
-        <p>{optionalText(block.description)}</p>
-        {block.ctaLabel && block.ctaHref ? (
-          <ButtonLink href={block.ctaHref} variant="primary">
-            {block.ctaLabel}
-          </ButtonLink>
-        ) : null}
-      </div>
-    </section>
-  )
 }

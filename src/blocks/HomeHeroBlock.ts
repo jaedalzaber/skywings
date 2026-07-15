@@ -46,12 +46,12 @@ export const HomeHeroBlock: Block = {
         {
           name: 'secondaryLabel',
           type: 'text',
-          defaultValue: 'View product map',
+          defaultValue: 'View products',
         },
         {
           name: 'secondaryHref',
           type: 'text',
-          defaultValue: '#products',
+          defaultValue: '/products',
         },
       ],
     },

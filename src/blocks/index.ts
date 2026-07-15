@@ -10,12 +10,9 @@ import { CTABlock } from './CTABlock'
 import { FAQBlock } from './FAQBlock'
 import { FeatureGridBlock } from './FeatureGridBlock'
 import { HeroBlock } from './HeroBlock'
-import { HomeCapabilitiesBlock } from './HomeCapabilitiesBlock'
-import { HomeConfiguratorBlock } from './HomeConfiguratorBlock'
 import { HomeHeroBlock } from './HomeHeroBlock'
 import { HomeIndustriesBlock } from './HomeIndustriesBlock'
 import { HomeProcessBlock } from './HomeProcessBlock'
-import { HomeProductMapBlock } from './HomeProductMapBlock'
 import { LeadFormBlock } from './LeadFormBlock'
 import { LogoCloudBlock } from './LogoCloudBlock'
 import { IndustryListingBlock } from './IndustryListingBlock'
@@ -28,11 +25,8 @@ import { ThreeDShowcaseBlock } from './ThreeDShowcaseBlock'
 
 export const pageBuilderBlocks: Block[] = [
   HomeHeroBlock,
-  HomeCapabilitiesBlock,
   HomeIndustriesBlock,
-  HomeProductMapBlock,
   HomeProcessBlock,
-  HomeConfiguratorBlock,
   PageHeroBlock,
   CapabilityListingBlock,
   IndustryListingBlock,

@@ -5,17 +5,8 @@ import { getPayloadClient } from './payload'
 export type LayoutBlock = NonNullable<Page['layout']>[number]
 export type HomeLayout = Extract<LayoutBlock, { blockType: `home${string}` }>[]
 export type HomeHeroLayoutBlock = Extract<HomeLayout[number], { blockType: 'homeHero' }>
-export type HomeCapabilitiesLayoutBlock = Extract<
-  HomeLayout[number],
-  { blockType: 'homeCapabilities' }
->
 export type HomeIndustriesLayoutBlock = Extract<HomeLayout[number], { blockType: 'homeIndustries' }>
-export type HomeProductMapLayoutBlock = Extract<HomeLayout[number], { blockType: 'homeProductMap' }>
 export type HomeProcessLayoutBlock = Extract<HomeLayout[number], { blockType: 'homeProcess' }>
-export type HomeConfiguratorLayoutBlock = Extract<
-  HomeLayout[number],
-  { blockType: 'homeConfigurator' }
->
 
 export const defaultHeroPreviewItems: NonNullable<HomeHeroLayoutBlock['previewItems']> = [
   { title: 'CNC machining' },
@@ -33,27 +24,10 @@ export const defaultHomeLayout: HomeLayout = [
       'Sky Wings brings CNC machining, sheet metal processing, pipe bending, fabrication, welding, assembly, and surface treatment into one connected manufacturing system.',
     primaryLabel: 'Request Quote',
     primaryHref: '/contact',
-    secondaryLabel: 'View product map',
-    secondaryHref: '#products',
+    secondaryLabel: 'View products',
+    secondaryHref: '/products',
     previewHeading: 'Manufacturing under one roof',
     previewItems: defaultHeroPreviewItems,
-  },
-  {
-    blockType: 'homeCapabilities',
-    eyebrow: 'Manufacturing capability',
-    heading: 'A scalable system for machines, materials, finishes, and output.',
-    items: [
-      { title: 'CNC machining' },
-      { title: 'Sheet metal processing' },
-      { title: 'Pipe bending' },
-      { title: 'Fabrication' },
-      { title: 'Welding and assembly' },
-      { title: 'Surface treatment' },
-    ].map((item) => ({
-      ...item,
-      description:
-        'Structured in the CMS as a capability with linked machines, materials, product outputs, brochures, and case studies.',
-    })),
   },
   {
     blockType: 'homeIndustries',
@@ -73,22 +47,6 @@ export const defaultHomeLayout: HomeLayout = [
     })),
   },
   {
-    blockType: 'homeProductMap',
-    eyebrow: 'Product architecture',
-    heading: 'Product families become pages, catalogue sections, and configurators.',
-    items: [
-      'Modular conveyor systems',
-      'Maintenance platforms',
-      'Frames and enclosures',
-      'Railings and barriers',
-      'Cargo handling equipment',
-      'Custom fabricated assemblies',
-    ].map((title) => ({
-      title,
-      description: 'Specs, materials, finishes, related machines, downloads, 3D assets.',
-    })),
-  },
-  {
     blockType: 'homeProcess',
     eyebrow: 'Manufacturing process',
     heading: 'Our Manufacturing Process',
@@ -100,15 +58,6 @@ export const defaultHomeLayout: HomeLayout = [
       'Surface Painting & Finishings',
       'Final Delivery',
     ].map((title) => ({ title })),
-  },
-  {
-    blockType: 'homeConfigurator',
-    eyebrow: '3D viewer and RFQ flow',
-    heading: 'Buyers can inspect, configure, and request a quote.',
-    description:
-      'Start with modular conveyor systems: length, width, roller type, guards, material, finish, and application. Every choice can be captured as structured RFQ data in Payload.',
-    ctaLabel: 'Send enquiry',
-    ctaHref: 'mailto:info@skywings.ae',
   },
 ]
 

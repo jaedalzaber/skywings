@@ -23,9 +23,11 @@ export function HomeGlobeSection() {
     <section
       aria-labelledby="global-delivery-title"
       className="global-delivery"
+      data-nav-surface="white"
+      data-scroll-snap="section"
       id="global-delivery"
     >
-      <div className="global-delivery-main">
+      <div className="global-delivery-main flex flex-row">
         <div className="global-delivery-copy">
           <h2 id="global-delivery-title">
             <span>We deliver all over</span>
@@ -43,6 +45,10 @@ export function HomeGlobeSection() {
                 <a href={branch.phoneHref}>{branch.phone}</a>
               </article>
             ))}
+          </div>
+
+          <div className="our-clients-title">
+            <p>Our Clients From All Around The World</p>
           </div>
         </div>
 
@@ -67,7 +73,6 @@ export function HomeGlobeSection() {
       </div>
 
       <div className="globe-clients">
-        <p>Our Clients From All Around The World</p>
         <div className="globe-client-viewport">
           <div className="globe-client-rail">
             {[0, 1].map((trackIndex) => (
@@ -77,7 +82,10 @@ export function HomeGlobeSection() {
                 key={trackIndex}
               >
                 {clients.map((client) => (
-                  <span className={`globe-client-logo globe-client-${client.toLowerCase()}`} key={`${trackIndex}-${client}`}>
+                  <span
+                    className={`globe-client-logo globe-client-${client.toLowerCase()}`}
+                    key={`${trackIndex}-${client}`}
+                  >
                     {client}
                   </span>
                 ))}

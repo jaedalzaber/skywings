@@ -332,11 +332,8 @@ export interface Product {
   layout?:
     | (
         | HomeHeroBlock
-        | HomeCapabilitiesBlock
         | HomeIndustriesBlock
-        | HomeProductMapBlock
         | HomeProcessBlock
-        | HomeConfiguratorBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -588,11 +585,8 @@ export interface CaseStudy {
   layout?:
     | (
         | HomeHeroBlock
-        | HomeCapabilitiesBlock
         | HomeIndustriesBlock
-        | HomeProductMapBlock
         | HomeProcessBlock
-        | HomeConfiguratorBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -649,22 +643,6 @@ export interface HomeHeroBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeCapabilitiesBlock".
- */
-export interface HomeCapabilitiesBlock {
-  eyebrow?: string | null;
-  heading: string;
-  items: {
-    title: string;
-    description?: string | null;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'homeCapabilities';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeIndustriesBlock".
  */
 export interface HomeIndustriesBlock {
@@ -682,22 +660,6 @@ export interface HomeIndustriesBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeProductMapBlock".
- */
-export interface HomeProductMapBlock {
-  eyebrow?: string | null;
-  heading: string;
-  items: {
-    title: string;
-    description?: string | null;
-    id?: string | null;
-  }[];
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'homeProductMap';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeProcessBlock".
  */
 export interface HomeProcessBlock {
@@ -710,20 +672,6 @@ export interface HomeProcessBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'homeProcess';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeConfiguratorBlock".
- */
-export interface HomeConfiguratorBlock {
-  eyebrow?: string | null;
-  heading: string;
-  description?: string | null;
-  ctaLabel?: string | null;
-  ctaHref?: string | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'homeConfigurator';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1174,11 +1122,8 @@ export interface Page {
   layout?:
     | (
         | HomeHeroBlock
-        | HomeCapabilitiesBlock
         | HomeIndustriesBlock
-        | HomeProductMapBlock
         | HomeProcessBlock
-        | HomeConfiguratorBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -1223,11 +1168,8 @@ export interface LandingPage {
   layout?:
     | (
         | HomeHeroBlock
-        | HomeCapabilitiesBlock
         | HomeIndustriesBlock
-        | HomeProductMapBlock
         | HomeProcessBlock
-        | HomeConfiguratorBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -1713,11 +1655,8 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
-        homeCapabilities?: T | HomeCapabilitiesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
-        homeProductMap?: T | HomeProductMapBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
-        homeConfigurator?: T | HomeConfiguratorBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -1774,23 +1713,6 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeCapabilitiesBlock_select".
- */
-export interface HomeCapabilitiesBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
-  heading?: T;
-  items?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeIndustriesBlock_select".
  */
 export interface HomeIndustriesBlockSelect<T extends boolean = true> {
@@ -1809,23 +1731,6 @@ export interface HomeIndustriesBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeProductMapBlock_select".
- */
-export interface HomeProductMapBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
-  heading?: T;
-  items?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeProcessBlock_select".
  */
 export interface HomeProcessBlockSelect<T extends boolean = true> {
@@ -1837,19 +1742,6 @@ export interface HomeProcessBlockSelect<T extends boolean = true> {
         title?: T;
         id?: T;
       };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HomeConfiguratorBlock_select".
- */
-export interface HomeConfiguratorBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
-  heading?: T;
-  description?: T;
-  ctaLabel?: T;
-  ctaHref?: T;
   id?: T;
   blockName?: T;
 }
@@ -2153,11 +2045,8 @@ export interface LandingPagesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
-        homeCapabilities?: T | HomeCapabilitiesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
-        homeProductMap?: T | HomeProductMapBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
-        homeConfigurator?: T | HomeConfiguratorBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -2246,11 +2135,8 @@ export interface CaseStudiesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
-        homeCapabilities?: T | HomeCapabilitiesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
-        homeProductMap?: T | HomeProductMapBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
-        homeConfigurator?: T | HomeConfiguratorBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -2491,11 +2377,8 @@ export interface ProductsSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
-        homeCapabilities?: T | HomeCapabilitiesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
-        homeProductMap?: T | HomeProductMapBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
-        homeConfigurator?: T | HomeConfiguratorBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -2732,8 +2615,16 @@ export interface Header {
  */
 export interface Footer {
   id: number;
-  logo?: (number | null) | Media;
-  tagline?: string | null;
+  headline: string;
+  emailLabel?: string | null;
+  emailAddress?: string | null;
+  phoneLabel?: string | null;
+  phoneNumbers?:
+    | {
+        number: string;
+        id?: string | null;
+      }[]
+    | null;
   linkGroups?:
     | {
         heading: string;
@@ -2744,6 +2635,31 @@ export interface Footer {
               id?: string | null;
             }[]
           | null;
+        id?: string | null;
+      }[]
+    | null;
+  newsletterHeading?: string | null;
+  newsletterPlaceholder?: string | null;
+  newsletterButtonLabel?: string | null;
+  newsletterPrivacyText?: string | null;
+  newsletterPrivacyLinks?:
+    | {
+        label: string;
+        href: string;
+        id?: string | null;
+      }[]
+    | null;
+  addresses?:
+    | {
+        address: string;
+        phone?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  legalLinks?:
+    | {
+        label: string;
+        href: string;
         id?: string | null;
       }[]
     | null;
@@ -2838,8 +2754,16 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
-  logo?: T;
-  tagline?: T;
+  headline?: T;
+  emailLabel?: T;
+  emailAddress?: T;
+  phoneLabel?: T;
+  phoneNumbers?:
+    | T
+    | {
+        number?: T;
+        id?: T;
+      };
   linkGroups?:
     | T
     | {
@@ -2851,6 +2775,31 @@ export interface FooterSelect<T extends boolean = true> {
               href?: T;
               id?: T;
             };
+        id?: T;
+      };
+  newsletterHeading?: T;
+  newsletterPlaceholder?: T;
+  newsletterButtonLabel?: T;
+  newsletterPrivacyText?: T;
+  newsletterPrivacyLinks?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        id?: T;
+      };
+  addresses?:
+    | T
+    | {
+        address?: T;
+        phone?: T;
+        id?: T;
+      };
+  legalLinks?:
+    | T
+    | {
+        label?: T;
+        href?: T;
         id?: T;
       };
   copyright?: T;

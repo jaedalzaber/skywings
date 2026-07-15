@@ -77,7 +77,7 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
                   ))}
                 </div>
 
-                <a className="industries-showcase-cta" href="#products">
+                <a className="industries-showcase-cta" href="/products">
                   Browse Related Products
                 </a>
               </div>

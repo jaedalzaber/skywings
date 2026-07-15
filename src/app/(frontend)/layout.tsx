@@ -4,6 +4,7 @@ import { Inter, Roboto } from 'next/font/google'
 
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SectionSnapController } from '@/components/layout/SectionSnapController'
 import { SmoothScroll } from '@/components/layout/SmoothScroll'
 import { getSiteFooter, getSiteHeader, getSiteMetadata } from '@/data/site'
 
@@ -43,6 +44,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en">
       <body className={`${bodyFont.variable} ${titleFont.variable}`}>
         <SmoothScroll />
+        <SectionSnapController />
         <div className="site-shell">
           <SiteHeader header={header} />
           <main>{children}</main>

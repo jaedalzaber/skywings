@@ -2,6 +2,19 @@
 
 import { useEffect } from 'react'
 
+type WindowWithLenis = Window & {
+  __skywingsLenis?: {
+    destroy: () => void
+    off: (event: 'scroll', callback: () => void) => void
+    on: (event: 'scroll', callback: () => void) => void
+    raf: (time: number) => void
+    scrollTo: (
+      target: HTMLElement | number,
+      options?: { duration?: number; force?: boolean; immediate?: boolean; lock?: boolean },
+    ) => void
+  }
+}
+
 export function SmoothScroll() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -33,6 +46,7 @@ export function SmoothScroll() {
         syncTouch: false,
         wheelMultiplier: 0.92,
       })
+      ;(window as WindowWithLenis).__skywingsLenis = lenis
 
       const onScroll = () => {
         ScrollTrigger?.update()
@@ -50,6 +64,7 @@ export function SmoothScroll() {
       teardown = () => {
         window.cancelAnimationFrame(frameId)
         lenis.off('scroll', onScroll)
+        delete (window as WindowWithLenis).__skywingsLenis
         lenis.destroy()
       }
     }
