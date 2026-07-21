@@ -9,6 +9,7 @@ import { SmoothScroll } from '@/components/layout/SmoothScroll'
 import { getSiteFooter, getSiteHeader, getSiteMetadata } from '@/data/site'
 
 import './styles.css'
+import './home-responsive.css'
 
 const bodyFont = Roboto({
   display: 'swap',

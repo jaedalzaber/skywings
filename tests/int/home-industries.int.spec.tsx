@@ -30,6 +30,7 @@ describe('HomeIndustriesAccordion', () => {
     expect(industriesQueries.getAllByRole('link', { name: 'Browse Related Products' })[0]?.getAttribute('href')).toBe(
       '#products',
     )
+    expect(container.querySelector('#products')).not.toBeNull()
     expect(container.querySelectorAll('.industries-showcase-card')).toHaveLength(6)
   })
 })

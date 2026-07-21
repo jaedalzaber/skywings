@@ -86,8 +86,18 @@ function HomeHero(props: {
 
   return (
     <>
-      <section className="hero-section hero-container" id="top" aria-label="Sky Wings hero">
+      <section
+        aria-label="Sky Wings hero"
+        className="hero-section hero-container"
+        data-responsive-layout="hero"
+        id="top"
+      >
         <div className="hero-video-layer" aria-hidden="true">
+          <picture className="hero-image">
+            <source media="(min-width: 90rem)" srcSet="/images/home/hero-desktop.png" />
+            <source media="(min-width: 48rem)" srcSet="/images/home/hero-laptop.png" />
+            <img alt="" src="/images/home/hero-mobile.png" />
+          </picture>
           <div className="hero-video-placeholder" />
         </div>
 

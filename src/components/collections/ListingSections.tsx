@@ -93,17 +93,17 @@ export async function ProductListingSection(
       </div>
       {families.length ? (
         <div className="shop-chip-row" aria-label="Product families">
-          <a className={!filters.family ? 'active' : undefined} href="/products">
+          <Link className={!filters.family ? 'active' : undefined} href="/products">
             All
-          </a>
+          </Link>
           {families.slice(0, 12).map((family) => (
-            <a
+            <Link
               className={filters.family === family.slug ? 'active' : undefined}
               href={`/products?family=${family.slug}`}
               key={family.id}
             >
               {family.title}
-            </a>
+            </Link>
           ))}
         </div>
       ) : null}
@@ -175,3 +175,4 @@ export async function BlogListingSection(props: ListingCopy) {
     </section>
   )
 }
+import Link from 'next/link'

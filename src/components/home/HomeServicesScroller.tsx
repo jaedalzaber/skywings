@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 
 type ServiceCard = {
@@ -11,28 +12,28 @@ type ServiceCard = {
 
 const serviceCards: ServiceCard[] = [
   {
-    image: 'https://www.figma.com/api/mcp/asset/5afbe330-8847-40ef-a40a-82e3f0081356',
+    image: '/images/home/service-01.png',
     number: '01',
     title: 'Custom Equipment Manufacturing',
   },
   {
-    image: 'https://www.figma.com/api/mcp/asset/47fe3dce-c483-4c9a-a56a-2ad2ea67b132',
+    image: '/images/home/service-02.png',
     number: '02',
     title: 'Structural Steel Fabrication',
   },
   {
-    image: 'https://www.figma.com/api/mcp/asset/186eac60-dfca-4d29-a853-4703675b4d5e',
+    image: '/images/home/service-03.png',
     number: '03',
     title: 'Metal Product Fabrication',
   },
   {
-    image: 'https://www.figma.com/api/mcp/asset/9fd34177-b6c4-4588-b912-bc684e68d313',
+    image: '/images/home/service-04.png',
     number: '04',
     title: 'Custom Equipment Manufacturing',
   },
   {
     accentTitle: true,
-    image: 'https://www.figma.com/api/mcp/asset/20ad81d0-4ab9-44f3-a60e-3ee93a3ea8df',
+    image: '/images/home/service-05.png',
     number: '05',
     title: 'Erection',
   },
@@ -84,7 +85,8 @@ export function HomeServicesScroller() {
       const media = gsap.matchMedia()
 
       const context = gsap.context(() => {
-        media.add('(min-width: 64rem)', () => {
+        // Scroll-scrubbed horizontal rail at every width, mobile included.
+        media.add('(min-width: 0px)', () => {
           const section = sectionRef.current
           const pin = pinRef.current
           const viewport = viewportRef.current
@@ -146,6 +148,7 @@ export function HomeServicesScroller() {
     <section
       className="services-showcase"
       aria-labelledby="services-showcase-title"
+      data-responsive-layout="services"
       ref={sectionRef}
     >
       <div className="services-showcase-pin" ref={pinRef}>
@@ -173,10 +176,12 @@ export function HomeServicesScroller() {
               <article className="services-showcase-card" key={card.number}>
                 <p className="services-showcase-card-number">{card.number}</p>
                 <div className="services-showcase-card-surface">
-                  <img
+                  <Image
                     alt=""
                     className="services-showcase-card-image"
+                    fill
                     loading="lazy"
+                    sizes="(max-width: 767px) 66vw, (max-width: 1439px) 26vw, 24rem"
                     src={card.image}
                   />
                   <h3

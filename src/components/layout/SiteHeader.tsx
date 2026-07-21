@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 import type { SiteHeaderData } from '@/data/site'
 
@@ -18,7 +19,7 @@ export function SiteHeader(props: SiteHeaderProps) {
       <HeaderSurfaceController />
       <div className="nav-spacer" aria-hidden="true" />
       <div className="topbar">
-        <a className="brand" href="/" aria-label={`${header.brandName} home`}>
+        <Link className="brand" href="/" aria-label={`${header.brandName} home`}>
           {logo && logoUrl ? (
             <span className="brand-logo">
               <Image
@@ -30,11 +31,12 @@ export function SiteHeader(props: SiteHeaderProps) {
             </span>
           ) : (
             <span className="brand-wordmark" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="" height={24} src="/favicon.png" width={38} />
               <span>Sky Wings</span>
             </span>
           )}
-        </a>
+        </Link>
 
         <nav className="nav-links" aria-label="Site sections">
           {header.navigation.map((item) => (

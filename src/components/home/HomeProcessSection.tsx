@@ -96,7 +96,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
       gsap.registerPlugin(ScrollTrigger)
       trigger = ScrollTrigger.create({
         anticipatePin: 1,
-        end: () => `+=${window.innerHeight * 0.1}`,
+        end: () => `+=${window.innerHeight * 0.05}`,
         invalidateOnRefresh: true,
         onEnter: () => setNavigationState(true),
         onEnterBack: () => setNavigationState(true),
@@ -213,6 +213,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
       aria-labelledby="manufacturing-process-title"
       className="manufacturing-process"
       data-nav-surface="white"
+      data-responsive-layout="process"
       data-scroll-scene="pinned"
       id="manufacturing-process"
       ref={sectionRef}
@@ -220,8 +221,8 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
       <header className="process-header" data-grid-alignment="process-columns">
         <h2 id="manufacturing-process-title">Our Manufacturing Process</h2>
         <div className="process-specs" aria-label="Example product specifications">
-          <span>// GSE Luggage Trolley</span>
-          <span>// 1500 Kg Capacity</span>
+          <span>{'// GSE Luggage Trolley'}</span>
+          <span>{'// 1500 Kg Capacity'}</span>
         </div>
         <div className="process-mark" data-position="top-right" aria-hidden="true">
           <span>SW</span>

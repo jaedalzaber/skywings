@@ -65,4 +65,13 @@ describe('SiteHeader', () => {
       /html\[data-process-nav-active='true'\]\s*\{[^}]*--nav-surface:\s*#fff;[^}]*--nav-backdrop:\s*none;/s,
     )
   })
+
+  test('uses an unoptimized native image for the bundled fallback favicon', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/components/layout/SiteHeader.tsx'),
+      'utf8',
+    )
+
+    expect(source).toMatch(/<img alt="" height=\{24\} src="\/favicon\.png" width=\{38\} \/>/)
+  })
 })

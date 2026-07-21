@@ -2,8 +2,12 @@
 
 import { Edges, Grid } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { Group } from 'three'
+
+const subscribeToWebGLAvailability = () => () => undefined
+const getWebGLAvailability = () =>
+  typeof window !== 'undefined' && typeof window.WebGLRenderingContext !== 'undefined'
 
 function WireframeProduct() {
   const group = useRef<Group>(null)
@@ -40,11 +44,11 @@ function WireframeProduct() {
 }
 
 export function HomeProcessModel() {
-  const [canRenderWebGL, setCanRenderWebGL] = useState(false)
-
-  useEffect(() => {
-    setCanRenderWebGL(typeof window.WebGLRenderingContext !== 'undefined')
-  }, [])
+  const canRenderWebGL = useSyncExternalStore(
+    subscribeToWebGLAvailability,
+    getWebGLAvailability,
+    () => false,
+  )
 
   if (!canRenderWebGL) {
     return <div className="process-model-fallback" aria-hidden="true" />

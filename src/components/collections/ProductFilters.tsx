@@ -53,10 +53,11 @@ export function ProductFilters(props: ProductFiltersProps) {
         <button className="button button-primary" type="submit">
           Apply
         </button>
-        <a className="button button-secondary" href="/products">
+        <Link className="button button-secondary" href="/products">
           Reset
-        </a>
+        </Link>
       </div>
     </form>
   )
 }
+import Link from 'next/link'

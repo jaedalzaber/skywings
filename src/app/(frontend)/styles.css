@@ -411,7 +411,11 @@ a {
   transition: background-color 220ms ease;
 }
 
-html[data-process-nav-active='true'],
+html[data-process-nav-active='true'] {
+  --nav-surface: #fff;
+  --nav-backdrop: none;
+}
+
 html[data-section-nav-active='true'] {
   --nav-surface: #fff;
   --nav-backdrop: none;

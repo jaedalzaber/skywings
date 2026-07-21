@@ -3,7 +3,7 @@
 import { Line } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useReducedMotion } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import type { MutableRefObject, PointerEvent as ReactPointerEvent } from 'react'
 import {
   BufferAttribute,
@@ -24,6 +24,10 @@ const destinations = [
   { lat: 50.1, lon: 10.4 },
   { lat: 1.5, lon: 25.2 },
 ]
+
+const subscribeToWebGLAvailability = () => () => undefined
+const getWebGLAvailability = () =>
+  typeof window !== 'undefined' && typeof window.WebGLRenderingContext !== 'undefined'
 
 function coordinateToVector(lat: number, lon: number, radius = globeRadius) {
   const latitude = MathUtils.degToRad(lat)
@@ -86,7 +90,7 @@ function createRoutePoints(lat: number, lon: number) {
 
 function GlobeContents({ pointer, reduceMotion }: { pointer: MutableRefObject<PointerTarget>; reduceMotion: boolean }) {
   const globe = useRef<Group>(null)
-  const landGeometry = useMemo(buildLandGeometry, [])
+  const landGeometry = useMemo(() => buildLandGeometry(), [])
   const routePoints = useMemo(
     () => destinations.map((destination) => createRoutePoints(destination.lat, destination.lon)),
     [],
@@ -149,11 +153,11 @@ function GlobeContents({ pointer, reduceMotion }: { pointer: MutableRefObject<Po
 export function HomeGlobeScene() {
   const reduceMotion = Boolean(useReducedMotion())
   const pointer = useRef<PointerTarget>({ x: 0, y: 0 })
-  const [canRenderWebGL, setCanRenderWebGL] = useState(false)
-
-  useEffect(() => {
-    setCanRenderWebGL(typeof window.WebGLRenderingContext !== 'undefined')
-  }, [])
+  const canRenderWebGL = useSyncExternalStore(
+    subscribeToWebGLAvailability,
+    getWebGLAvailability,
+    () => false,
+  )
 
   const updatePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (reduceMotion) return

@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { CSSProperties } from 'react'
 
 import type { HomeIndustriesLayoutBlock } from '@/data/home'
@@ -28,6 +29,7 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
       className="industries-showcase"
       id="industries"
       aria-labelledby="industries-showcase-title"
+      data-responsive-layout="industries"
     >
       <div className="industries-showcase-intro">
         <p className="industries-showcase-eyebrow">{block.eyebrow}</p>
@@ -58,17 +60,22 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
                   </div>
                 </div>
 
-                <div className="industries-showcase-product-grid">
+                <div
+                  className="industries-showcase-product-grid"
+                  id={itemIndex === 0 ? 'products' : undefined}
+                >
                   {industryProducts.map((productTitle, productIndex) => (
                     <figure
                       className="industries-showcase-product-card"
                       key={`${industry.title}-${productIndex}`}
                     >
                       <div className="industries-showcase-product-frame">
-                        <img
+                        <Image
                           alt=""
                           className="industries-showcase-product-image"
+                          fill
                           loading="lazy"
+                          sizes="(max-width: 767px) 42vw, (max-width: 1439px) 18vw, 16vw"
                           src={industryProductImage}
                         />
                       </div>
@@ -77,7 +84,7 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
                   ))}
                 </div>
 
-                <a className="industries-showcase-cta" href="/products">
+                <a className="industries-showcase-cta" href="#products">
                   Browse Related Products
                 </a>
               </div>
