@@ -30,7 +30,10 @@ export const Footer: GlobalConfig = {
             {
               name: 'headline',
               type: 'text',
-              defaultValue: 'Let’s talk',
+              admin: {
+                description: 'Large brand wordmark displayed over the footer grid artwork.',
+              },
+              defaultValue: 'Skywings',
               required: true,
             },
             {
@@ -114,8 +117,12 @@ export const Footer: GlobalConfig = {
             {
               name: 'newsletterPrivacyText',
               type: 'textarea',
+              admin: {
+                description:
+                  'Use {privacyLink}, {googlePrivacy}, and {terms} to place the editable links.',
+              },
               defaultValue:
-                'The privacy policy is available at the following link. The site is protected by reCAPTCHA and Google policies apply.',
+                'The privacy policy is available at the following {privacyLink}\nThe site is protected by reCAPTCHA and Google {googlePrivacy} and {terms} apply',
             },
             {
               name: 'newsletterPrivacyLinks',

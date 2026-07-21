@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 
-import { ProductDetail } from '@/components/collections/ProductDetail'
+import { ProductDetail } from '@/components/collections/product/ProductDetail'
 import { PageBlocks } from '@/components/page-builder/PageBlocks'
-import { getProductBySlug } from '@/data/catalog'
+import { getProductBySlug, getRelatedProductsFor } from '@/data/catalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,9 +14,11 @@ export default async function ProductDetailPage(props: { params: Promise<{ slug:
     notFound()
   }
 
+  const related = await getRelatedProductsFor(product)
+
   return (
     <>
-      <ProductDetail product={product} />
+      <ProductDetail product={product} related={related} />
       {product.layout?.length ? <PageBlocks blocks={product.layout} /> : null}
     </>
   )

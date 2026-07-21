@@ -10,6 +10,7 @@ import { getSiteFooter, getSiteHeader, getSiteMetadata } from '@/data/site'
 
 import './styles.css'
 import './home-responsive.css'
+import './product-detail.css'
 
 const bodyFont = Roboto({
   display: 'swap',

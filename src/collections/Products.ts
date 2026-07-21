@@ -73,6 +73,58 @@ export const Products: CollectionConfig = {
       type: 'richText',
     },
     {
+      name: 'breadcrumb',
+      type: 'text',
+      admin: {
+        description: 'Category path shown above the title, e.g. "Aviation / GSE / Stands".',
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'industryLabel',
+          type: 'text',
+          admin: {
+            description: 'Shown as "Industry: …" in the overview.',
+          },
+        },
+        {
+          name: 'categoryLabel',
+          type: 'text',
+          admin: {
+            description: 'Shown as "Category: …" in the overview.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'keySpecs',
+      label: 'Key specs (overview grid)',
+      type: 'array',
+      admin: {
+        description:
+          'Short label/value pairs shown beside the description (Type, Material, Weight, Capacity, …).',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'label',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'value',
+              type: 'text',
+              required: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'featuredImage',
       type: 'upload',
       relationTo: 'media',
@@ -86,6 +138,31 @@ export const Products: CollectionConfig = {
           type: 'upload',
           relationTo: 'media',
           required: true,
+        },
+        {
+          name: 'caption',
+          type: 'text',
+        },
+      ],
+    },
+    {
+      name: 'howItWorks',
+      label: 'How it works (optional)',
+      type: 'group',
+      admin: {
+        description:
+          'Optional illustrated section (e.g. fold / unfold). Rendered only when an image is set.',
+      },
+      fields: [
+        {
+          name: 'heading',
+          type: 'text',
+          defaultValue: 'How it works',
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
         },
         {
           name: 'caption',
@@ -147,6 +224,40 @@ export const Products: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'accessories',
+      label: 'Accessories (spec table)',
+      type: 'array',
+      admin: {
+        description: 'Second spec table shown next to Specification.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'label',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'value',
+              type: 'text',
+              required: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'technicalDrawing',
+      label: 'Technical drawing',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Dimensioned engineering drawing shown in its own section.',
+      },
     },
     {
       name: 'dimensions',
@@ -232,6 +343,14 @@ export const Products: CollectionConfig = {
             {
               name: 'priceImpactNote',
               type: 'text',
+            },
+            {
+              name: 'swatch',
+              label: 'Swatch color (optional)',
+              type: 'text',
+              admin: {
+                description: 'Hex color to tint this option pill (Color groups), e.g. #3d47ff.',
+              },
             },
           ],
         },

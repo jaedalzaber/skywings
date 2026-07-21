@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { HomeProcessLayoutBlock } from '@/data/home'
 
@@ -44,7 +44,6 @@ const cycleDuration = 4000
 
 export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock }) {
   const reduceMotion = useReducedMotion()
-  const sectionRef = useRef<HTMLElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const steps = useMemo(
@@ -65,58 +64,6 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
 
     return () => clearInterval(timer)
   }, [hoveredIndex, steps.length])
-
-  useEffect(() => {
-    const section = sectionRef.current
-
-    if (!section || reduceMotion || typeof window.matchMedia !== 'function') {
-      return
-    }
-
-    let mounted = true
-    let trigger: { kill: () => void } | undefined
-    const root = document.documentElement
-
-    const setNavigationState = (active: boolean) => {
-      if (active) {
-        root.dataset.processNavActive = 'true'
-      } else {
-        delete root.dataset.processNavActive
-      }
-    }
-
-    async function setupPin() {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
-      ])
-
-      if (!mounted) return
-
-      gsap.registerPlugin(ScrollTrigger)
-      trigger = ScrollTrigger.create({
-        anticipatePin: 1,
-        end: () => `+=${window.innerHeight * 0.05}`,
-        invalidateOnRefresh: true,
-        onEnter: () => setNavigationState(true),
-        onEnterBack: () => setNavigationState(true),
-        onLeave: () => setNavigationState(false),
-        onLeaveBack: () => setNavigationState(false),
-        pin: true,
-        start: 'top top',
-        trigger: section,
-      })
-      ScrollTrigger.refresh()
-    }
-
-    void setupPin()
-
-    return () => {
-      mounted = false
-      trigger?.kill()
-      setNavigationState(false)
-    }
-  }, [reduceMotion])
 
   const activateStep = (index: number) => {
     setHoveredIndex(index)
@@ -214,9 +161,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
       className="manufacturing-process"
       data-nav-surface="white"
       data-responsive-layout="process"
-      data-scroll-scene="pinned"
       id="manufacturing-process"
-      ref={sectionRef}
     >
       <header className="process-header" data-grid-alignment="process-columns">
         <h2 id="manufacturing-process-title">Our Manufacturing Process</h2>

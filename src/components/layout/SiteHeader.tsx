@@ -12,7 +12,8 @@ type SiteHeaderProps = {
 export function SiteHeader(props: SiteHeaderProps) {
   const { header } = props
   const logo = header.logo?.url ? header.logo : null
-  const logoUrl = logo?.url
+  const logoUrl = logo?.url || '/images/header/logo.svg'
+  const logoIsSvg = logo?.mimeType === 'image/svg+xml' || /\.svg(?:\?.*)?$/i.test(logoUrl)
 
   return (
     <header className="nav-container" aria-label="Primary navigation">
@@ -20,22 +21,16 @@ export function SiteHeader(props: SiteHeaderProps) {
       <div className="nav-spacer" aria-hidden="true" />
       <div className="topbar">
         <Link className="brand" href="/" aria-label={`${header.brandName} home`}>
-          {logo && logoUrl ? (
-            <span className="brand-logo">
-              <Image
-                alt={logo.alt || header.brandName}
-                height={logo.height || 38}
-                src={logoUrl}
-                width={logo.width || 83}
-              />
-            </span>
-          ) : (
-            <span className="brand-wordmark" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="" height={24} src="/favicon.png" width={38} />
-              <span>Sky Wings</span>
-            </span>
-          )}
+          <span className="brand-logo">
+            <Image
+              alt={logo?.alt || header.brandName}
+              height={logo?.height || 29}
+              priority
+              src={logoUrl}
+              unoptimized={logoIsSvg}
+              width={logo?.width || 61}
+            />
+          </span>
         </Link>
 
         <nav className="nav-links" aria-label="Site sections">

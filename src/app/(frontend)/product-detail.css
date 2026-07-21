@@ -1,0 +1,633 @@
+/* Product detail page — matches Figma laptop (466-875) + mobile (480-1662).
+   Mobile-first; `min-width: 48rem` unlocks the laptop/desktop layout.
+   Scoped under `.pdp` so it never collides with the rest of the site CSS. */
+
+.pdp {
+  --pdp-ink: #252424;
+  --pdp-heading: #323232;
+  --pdp-muted: #636363;
+  --pdp-faint: #b1b1b1;
+  --pdp-line: #e0e0e0;
+  --pdp-line-strong: #c4c4c4;
+  --pdp-zebra: #f0f0f0;
+  --pdp-accent: #1f42e3;
+  --pdp-breadcrumb: #3867ff;
+  --pdp-pill-active: #262626;
+  --pdp-hero-bg: linear-gradient(180deg, #f5f6f8 0%, #e7e9ee 100%);
+  --pdp-pad: clamp(1rem, 4vw, 2.625rem);
+
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  color: var(--pdp-ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.pdp :where(h1, h2, h3, p, dl, dd, dt, ul, ol, fieldset, legend) {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- Hero --- */
+
+.pdp-hero {
+  position: relative;
+  display: flex;
+  min-height: clamp(19rem, 74vw, 24rem);
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: var(--pdp-hero-bg);
+}
+
+.pdp-hero-media {
+  position: absolute;
+  inset: 0;
+}
+
+.pdp-hero-media img {
+  object-fit: cover;
+}
+
+.pdp-hero-media .media-wireframe {
+  position: absolute;
+  inset: 0;
+}
+
+.pdp-hero-bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: clamp(1rem, 4vw, 2.5rem) var(--pdp-pad);
+}
+
+.pdp-hero-title {
+  color: #121111;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  text-transform: capitalize;
+}
+
+.pdp-hero-thumbs {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+
+.pdp-hero-thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.pdp-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 6.5rem;
+  height: 3.6rem;
+  padding: 0;
+  border: 1px solid var(--pdp-line);
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 160ms ease;
+}
+
+.pdp-thumb img {
+  object-fit: cover;
+}
+
+.pdp-thumb:hover {
+  border-color: var(--pdp-line-strong);
+}
+
+.pdp-thumb[data-active] {
+  border-color: var(--pdp-pill-active);
+}
+
+/* --------------------------------------------------------------- Body --- */
+
+.pdp-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 6vw, 3.5rem);
+  padding: clamp(1.75rem, 5vw, 2.75rem) var(--pdp-pad) clamp(3rem, 7vw, 4.5rem);
+}
+
+.pdp-section-title {
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.25rem, 3.4vw, 1.375rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.03;
+  text-transform: capitalize;
+}
+
+/* ----------------------------------------------------------- Overview --- */
+
+.pdp-overview {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 4vw, 2.375rem);
+}
+
+.pdp-breadcrumb {
+  color: var(--pdp-breadcrumb);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pdp-overview-grid {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.pdp-overview-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.pdp-overview-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: capitalize;
+}
+
+.pdp-keyspecs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem 2.5rem;
+  color: var(--pdp-muted);
+  font-size: 0.75rem;
+}
+
+.pdp-keyspec {
+  display: flex;
+  gap: 0.3rem;
+  text-transform: capitalize;
+}
+
+.pdp-keyspec dt {
+  font-weight: 400;
+}
+
+.pdp-overview-description {
+  color: #121111;
+  font-size: 1rem;
+  line-height: 1.44;
+}
+
+.pdp-overview-description p + p {
+  margin-top: 1em;
+}
+
+.pdp-overview-description strong {
+  font-weight: 700;
+}
+
+/* ID line */
+
+.pdp-id {
+  color: var(--pdp-faint);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: capitalize;
+}
+
+/* -------------------------------------------------------- How it works --- */
+
+.pdp-how {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.pdp-how-media {
+  width: 100%;
+}
+
+.pdp-how-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
+.pdp-how-caption {
+  color: var(--pdp-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ----------------------------------------------- Collapsible sections --- */
+
+.pdp-collapsible {
+  border-top: 1px solid var(--pdp-line);
+}
+
+.pdp-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: clamp(0.85rem, 2.5vw, 1.1rem);
+  cursor: pointer;
+  list-style: none;
+}
+
+.pdp-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdp-collapsible-summary:focus-visible {
+  outline: 2px solid var(--pdp-accent);
+  outline-offset: 2px;
+}
+
+.pdp-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--pdp-heading);
+}
+
+.pdp-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pdp-spec-tables {
+  display: grid;
+  gap: clamp(1.25rem, 4vw, 2rem);
+  padding-bottom: 1.25rem;
+}
+
+.pdp-spec-caption {
+  margin-bottom: 0.5rem;
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: capitalize;
+}
+
+.pdp-spec-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdp-spec-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  padding: 0.7rem clamp(1rem, 3vw, 2.4rem);
+  color: #252525;
+  font-size: 0.8125rem;
+}
+
+.pdp-spec-row:nth-child(odd) {
+  background: var(--pdp-zebra);
+}
+
+.pdp-spec-row dt {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* -------------------------------------------------- Technical drawing --- */
+
+.pdp-drawing {
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--pdp-line-strong);
+}
+
+.pdp-drawing img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ------------------------------------------------------------ Brochure --- */
+
+.pdp-brochure {
+  border-top: 1px solid var(--pdp-line);
+}
+
+.pdp-brochure-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: clamp(0.85rem, 2.5vw, 1.1rem);
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.pdp-brochure-link:hover {
+  color: var(--pdp-accent);
+}
+
+.pdp-brochure-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* -------------------------------------------------------- Configurator --- */
+
+.pdp-configurator {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 5vw, 3.5rem);
+}
+
+.pdp-configurator-title {
+  font-size: clamp(1.6rem, 6vw, 2.125rem);
+  letter-spacing: -0.03em;
+}
+
+.pdp-option-groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: clamp(2rem, 5vw, 4rem);
+  row-gap: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.pdp-option-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  border: 0;
+}
+
+.pdp-option-label {
+  padding: 0;
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  text-transform: capitalize;
+}
+
+.pdp-option-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.pdp-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #000;
+  border-radius: 68px;
+  background: #fff;
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1rem;
+  line-height: 1.03;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.pdp-pill[data-active] {
+  border-color: var(--pdp-pill-active);
+  background: var(--pdp-pill-active);
+  color: #fff;
+}
+
+.pdp-pill:focus-visible {
+  outline: 2px solid var(--pdp-accent);
+  outline-offset: 2px;
+}
+
+.pdp-swatch-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+}
+
+.pdp-quote-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.pdp-quantity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.pdp-quantity-label {
+  color: var(--pdp-heading);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.25rem, 4vw, 1.625rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.pdp-quantity-stepper {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border: 1px solid var(--pdp-line-strong);
+  border-radius: 6px;
+}
+
+.pdp-quantity-btn {
+  display: grid;
+  width: 2.75rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--pdp-heading);
+  cursor: pointer;
+}
+
+.pdp-quantity-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pdp-quantity-divider {
+  width: 1px;
+  height: 2rem;
+  background: var(--pdp-line-strong);
+}
+
+.pdp-add-to-quote {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1.1rem 2rem;
+  border-radius: 0.8rem;
+  background: var(--pdp-accent);
+  color: #fff;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.125rem, 3vw, 1.375rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.pdp-add-to-quote:hover {
+  background: #1a37bd;
+}
+
+.pdp-add-to-quote:active {
+  transform: translateY(1px);
+}
+
+.pdp-add-to-quote:focus-visible {
+  outline: 2px solid var(--pdp-accent);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------- Related --- */
+
+.pdp-related {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.pdp-related-title {
+  font-size: clamp(1.375rem, 4vw, 1.625rem);
+  letter-spacing: -0.04em;
+}
+
+.pdp-related-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  list-style: none;
+}
+
+.pdp-related-card a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  color: #221e1f;
+  text-decoration: none;
+}
+
+.pdp-related-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 175 / 164;
+  border-radius: 6px;
+  background: #f4f5f7;
+  overflow: hidden;
+}
+
+.pdp-related-media img {
+  object-fit: contain;
+  padding: 0.75rem;
+}
+
+.pdp-related-card:hover .pdp-related-media {
+  outline: 1px solid var(--pdp-line-strong);
+}
+
+.pdp-related-name {
+  font-size: 0.875rem;
+  line-height: 1.15;
+  text-transform: capitalize;
+}
+
+/* --------------------------------------------------- Laptop / desktop --- */
+
+@media (min-width: 48rem) {
+  .pdp-hero {
+    min-height: 0;
+    aspect-ratio: 1024 / 560;
+  }
+
+  .pdp-hero-bar {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .pdp-hero-thumbs {
+    flex: 0 0 auto;
+    overflow-x: visible;
+  }
+
+  .pdp-thumb {
+    width: 7.5rem;
+    height: 4.2rem;
+  }
+
+  .pdp-overview-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .pdp-spec-tables[data-cols='two'] {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+
+  .pdp-option-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pdp-quote-row {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .pdp-add-to-quote {
+    width: auto;
+    min-width: min(100%, 30rem);
+  }
+
+  .pdp-related-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdp * {
+    transition: none !important;
+  }
+}

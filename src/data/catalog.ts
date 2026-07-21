@@ -8,7 +8,12 @@ import type {
 } from '@/payload-types'
 
 import { getPayloadClient } from './payload'
-import { relationArrayIncludesSlug, relationSlug } from './relations'
+import {
+  relationArray,
+  relationArrayIncludesSlug,
+  relationId,
+  relationSlug,
+} from './relations'
 
 export type ProductFilters = {
   family?: string
@@ -132,6 +137,59 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   })
 
   return docs[0] ?? null
+}
+
+/**
+ * Resolve the related products shown on a product detail page. Uses the
+ * editor-curated `relatedProducts` when present, otherwise falls back to other
+ * products in the same family, then to any other published products.
+ */
+export async function getRelatedProductsFor(
+  product: Product,
+  limit = 5,
+): Promise<Product[]> {
+  const curated = relationArray(product.relatedProducts).filter(
+    (item): item is Product => typeof item === 'object' && item !== null,
+  )
+
+  if (curated.length) {
+    return curated.slice(0, limit)
+  }
+
+  const payload = await getPayloadClient()
+  const familyId = relationId(product.productFamily)
+
+  if (familyId) {
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 1,
+      draft: false,
+      limit: limit + 1,
+      overrideAccess: false,
+      where: {
+        and: [
+          { productFamily: { equals: familyId } },
+          { id: { not_equals: product.id } },
+        ],
+      },
+    })
+
+    if (docs.length) {
+      return docs.slice(0, limit)
+    }
+  }
+
+  const { docs } = await payload.find({
+    collection: 'products',
+    depth: 1,
+    draft: false,
+    limit: limit + 1,
+    overrideAccess: false,
+    sort: '-updatedAt',
+    where: { id: { not_equals: product.id } },
+  })
+
+  return docs.slice(0, limit)
 }
 
 export async function getBrochures(): Promise<Brochure[]> {

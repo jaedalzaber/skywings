@@ -11,7 +11,7 @@ export function FooterNewsletterForm(props: { buttonLabel: string; placeholder: 
   const [state, formAction, pending] = useActionState(subscribeToNewsletter, initialState)
 
   return (
-    <form action={formAction} className="footer-newsletter-form">
+    <form action={formAction} className="figma-footer-newsletter-form">
       <label className="sr-only" htmlFor="footer-newsletter-email">
         Email address
       </label>
@@ -23,11 +23,11 @@ export function FooterNewsletterForm(props: { buttonLabel: string; placeholder: 
         required
         type="email"
       />
-      <input aria-hidden="true" className="footer-honeypot" name="website" tabIndex={-1} />
+      <input aria-hidden="true" className="figma-footer-honeypot" name="website" tabIndex={-1} />
       <button disabled={pending} type="submit">
         {pending ? 'Subscribing…' : buttonLabel}
       </button>
-      <p aria-live="polite" className={`footer-form-status is-${state.status}`}>
+      <p aria-live="polite" className={`figma-footer-form-status is-${state.status}`}>
         {state.message}
       </p>
     </form>

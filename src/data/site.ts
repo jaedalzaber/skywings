@@ -78,7 +78,7 @@ export const defaultFooterData: SiteFooterData = {
   copyright: `© ${new Date().getFullYear()} Skywings. All rights reserved.`,
   emailAddress: 'info@skywings.ae',
   emailLabel: 'Send email',
-  headline: 'Let’s talk',
+  headline: 'Skywings',
   legalLinks: [
     { label: 'Cookie Policy', href: '/cookie-policy' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
@@ -112,7 +112,7 @@ export const defaultFooterData: SiteFooterData = {
     { label: 'Terms of Service', href: 'https://policies.google.com/terms' },
   ],
   newsletterPrivacyText:
-    'The privacy policy is available at the following link. The site is protected by reCAPTCHA and Google policies apply.',
+    'The privacy policy is available at the following {privacyLink}\nThe site is protected by reCAPTCHA and Google {googlePrivacy} and {terms} apply',
   phoneLabel: 'Call now',
   phoneNumbers: ['06 883 8036', '+971 54 242 9624', '+971 50 946 9979', '+971 50 538 9979'],
 }
@@ -124,7 +124,7 @@ export const defaultSiteMetadata: SiteMetadataData = {
   title: 'Sky Wings Engineering Industries LLC',
 }
 
-function getMedia(value: Header['logo'] | SiteSetting['favicon']): Media | null {
+function getMedia(value: SiteSetting['logo'] | SiteSetting['favicon']): Media | null {
   return typeof value === 'object' && value ? value : null
 }
 
@@ -148,15 +148,22 @@ function getResolvableFaviconHref(media: Media | null): string {
 export async function getSiteHeader(): Promise<SiteHeaderData> {
   try {
     const payload = await getPayloadClient()
-    const header = await payload.findGlobal({
-      slug: 'header',
-      depth: 1,
-      overrideAccess: false,
-    })
+    const [header, siteSettings] = await Promise.all([
+      payload.findGlobal({
+        slug: 'header',
+        depth: 1,
+        overrideAccess: false,
+      }),
+      payload.findGlobal({
+        slug: 'site-settings',
+        depth: 1,
+        overrideAccess: false,
+      }),
+    ])
 
     return {
       ...defaultHeaderData,
-      logo: getMedia(header.logo),
+      logo: getMedia(siteSettings.logo),
       navigation: header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
       cta: header.cta?.[0] ?? defaultHeaderData.cta,
     }

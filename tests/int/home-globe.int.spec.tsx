@@ -10,16 +10,10 @@ vi.mock('@/components/home/HomeProcessModel', () => ({
   HomeProcessModel: () => <div data-testid="process-model-canvas" />,
 }))
 
-vi.mock('@/components/home/HomeGlobeScene', () => ({
-  HomeGlobeScene: () => (
-    <div className="globe-scene-fallback" data-testid="globe-scene-fallback" />
-  ),
-}))
-
 describe('HomeGlobeSection', () => {
   afterEach(cleanup)
 
-  test('renders directly after manufacturing process with branches, routes, and looping clients', () => {
+  test('renders directly after manufacturing process with branches, map background, and looping clients', () => {
     const { container } = render(<HomeBlockRenderer blocks={defaultHomeLayout} />)
     const process = container.querySelector('#manufacturing-process')
     const globe = container.querySelector('#global-delivery') as HTMLElement
@@ -38,10 +32,9 @@ describe('HomeGlobeSection', () => {
     expect(globeQueries.getByRole('link', { name: '+971 505 389 979' }).getAttribute('href')).toBe(
       'tel:+971505389979',
     )
-    expect(globe.querySelectorAll('[data-globe-label]')).toHaveLength(4)
     expect(globe.querySelectorAll('.globe-client-track')).toHaveLength(2)
     expect(globeQueries.getByTestId('globe-stage')).toBeTruthy()
-    expect(globeQueries.getByTestId('globe-scene-fallback')).toBeTruthy()
+    expect(globe.querySelector('.globe-map-background')).toBeTruthy()
   })
 
   test('uses the Figma charcoal layout and a reduced-motion-safe client marquee', () => {
@@ -54,6 +47,7 @@ describe('HomeGlobeSection', () => {
     expect(styles).toMatch(
       /\.global-delivery-main\s*\{[^}]*padding:\s*clamp\(6\.25rem,[^;]+;/s,
     )
+    expect(styles).toContain("url('/images/home/delivery-map.png')")
     expect(styles).toMatch(/@keyframes globe-client-slide/)
     expect(styles).toMatch(
       /\.globe-client-rail\s*\{[^}]*animation:\s*globe-client-slide[^;]+;/s,

@@ -63,7 +63,7 @@ describe('HomeProcessSection', () => {
     expect(styles).toMatch(/\.process-grid\s*\{[^}]*grid-template-columns:\s*var\(--process-columns\);/s)
   })
 
-  test('declares a full-height pinned scroll scene with a .05 viewport scroll distance', () => {
+  test('renders as a full-height normal-flow section without scroll pinning', () => {
     const { container } = render(<HomeBlockRenderer blocks={defaultHomeLayout} />)
     const processSection = container.querySelector('#manufacturing-process')
     const styles = readFileSync(resolve(process.cwd(), 'src/app/(frontend)/styles.css'), 'utf8')
@@ -72,9 +72,9 @@ describe('HomeProcessSection', () => {
       'utf8',
     )
 
-    expect(processSection?.getAttribute('data-scroll-scene')).toBe('pinned')
-    expect(styles).toMatch(/\.manufacturing-process\s*\{[^}]*--process-pin-distance:\s*5vh;/s)
-    expect(component).toMatch(/window\.innerHeight \* 0\.05/)
+    expect(processSection?.hasAttribute('data-scroll-scene')).toBe(false)
+    expect(component).not.toMatch(/ScrollTrigger/)
+    expect(component).not.toMatch(/pin:\s*true/)
     expect(styles).toMatch(/\.manufacturing-process\s*\{[^}]*min-height:\s*100svh;/s)
     expect(styles).toMatch(/padding-top:\s*max\(5\.5rem,\s*calc\(\(100svh - 41\.75rem\) \/ 2\)\);/)
     expect(styles).toMatch(/height:\s*min\(34\.25rem,\s*calc\(100svh - 15rem\)\);/)

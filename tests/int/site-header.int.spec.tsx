@@ -5,6 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import type { SiteHeaderData } from '@/data/site'
+import { SiteSettings, validateDistinctBrandAsset } from '@/globals/SiteSettings'
 
 const figmaHeader: SiteHeaderData = {
   brandName: 'Sky Wings',
@@ -30,6 +31,28 @@ const figmaHeader: SiteHeaderData = {
 }
 
 describe('SiteHeader', () => {
+  test('keeps the navigation logo and favicon as distinct Payload uploads', () => {
+    const logoField = SiteSettings.fields.find((field) => 'name' in field && field.name === 'logo')
+    const faviconField = SiteSettings.fields.find(
+      (field) => 'name' in field && field.name === 'favicon',
+    )
+
+    expect(logoField).toMatchObject({
+      label: 'Navigation logo',
+      relationTo: 'media',
+      type: 'upload',
+    })
+    expect(faviconField).toMatchObject({
+      label: 'Browser favicon',
+      relationTo: 'media',
+      type: 'upload',
+    })
+    expect(validateDistinctBrandAsset(2, { favicon: 2 }, 'favicon')).toBe(
+      'Logo and favicon must use separate media uploads.',
+    )
+    expect(validateDistinctBrandAsset(2, { favicon: 3 }, 'favicon')).toBe(true)
+  })
+
   test('renders the Figma nav container structure', () => {
     const { container } = render(<SiteHeader header={figmaHeader} />)
 
@@ -55,23 +78,49 @@ describe('SiteHeader', () => {
     )
   })
 
-  test('uses an opaque unblurred surface while the manufacturing process scene is active', () => {
+  test('uses CSS variables for the floating navigation surface', () => {
     const styles = readFileSync(resolve(process.cwd(), 'src/app/(frontend)/styles.css'), 'utf8')
 
     expect(styles).toMatch(
       /\.topbar\s*\{[^}]*background:\s*var\(--nav-surface,[^;]+;[^}]*backdrop-filter:\s*var\(--nav-backdrop,[^;]+;/s,
     )
-    expect(styles).toMatch(
-      /html\[data-process-nav-active='true'\]\s*\{[^}]*--nav-surface:\s*#fff;[^}]*--nav-backdrop:\s*none;/s,
-    )
   })
 
-  test('uses an unoptimized native image for the bundled fallback favicon', () => {
-    const source = readFileSync(
-      resolve(process.cwd(), 'src/components/layout/SiteHeader.tsx'),
-      'utf8',
+  test('uses the bundled SVG logo when no Payload logo is selected', () => {
+    const { container } = render(<SiteHeader header={figmaHeader} />)
+
+    const logo = container.querySelector('.brand-logo img') as HTMLImageElement
+
+    expect(logo.getAttribute('alt')).toBe('Sky Wings')
+    expect(logo.getAttribute('src')).toBe('/images/header/logo.svg')
+    expect(logo.getAttribute('width')).toBe('61')
+    expect(logo.getAttribute('height')).toBe('29')
+  })
+
+  test('renders a Payload-uploaded SVG logo without raster optimization', () => {
+    const { container } = render(
+      <SiteHeader
+        header={{
+          ...figmaHeader,
+          logo: {
+            id: 1,
+            alt: 'Uploaded Sky Wings logo',
+            createdAt: '2026-07-21T00:00:00.000Z',
+            updatedAt: '2026-07-21T00:00:00.000Z',
+            height: 58,
+            mimeType: 'image/svg+xml',
+            url: '/api/media/file/uploaded-logo.svg',
+            width: 122,
+          },
+        }}
+      />,
     )
 
-    expect(source).toMatch(/<img alt="" height=\{24\} src="\/favicon\.png" width=\{38\} \/>/)
+    const logo = container.querySelector('.brand-logo img') as HTMLImageElement
+
+    expect(logo.getAttribute('alt')).toBe('Uploaded Sky Wings logo')
+    expect(logo.getAttribute('src')).toBe('/api/media/file/uploaded-logo.svg')
+    expect(logo.getAttribute('width')).toBe('122')
+    expect(logo.getAttribute('height')).toBe('58')
   })
 })

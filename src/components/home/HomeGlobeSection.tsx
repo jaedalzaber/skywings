@@ -1,5 +1,3 @@
-import { HomeGlobeScene } from './HomeGlobeScene'
-
 const branches = [
   {
     address: 'A2, Plot No. 10576015-3, Sajja Industrial Area, Sharjah, UAE',
@@ -15,7 +13,6 @@ const branches = [
   },
 ]
 
-const deliveryLabels = ['Europe', 'UAE', 'Saudi', 'Africa']
 const clients = ['Uber', 'Rappi', 'GE', 'Glovo', 'Telenor', 'FairMoney', 'Vinted']
 
 export function HomeGlobeSection() {
@@ -24,7 +21,6 @@ export function HomeGlobeSection() {
       aria-labelledby="global-delivery-title"
       className="global-delivery"
       data-nav-surface="white"
-      data-scroll-snap="section"
       id="global-delivery"
     >
       <div className="global-delivery-main flex flex-row">
@@ -57,8 +53,8 @@ export function HomeGlobeSection() {
           className="globe-stage"
           data-testid="globe-stage"
         >
-          <HomeGlobeScene />
-          <div className="globe-label-layer" aria-hidden="true">
+          <div className="globe-map-background" aria-hidden="true" />
+          {/* <div className="globe-label-layer" aria-hidden="true">
             {deliveryLabels.map((label) => (
               <span
                 className={`globe-location-label globe-location-${label.toLowerCase()}`}
@@ -68,7 +64,7 @@ export function HomeGlobeSection() {
                 {label}
               </span>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 

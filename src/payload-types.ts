@@ -281,6 +281,28 @@ export interface Product {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Category path shown above the title, e.g. "Aviation / GSE / Stands".
+   */
+  breadcrumb?: string | null;
+  /**
+   * Shown as "Industry: …" in the overview.
+   */
+  industryLabel?: string | null;
+  /**
+   * Shown as "Category: …" in the overview.
+   */
+  categoryLabel?: string | null;
+  /**
+   * Short label/value pairs shown beside the description (Type, Material, Weight, Capacity, …).
+   */
+  keySpecs?:
+    | {
+        label: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
   featuredImage?: (number | null) | Media;
   gallery?:
     | {
@@ -289,6 +311,14 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Optional illustrated section (e.g. fold / unfold). Rendered only when an image is set.
+   */
+  howItWorks?: {
+    heading?: string | null;
+    image?: (number | null) | Media;
+    caption?: string | null;
+  };
   industries?: (number | Industry)[] | null;
   capabilities?: (number | Capability)[] | null;
   materials?: (number | Material)[] | null;
@@ -302,6 +332,20 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Second spec table shown next to Specification.
+   */
+  accessories?:
+    | {
+        label: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Dimensioned engineering drawing shown in its own section.
+   */
+  technicalDrawing?: (number | null) | Media;
   dimensions?: {
     length?: string | null;
     width?: string | null;
@@ -321,6 +365,10 @@ export interface Product {
               label: string;
               value: string;
               priceImpactNote?: string | null;
+              /**
+               * Hex color to tint this option pill (Color groups), e.g. #3d47ff.
+               */
+              swatch?: string | null;
               id?: string | null;
             }[]
           | null;
@@ -2323,6 +2371,16 @@ export interface ProductsSelect<T extends boolean = true> {
   productFamily?: T;
   summary?: T;
   description?: T;
+  breadcrumb?: T;
+  industryLabel?: T;
+  categoryLabel?: T;
+  keySpecs?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
   featuredImage?: T;
   gallery?:
     | T
@@ -2330,6 +2388,13 @@ export interface ProductsSelect<T extends boolean = true> {
         image?: T;
         caption?: T;
         id?: T;
+      };
+  howItWorks?:
+    | T
+    | {
+        heading?: T;
+        image?: T;
+        caption?: T;
       };
   industries?: T;
   capabilities?: T;
@@ -2344,6 +2409,14 @@ export interface ProductsSelect<T extends boolean = true> {
         unit?: T;
         id?: T;
       };
+  accessories?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
+  technicalDrawing?: T;
   dimensions?:
     | T
     | {
@@ -2367,6 +2440,7 @@ export interface ProductsSelect<T extends boolean = true> {
               label?: T;
               value?: T;
               priceImpactNote?: T;
+              swatch?: T;
               id?: T;
             };
         id?: T;
@@ -2582,7 +2656,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Header {
   id: number;
-  logo?: (number | null) | Media;
   navigation?:
     | {
         label: string;
@@ -2615,6 +2688,9 @@ export interface Header {
  */
 export interface Footer {
   id: number;
+  /**
+   * Large brand wordmark displayed over the footer grid artwork.
+   */
   headline: string;
   emailLabel?: string | null;
   emailAddress?: string | null;
@@ -2641,6 +2717,9 @@ export interface Footer {
   newsletterHeading?: string | null;
   newsletterPlaceholder?: string | null;
   newsletterButtonLabel?: string | null;
+  /**
+   * Use {privacyLink}, {googlePrivacy}, and {terms} to place the editable links.
+   */
   newsletterPrivacyText?: string | null;
   newsletterPrivacyLinks?:
     | {
@@ -2675,7 +2754,13 @@ export interface SiteSetting {
   id: number;
   siteName: string;
   tagline?: string | null;
+  /**
+   * Used only in the website navigation. SVG is recommended.
+   */
   logo?: (number | null) | Media;
+  /**
+   * Used only for browser tabs and bookmarks. Upload a separate square image.
+   */
   favicon?: (number | null) | Media;
   contact?: {
     email?: string | null;
@@ -2721,7 +2806,6 @@ export interface SocialLink {
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
-  logo?: T;
   navigation?:
     | T
     | {
