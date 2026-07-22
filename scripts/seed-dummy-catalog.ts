@@ -11,6 +11,161 @@ import config from '../src/payload.config'
 
 const tmpDir = path.join(os.tmpdir(), 'skywings-dummy-catalog')
 
+// Committed sample renders used to give a couple of products the full Figma
+// design content (hero, gallery, how-it-works, technical drawing).
+const productImageDir = path.join(process.cwd(), 'public', 'images', 'products')
+
+// Minimal Lexical rich-text builders for seeded product descriptions.
+const lexText = (text: string, bold = false) => ({
+  detail: 0,
+  format: bold ? 1 : 0,
+  mode: 'normal',
+  style: '',
+  text,
+  type: 'text',
+  version: 1,
+})
+const lexParagraph = (children: ReturnType<typeof lexText>[]) => ({
+  children,
+  direction: 'ltr',
+  format: '',
+  indent: 0,
+  textFormat: 0,
+  textStyle: '',
+  type: 'paragraph',
+  version: 1,
+})
+const lexRichText = (paragraphs: ReturnType<typeof lexParagraph>[]) => ({
+  root: {
+    children: paragraphs,
+    direction: 'ltr',
+    format: '',
+    indent: 0,
+    type: 'root',
+    version: 1,
+  },
+})
+
+type ProductRich = {
+  accessories?: { label: string; value: string }[]
+  breadcrumb?: string
+  categoryLabel?: string
+  configurationOptions?: Record<string, unknown>[]
+  description?: unknown
+  featuredImage?: string
+  gallery?: string[]
+  howItWorks?: { caption: string; heading: string; image: string }
+  industryLabel?: string
+  keySpecs?: { label: string; value: string }[]
+  specifications?: { label: string; unit?: string; value: string }[]
+  technicalDrawing?: string
+}
+
+// Per-SKU rich content matching the Figma product template. Any product not
+// listed here still seeds with the generic defaults below.
+const productRichContent: Record<string, ProductRich> = {
+  'GSE-FS-038': {
+    breadcrumb: 'Aviation / GSE / Stands',
+    industryLabel: 'Aviation GSE',
+    categoryLabel: 'Maintenance & Stand',
+    featuredImage: 'folding-stand-hero.png',
+    gallery: ['thumb-1.png', 'thumb-2.png', 'thumb-3.png', 'thumb-4.png'],
+    keySpecs: [
+      { label: 'Type', value: 'Folding' },
+      { label: 'Material', value: 'Aluminium' },
+      { label: 'Surface', value: 'Powder Coated' },
+      { label: 'Size', value: '20m x 40m x 20m' },
+      { label: 'Weight', value: '20kg' },
+      { label: 'Capacity', value: '200kg' },
+    ],
+    description: lexRichText([
+      lexParagraph([
+        lexText('Sky Wings provides '),
+        lexText('End-to-End Metal Manufacturing', true),
+        lexText(
+          '. We take a requirement — a drawing, a sample, a concept, or a problem to solve — and convert it into a ',
+        ),
+        lexText('manufactured product', true),
+        lexText('.'),
+      ]),
+      lexParagraph([
+        lexText(
+          'Foldable work stand provides stable elevated access while saving storage space when not in use.',
+        ),
+      ]),
+    ]),
+    howItWorks: {
+      heading: 'How it works',
+      image: 'fold-unfold.png',
+      caption: 'Folds flat for storage, unfolds to a 180° working platform.',
+    },
+    specifications: [
+      { label: 'Code', value: 'GSE-OB-04' },
+      { label: 'Application', value: '777X and 777 legacy' },
+      { label: 'Movement', value: '2 Persons' },
+      { label: 'Weight', value: '700', unit: 'kg' },
+      { label: 'Material', value: 'Steel Construction' },
+      { label: 'Deck Type', value: 'Roller Deck' },
+      { label: 'Finish', value: 'Powder Coated' },
+      { label: 'Application', value: 'ULD & Cargo Transfer' },
+    ],
+    accessories: [
+      { label: 'Code', value: 'GSE-OB-04' },
+      { label: 'Application', value: '777X and 777 legacy' },
+      { label: 'Movement', value: '2 Persons' },
+      { label: 'Weight', value: '700 kg' },
+      { label: 'Material', value: 'Steel Construction' },
+    ],
+    technicalDrawing: 'technical-drawing.png',
+    configurationOptions: [
+      {
+        group: 'Material',
+        options: [
+          { label: 'Steel', value: 'steel' },
+          { label: 'Aluminium', value: 'aluminium' },
+        ],
+      },
+      {
+        group: 'Size',
+        options: [
+          { label: '10m', value: '10m' },
+          { label: '20m', value: '20m' },
+        ],
+      },
+      {
+        group: 'Wheel Type',
+        options: [
+          { label: 'None', value: 'none' },
+          { label: 'Pneumatic Tires', value: 'pneumatic' },
+        ],
+      },
+      {
+        group: 'Towbar',
+        options: [
+          { label: 'None', value: 'none' },
+          { label: 'Hook', value: 'hook' },
+          { label: 'Free', value: 'free' },
+        ],
+      },
+      {
+        group: 'Finishing',
+        options: [
+          { label: 'Paint', value: 'paint' },
+          { label: 'Powder Coating', value: 'powder' },
+        ],
+      },
+      {
+        group: 'Color',
+        options: [
+          { label: 'Blue', value: 'blue', swatch: '#3d47ff' },
+          { label: 'White', value: 'white', swatch: '#f0f0f0' },
+          { label: 'Custom', value: 'custom' },
+        ],
+      },
+    ],
+  },
+}
+
 type CollectionSlug =
   | 'brochures'
   | 'capabilities'
@@ -388,51 +543,97 @@ export async function seedDummyCatalog() {
     const [title, sku, summary, familyTitle, industrySlugs, capabilitySlugs, productType] = seed
     const family = familyMap.get(slugify(familyTitle))
     const accent = familyTitle.includes('Aviation') || familyTitle.includes('ULD') ? '#2453d4' : '#f6c500'
-    const image = await ensureMedia(
-      payload,
-      await writeProductImage(title, sku, familyTitle, accent),
-      `${title} product image`,
-    )
+    const rich = productRichContent[sku]
+
+    const image = rich?.featuredImage
+      ? await ensureMedia(payload, path.join(productImageDir, rich.featuredImage), `${title} product image`)
+      : await ensureMedia(payload, await writeProductImage(title, sku, familyTitle, accent), `${title} product image`)
+
+    const gallery = rich?.gallery
+      ? await Promise.all(
+          rich.gallery.map(async (file, viewIndex) => ({
+            image: (
+              await ensureMedia(payload, path.join(productImageDir, file), `${title} view ${viewIndex + 1}`)
+            ).id,
+          })),
+        )
+      : undefined
+
+    const howItWorks = rich?.howItWorks
+      ? {
+          caption: rich.howItWorks.caption,
+          heading: rich.howItWorks.heading,
+          image: (
+            await ensureMedia(
+              payload,
+              path.join(productImageDir, rich.howItWorks.image),
+              `${title} how it works`,
+            )
+          ).id,
+        }
+      : undefined
+
+    const technicalDrawing = rich?.technicalDrawing
+      ? (
+          await ensureMedia(
+            payload,
+            path.join(productImageDir, rich.technicalDrawing),
+            `${title} technical drawing`,
+          )
+        ).id
+      : undefined
+
     const isConfigurable = productType === 'configurable'
     const doc = await upsertBySlug(payload, 'products', {
       _status: 'published',
+      accessories: rich?.accessories,
+      breadcrumb: rich?.breadcrumb,
       capabilities: ids(capabilitySlugs, capabilityMap),
-      configurationOptions: isConfigurable
-        ? [
-            {
-              group: 'Module Layout',
-              options: [
-                { label: 'Straight', value: 'straight' },
-                { label: 'Curved', value: 'curved' },
-                { label: 'Transfer', value: 'transfer' },
-              ],
-            },
-            {
-              group: 'Finish',
-              options: [
-                { label: 'Industrial paint', value: 'paint' },
-                { label: 'Powder coated', value: 'powder-coated' },
-                { label: 'Galvanized', value: 'galvanized' },
-              ],
-            },
-          ]
-        : undefined,
+      categoryLabel: rich?.categoryLabel,
+      configurationOptions:
+        rich?.configurationOptions ??
+        (isConfigurable
+          ? [
+              {
+                group: 'Module Layout',
+                options: [
+                  { label: 'Straight', value: 'straight' },
+                  { label: 'Curved', value: 'curved' },
+                  { label: 'Transfer', value: 'transfer' },
+                ],
+              },
+              {
+                group: 'Finish',
+                options: [
+                  { label: 'Industrial paint', value: 'paint' },
+                  { label: 'Powder coated', value: 'powder-coated' },
+                  { label: 'Galvanized', value: 'galvanized' },
+                ],
+              },
+            ]
+          : undefined),
+      description: rich?.description,
       dimensions: { notes: 'Dimensions configurable by drawing, sample, or project requirement.' },
       featuredImage: image.id,
+      gallery,
+      howItWorks,
       industries: ids(industrySlugs, industryMap),
+      industryLabel: rich?.industryLabel,
       isConfigurable,
+      keySpecs: rich?.keySpecs,
       loadCapacity: familyTitle.includes('Aviation') ? 'Project and aircraft specific' : 'By requirement',
       productFamily: family?.id,
       productType,
       sku,
       slug: slugify(title),
-      specifications: [
+      specifications: rich?.specifications ?? [
         { label: 'Manufacturing route', value: familyTitle },
         { label: 'Finish', value: 'Painted, powder-coated, galvanized, or stainless finish' },
         { label: 'Source input', value: 'Drawing, sample, concept, or problem statement' },
       ],
       summary,
       surfaceTreatment: 'Industrial painting, powder coating, galvanizing, or customer-specific finishing available.',
+      technicalDrawing,
       title,
     })
     productMap.set(slugify(title), doc)

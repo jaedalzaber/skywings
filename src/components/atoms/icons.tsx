@@ -57,3 +57,19 @@ export function ArrowRightIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+export function CloseIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  )
+}
+
+export function CubeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 0v20M3 7l9 5 9-5" />
+    </svg>
+  )
+}

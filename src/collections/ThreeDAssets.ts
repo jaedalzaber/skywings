@@ -16,7 +16,7 @@ export const ThreeDAssets: CollectionConfig = {
     delete: authenticated,
   },
   admin: {
-    group: 'Assets',
+    group: '3D Viewer',
     useAsTitle: 'title',
     defaultColumns: ['title', 'format', 'isPublic', 'updatedAt'],
   },
@@ -88,13 +88,32 @@ export const ThreeDAssets: CollectionConfig = {
     },
     {
       name: 'lightingPreset',
+      type: 'relationship',
+      relationTo: 'lighting-presets',
+      admin: {
+        description:
+          'Select a reusable lighting preset. Editing the preset updates every linked model automatically.',
+      },
+    },
+    {
+      name: 'viewerActions',
+      label: 'Viewer actions',
       type: 'select',
-      defaultValue: 'studio',
+      hasMany: true,
+      defaultValue: ['auto-rotate', 'reset-view'],
+      admin: {
+        description:
+          'Controls shown in the 3D viewer for this model. Clip-based actions play a matching animation clip in the GLB (e.g. an action named "fold").',
+      },
       options: [
-        { label: 'Studio', value: 'studio' },
-        { label: 'Workshop', value: 'workshop' },
-        { label: 'Outdoor', value: 'outdoor' },
-        { label: 'Technical', value: 'technical' },
+        { label: 'Fold / Unfold', value: 'fold-unfold' },
+        { label: 'Open / Close', value: 'open-close' },
+        { label: 'Extend / Retract', value: 'extend-retract' },
+        { label: 'Exploded View', value: 'exploded-view' },
+        { label: 'Play / Pause Animation', value: 'play-pause' },
+        { label: 'Reset View', value: 'reset-view' },
+        { label: 'Auto Rotate', value: 'auto-rotate' },
+        { label: 'Hotspots / Annotations', value: 'hotspots' },
       ],
     },
     {

@@ -9,6 +9,7 @@ import { FormSubmissions } from './FormSubmissions'
 import { Industries } from './Industries'
 import { LandingPages } from './LandingPages'
 import { Leads } from './Leads'
+import { LightingPresets } from './LightingPresets'
 import { Machines } from './Machines'
 import { Materials } from './Materials'
 import { Media } from './Media'
@@ -24,6 +25,7 @@ export const collections = [
   Users,
   Media,
   Brochures,
+  LightingPresets,
   ThreeDAssets,
   Pages,
   LandingPages,

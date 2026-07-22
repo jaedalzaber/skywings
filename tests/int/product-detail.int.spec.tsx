@@ -1,5 +1,5 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, test } from 'vitest'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { ProductDetail } from '@/components/collections/product/ProductDetail'
 import type { Media, Product } from '@/payload-types'
@@ -63,6 +63,23 @@ const relatedProduct = {
   featuredImage: media({ id: 6, url: '/images/products/ladders.png' }),
 } as unknown as Product
 
+function setMobileViewport(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  })
+}
+
 describe('ProductDetail', () => {
   afterEach(cleanup)
 
@@ -117,5 +134,69 @@ describe('ProductDetail', () => {
     expect(container.querySelector('.pdp-collapsible')).toBeNull()
     // Summary still shows.
     expect(within(container).getByText('A simple stand.')).toBeDefined()
+  })
+
+  test('uses the optional mobile gallery below laptop width', async () => {
+    setMobileViewport(true)
+    const product = {
+      ...fullProduct,
+      mobileGallery: [
+        {
+          id: 'mg1',
+          image: media({
+            alt: 'Mobile folding stand render',
+            id: 30,
+            url: '/images/products/mobile-folding-stand.png',
+          }),
+        },
+      ],
+    } as unknown as Product
+
+    render(<ProductDetail product={product} related={[]} />)
+
+    await waitFor(() => {
+      expect(screen.getAllByAltText('Mobile folding stand render').length).toBeGreaterThan(0)
+    })
+    expect(
+      within(screen.getByLabelText('Folding Stand images')).queryByAltText('Folding stand render'),
+    ).toBeNull()
+  })
+
+  test('falls back to desktop images on mobile when no mobile gallery is set', async () => {
+    setMobileViewport(true)
+
+    render(<ProductDetail product={fullProduct} related={[]} />)
+
+    await waitFor(() => {
+      expect(screen.getAllByAltText('Folding stand render').length).toBeGreaterThan(0)
+    })
+  })
+
+  test('uses desktop images at laptop width even when mobile gallery is set', async () => {
+    setMobileViewport(false)
+    const product = {
+      ...fullProduct,
+      mobileGallery: [
+        {
+          id: 'mg1',
+          image: media({
+            alt: 'Mobile folding stand render',
+            id: 30,
+            url: '/images/products/mobile-folding-stand.png',
+          }),
+        },
+      ],
+    } as unknown as Product
+
+    render(<ProductDetail product={product} related={[]} />)
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByLabelText('Folding Stand images')).getAllByAltText(
+          'Folding stand render',
+        ).length,
+      ).toBeGreaterThan(0)
+    })
+    expect(screen.queryByAltText('Mobile folding stand render')).toBeNull()
   })
 })

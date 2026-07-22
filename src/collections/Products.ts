@@ -146,6 +146,27 @@ export const Products: CollectionConfig = {
       ],
     },
     {
+      name: 'mobileGallery',
+      label: 'Mobile image gallery (optional)',
+      type: 'array',
+      admin: {
+        description:
+          'Images used on product detail pages below laptop width. Leave empty to use the desktop featured image and gallery.',
+      },
+      fields: [
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          required: true,
+        },
+        {
+          name: 'caption',
+          type: 'text',
+        },
+      ],
+    },
+    {
       name: 'howItWorks',
       label: 'How it works (optional)',
       type: 'group',

@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     brochures: Brochure;
+    'lighting-presets': LightingPreset;
     'three-d-assets': ThreeDAsset;
     pages: Page;
     'landing-pages': LandingPage;
@@ -98,6 +99,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     brochures: BrochuresSelect<false> | BrochuresSelect<true>;
+    'lighting-presets': LightingPresetsSelect<false> | LightingPresetsSelect<true>;
     'three-d-assets': ThreeDAssetsSelect<false> | ThreeDAssetsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'landing-pages': LandingPagesSelect<false> | LandingPagesSelect<true>;
@@ -305,6 +307,16 @@ export interface Product {
     | null;
   featuredImage?: (number | null) | Media;
   gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Images used on product detail pages below laptop width. Leave empty to use the desktop featured image and gallery.
+   */
+  mobileGallery?:
     | {
         image: number | Media;
         caption?: string | null;
@@ -1142,7 +1154,25 @@ export interface ThreeDAsset {
     y?: number | null;
     z?: number | null;
   };
-  lightingPreset?: ('studio' | 'workshop' | 'outdoor' | 'technical') | null;
+  /**
+   * Select a reusable lighting preset. Editing the preset updates every linked model automatically.
+   */
+  lightingPreset?: (number | null) | LightingPreset;
+  /**
+   * Controls shown in the 3D viewer for this model. Clip-based actions play a matching animation clip in the GLB (e.g. an action named "fold").
+   */
+  viewerActions?:
+    | (
+        | 'fold-unfold'
+        | 'open-close'
+        | 'extend-retract'
+        | 'exploded-view'
+        | 'play-pause'
+        | 'reset-view'
+        | 'auto-rotate'
+        | 'hotspots'
+      )[]
+    | null;
   viewerNotes?: string | null;
   isPublic?: boolean | null;
   updatedAt: string;
@@ -1156,6 +1186,87 @@ export interface ThreeDAsset {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * Reusable scene lighting and renderer settings. Editing a preset updates every linked 3D asset.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lighting-presets".
+ */
+export interface LightingPreset {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  environment: {
+    source: 'preset' | 'hdri' | 'none';
+    preset?:
+      | ('apartment' | 'city' | 'dawn' | 'forest' | 'lobby' | 'night' | 'park' | 'studio' | 'sunset' | 'warehouse')
+      | null;
+    /**
+     * Upload an .hdr or .exr environment map in Media, then select it here.
+     */
+    hdri?: (number | null) | Media;
+    intensity?: number | null;
+    rotation?: {
+      x?: number | null;
+      y?: number | null;
+      z?: number | null;
+    };
+  };
+  background: {
+    mode: 'color' | 'environment' | 'transparent';
+    color?: string | null;
+    intensity?: number | null;
+    blur?: number | null;
+  };
+  lights?: {
+    ambient?: {
+      enabled?: boolean | null;
+      intensity?: number | null;
+      color?: string | null;
+    };
+    hemisphere?: {
+      enabled?: boolean | null;
+      intensity?: number | null;
+      skyColor?: string | null;
+      groundColor?: string | null;
+    };
+    directionalLights?:
+      | {
+          name: string;
+          enabled?: boolean | null;
+          intensity?: number | null;
+          color?: string | null;
+          position?: {
+            x?: number | null;
+            y?: number | null;
+            z?: number | null;
+          };
+          castShadow?: boolean | null;
+          shadowMapSize?: number | null;
+          shadowBias?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  contactShadows?: {
+    enabled?: boolean | null;
+    opacity?: number | null;
+    blur?: number | null;
+    color?: string | null;
+    far?: number | null;
+    scale?: number | null;
+    positionY?: number | null;
+  };
+  renderer: {
+    toneMapping: 'none' | 'linear' | 'reinhard' | 'cineon' | 'aces-filmic' | 'agx' | 'neutral';
+    exposure?: number | null;
+    shadows?: boolean | null;
+    shadowMapType?: ('basic' | 'percentage' | 'soft' | 'variance') | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1469,6 +1580,10 @@ export interface PayloadLockedDocument {
         value: number | Brochure;
       } | null)
     | ({
+        relationTo: 'lighting-presets';
+        value: number | LightingPreset;
+      } | null)
+    | ({
         relationTo: 'three-d-assets';
         value: number | ThreeDAsset;
       } | null)
@@ -1659,6 +1774,97 @@ export interface BrochuresSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lighting-presets_select".
+ */
+export interface LightingPresetsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  environment?:
+    | T
+    | {
+        source?: T;
+        preset?: T;
+        hdri?: T;
+        intensity?: T;
+        rotation?:
+          | T
+          | {
+              x?: T;
+              y?: T;
+              z?: T;
+            };
+      };
+  background?:
+    | T
+    | {
+        mode?: T;
+        color?: T;
+        intensity?: T;
+        blur?: T;
+      };
+  lights?:
+    | T
+    | {
+        ambient?:
+          | T
+          | {
+              enabled?: T;
+              intensity?: T;
+              color?: T;
+            };
+        hemisphere?:
+          | T
+          | {
+              enabled?: T;
+              intensity?: T;
+              skyColor?: T;
+              groundColor?: T;
+            };
+        directionalLights?:
+          | T
+          | {
+              name?: T;
+              enabled?: T;
+              intensity?: T;
+              color?: T;
+              position?:
+                | T
+                | {
+                    x?: T;
+                    y?: T;
+                    z?: T;
+                  };
+              castShadow?: T;
+              shadowMapSize?: T;
+              shadowBias?: T;
+              id?: T;
+            };
+      };
+  contactShadows?:
+    | T
+    | {
+        enabled?: T;
+        opacity?: T;
+        blur?: T;
+        color?: T;
+        far?: T;
+        scale?: T;
+        positionY?: T;
+      };
+  renderer?:
+    | T
+    | {
+        toneMapping?: T;
+        exposure?: T;
+        shadows?: T;
+        shadowMapType?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "three-d-assets_select".
  */
 export interface ThreeDAssetsSelect<T extends boolean = true> {
@@ -1676,6 +1882,7 @@ export interface ThreeDAssetsSelect<T extends boolean = true> {
         z?: T;
       };
   lightingPreset?: T;
+  viewerActions?: T;
   viewerNotes?: T;
   isPublic?: T;
   updatedAt?: T;
@@ -2383,6 +2590,13 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   featuredImage?: T;
   gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  mobileGallery?:
     | T
     | {
         image?: T;

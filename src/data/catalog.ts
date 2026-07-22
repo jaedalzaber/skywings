@@ -8,12 +8,7 @@ import type {
 } from '@/payload-types'
 
 import { getPayloadClient } from './payload'
-import {
-  relationArray,
-  relationArrayIncludesSlug,
-  relationId,
-  relationSlug,
-} from './relations'
+import { relationArray, relationArrayIncludesSlug, relationId, relationSlug } from './relations'
 
 export type ProductFilters = {
   family?: string
@@ -57,6 +52,24 @@ function matchesIndustry(product: Product, industry?: string) {
 
 function matchesType(product: Product, type?: string) {
   return type ? product.productType === type : true
+}
+
+async function getPublicModelForProduct(product: Product): Promise<Product['model3D'] | null> {
+  if (product.model3D) return product.model3D
+
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'three-d-assets',
+    depth: 2,
+    limit: 1,
+    overrideAccess: false,
+    sort: '-updatedAt',
+    where: {
+      and: [{ products: { contains: product.id } }, { isPublic: { equals: true } }],
+    },
+  })
+
+  return docs[0] ?? null
 }
 
 export async function getCapabilities(): Promise<Capability[]> {
@@ -125,7 +138,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({
     collection: 'products',
-    depth: 2,
+    depth: 3,
     draft: false,
     limit: 1,
     overrideAccess: false,
@@ -136,7 +149,12 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     },
   })
 
-  return docs[0] ?? null
+  const product = docs[0] ?? null
+  if (!product) return null
+
+  const model3D = await getPublicModelForProduct(product)
+
+  return model3D ? { ...product, model3D } : product
 }
 
 /**
@@ -144,10 +162,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
  * editor-curated `relatedProducts` when present, otherwise falls back to other
  * products in the same family, then to any other published products.
  */
-export async function getRelatedProductsFor(
-  product: Product,
-  limit = 5,
-): Promise<Product[]> {
+export async function getRelatedProductsFor(product: Product, limit = 5): Promise<Product[]> {
   const curated = relationArray(product.relatedProducts).filter(
     (item): item is Product => typeof item === 'object' && item !== null,
   )
@@ -167,10 +182,7 @@ export async function getRelatedProductsFor(
       limit: limit + 1,
       overrideAccess: false,
       where: {
-        and: [
-          { productFamily: { equals: familyId } },
-          { id: { not_equals: product.id } },
-        ],
+        and: [{ productFamily: { equals: familyId } }, { id: { not_equals: product.id } }],
       },
     })
 
