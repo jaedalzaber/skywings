@@ -5,13 +5,15 @@ import {
   getBrochures,
   getCapabilities,
   getIndustries,
-  getProductFamilies,
   getProducts,
   type ProductFilters,
 } from '@/data/catalog'
+import { getMediaImage } from '@/data/media'
+import { relationArray, relationSlug } from '@/data/relations'
 
-import { BlogCard, BrochureCard, CapabilityCard, IndustryCard, ProductCard } from './Cards'
-import { ProductFilters as ProductFiltersPanel } from './ProductFilters'
+import { BlogCard, BrochureCard, CapabilityCard, IndustryCard } from './Cards'
+import { ProductsCatalog, type IndustryOption } from './catalog/ProductsCatalog'
+import type { ProductLite } from './catalog/ProductShopCard'
 
 type ListingCopy = {
   description?: string | null
@@ -70,61 +72,51 @@ export async function IndustryListingSection(props: ListingCopy) {
 export async function ProductListingSection(
   props: ListingCopy & { filters?: ProductFilters; showFilters?: boolean | null },
 ) {
-  const filters = props.filters ?? {}
-  const [families, industries, products] = await Promise.all([
-    getProductFamilies(),
-    getIndustries(),
-    getProducts(filters),
-  ])
+  const [industries, products] = await Promise.all([getIndustries(), getProducts({})])
 
-  return (
-    <section className="section-block shop-section">
-      <div className="shop-heading-row">
-        <SectionHeading
-          description={props.description}
-          eyebrow={props.eyebrow}
-          heading={props.heading}
-          wide
-        />
-        <div className="shop-count">
-          <strong>{products.length}</strong>
-          <span>{products.length === 1 ? 'product' : 'products'}</span>
-        </div>
-      </div>
-      {families.length ? (
-        <div className="shop-chip-row" aria-label="Product families">
-          <Link className={!filters.family ? 'active' : undefined} href="/products">
-            All
-          </Link>
-          {families.slice(0, 12).map((family) => (
-            <Link
-              className={filters.family === family.slug ? 'active' : undefined}
-              href={`/products?family=${family.slug}`}
-              key={family.id}
-            >
-              {family.title}
-            </Link>
-          ))}
-        </div>
-      ) : null}
-      {props.showFilters === false ? null : (
-        <ProductFiltersPanel families={families} filters={filters} industries={industries} />
-      )}
-      {products.length ? (
-        <div className="catalog-grid">
-          {products.map((product, index) => (
-            <ProductCard index={index} key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
+  if (!products.length) {
+    return (
+      <section className="section-block shop-section">
         <EmptyState
           actionHref="/admin/collections/products"
           actionLabel="Add products"
           message="Add products in Payload, then connect them to product families, industries, capabilities, brochures, and 3D assets."
-          title="No products match this view"
+          title="No products yet"
         />
-      )}
-    </section>
+      </section>
+    )
+  }
+
+  const productsLite: ProductLite[] = products.map((product, index) => {
+    const image = getMediaImage(product.featuredImage)
+
+    return {
+      id: product.id,
+      image: image ? { alt: image.alt, url: image.url } : null,
+      industrySlugs: relationArray(product.industries)
+        .map((item) => relationSlug(item))
+        .filter((slug): slug is string => Boolean(slug)),
+      number: index + 1,
+      sku: product.sku ?? '',
+      slug: product.slug,
+      summary: product.summary,
+      title: product.title,
+    }
+  })
+
+  const industryOptions: IndustryOption[] = industries.map((industry) => ({
+    slug: industry.slug,
+    title: industry.title,
+  }))
+
+  return (
+    <ProductsCatalog
+      eyebrow={props.eyebrow}
+      heading={props.heading}
+      industries={industryOptions}
+      initialIndustry={props.filters?.industry ?? null}
+      products={productsLite}
+    />
   )
 }
 
@@ -175,4 +167,3 @@ export async function BlogListingSection(props: ListingCopy) {
     </section>
   )
 }
-import Link from 'next/link'

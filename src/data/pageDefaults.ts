@@ -44,22 +44,9 @@ export const industriesLayout: PageLayout = [
 
 export const productsLayout: PageLayout = [
   {
-    blockType: 'pageHero',
-    eyebrow: 'Products',
-    heading: 'A shop-like product catalogue for engineered metal products.',
-    description:
-      'Filter by industry, family, or product type, then open a product to inspect specs, related brochures, 3D assets, and RFQ options.',
-    primaryLabel: 'Request custom product',
-    primaryHref: '/contact',
-    secondaryLabel: 'Download brochures',
-    secondaryHref: '/brochures',
-  },
-  {
     blockType: 'productListing',
-    eyebrow: 'Catalogue',
-    heading: 'All products, families, and configurable systems.',
-    description:
-      'This section is powered by the Products collection and can grow as new machines, industries, and catalogues are added.',
+    eyebrow: 'Products',
+    heading: 'Engineered metal products, built to spec.',
     showFilters: true,
   },
 ]
