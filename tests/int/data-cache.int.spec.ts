@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 // hoisted above module top). The spy passes through to the real loader so we can
 // both assert forwarding and exercise the returned function.
 const { unstableCache } = vi.hoisted(() => ({
-  unstableCache: vi.fn((fn: unknown) => fn),
+  unstableCache: vi.fn((...args: unknown[]) => args[0]),
 }))
 
 vi.mock('next/cache', () => ({
