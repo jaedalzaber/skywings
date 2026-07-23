@@ -1,8 +1,14 @@
 import { describe, expect, test, vi } from 'vitest'
 
+// vi.hoisted keeps the spy defined before vi.mock's factory runs (the factory is
+// hoisted above module top). The spy passes through to the real loader so we can
+// both assert forwarding and exercise the returned function.
+const { unstableCache } = vi.hoisted(() => ({
+  unstableCache: vi.fn((fn: unknown) => fn),
+}))
+
 vi.mock('next/cache', () => ({
-  // Identity wrapper so we can test cachedQuery's pass-through deterministically.
-  unstable_cache: (fn: unknown) => fn,
+  unstable_cache: (...args: unknown[]) => unstableCache(...args),
 }))
 
 import { cachedQuery } from '@/data/cache'
@@ -27,5 +33,13 @@ describe('cachedQuery', () => {
   test('returns a function that yields the loader result', async () => {
     const wrapped = cachedQuery(async (n: number) => n * 2, ['double'], [TAGS.products])
     expect(await wrapped(21)).toBe(42)
+  })
+
+  test('forwards the loader, keyParts, and tags to unstable_cache', () => {
+    const loader = async (n: number) => n * 2
+    cachedQuery(loader, ['double'], [TAGS.products, TAGS.media])
+    expect(unstableCache).toHaveBeenCalledWith(loader, ['double'], {
+      tags: [TAGS.products, TAGS.media],
+    })
   })
 })
