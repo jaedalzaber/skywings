@@ -13,13 +13,15 @@ describe('SiteFooter', () => {
     const footerQueries = within(footer)
 
     expect(footer.querySelector('.figma-footer-wordmark')?.textContent).toBe('Skywings')
-    expect(footer.querySelector('.figma-footer-wordmark-art')?.getAttribute('src')).toBe(
+    expect(footer.querySelector('.figma-footer-wordmark-art')?.getAttribute('src')).toContain(
       '/images/footer/skywings-wordmark.svg',
     )
     const gridImages = footer.querySelectorAll('.figma-footer-grid-art img')
 
     expect(gridImages).toHaveLength(2)
-    expect(gridImages[0]?.getAttribute('src')).toBe('/images/footer/perspective-grid-left.svg')
+    expect(gridImages[0]?.getAttribute('src')).toContain(
+      '/images/footer/perspective-grid-left.svg',
+    )
     expect(footerQueries.getByRole('link', { name: 'info@skywings.ae' }).getAttribute('href')).toBe(
       'mailto:info@skywings.ae',
     )

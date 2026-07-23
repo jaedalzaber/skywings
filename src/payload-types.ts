@@ -232,6 +232,10 @@ export interface Brochure {
       )
     | null;
   summary?: string | null;
+  /**
+   * Shown on product detail brochure downloads, e.g. "Pages: 2".
+   */
+  pageCount?: number | null;
   coverImage?: (number | null) | Media;
   products?: (number | Product)[] | null;
   industries?: (number | Industry)[] | null;
@@ -306,6 +310,10 @@ export interface Product {
       }[]
     | null;
   featuredImage?: (number | null) | Media;
+  /**
+   * Optional image used only in small product cards. Leave empty to use the featured image.
+   */
+  thumbnailImage?: (number | null) | Media;
   gallery?:
     | {
         image: number | Media;
@@ -366,6 +374,13 @@ export interface Product {
   };
   loadCapacity?: string | null;
   surfaceTreatment?: string | null;
+  /**
+   * Single PDF brochure for this product. Upload or select one brochure file.
+   */
+  brochure?: (number | null) | Brochure;
+  /**
+   * Optional legacy/secondary brochure links. The single product brochure is used first.
+   */
   brochures?: (number | Brochure)[] | null;
   model3D?: (number | null) | ThreeDAsset;
   isConfigurable?: boolean | null;
@@ -392,6 +407,7 @@ export interface Product {
   layout?:
     | (
         | HomeHeroBlock
+        | HomeServicesBlock
         | HomeIndustriesBlock
         | HomeProcessBlock
         | PageHeroBlock
@@ -645,6 +661,7 @@ export interface CaseStudy {
   layout?:
     | (
         | HomeHeroBlock
+        | HomeServicesBlock
         | HomeIndustriesBlock
         | HomeProcessBlock
         | PageHeroBlock
@@ -686,6 +703,33 @@ export interface HomeHeroBlock {
   eyebrow?: string | null;
   heading: string;
   description?: string | null;
+  desktopCoverType?: ('image' | 'video') | null;
+  /**
+   * Shown on desktop screens when cover type is image.
+   */
+  desktopCoverImage?: (number | null) | Media;
+  /**
+   * Shown on desktop screens when cover type is video.
+   */
+  desktopCoverVideo?: (number | null) | Media;
+  laptopCoverType?: ('image' | 'video') | null;
+  /**
+   * Shown on laptop screens when cover type is image.
+   */
+  laptopCoverImage?: (number | null) | Media;
+  /**
+   * Shown on laptop screens when cover type is video.
+   */
+  laptopCoverVideo?: (number | null) | Media;
+  mobileCoverType?: ('image' | 'video') | null;
+  /**
+   * Shown on mobile screens when cover type is image.
+   */
+  mobileCoverImage?: (number | null) | Media;
+  /**
+   * Shown on mobile screens when cover type is video.
+   */
+  mobileCoverVideo?: (number | null) | Media;
   primaryLabel?: string | null;
   primaryHref?: string | null;
   secondaryLabel?: string | null;
@@ -700,6 +744,28 @@ export interface HomeHeroBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'homeHero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeServicesBlock".
+ */
+export interface HomeServicesBlock {
+  eyebrow?: string | null;
+  heading: string;
+  description?: string | null;
+  secondaryDescription?: string | null;
+  cards: {
+    title: string;
+    image?: (number | null) | Media;
+    /**
+     * Use the light title treatment for dark service artwork.
+     */
+    accentTitle?: boolean | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'homeServices';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -725,13 +791,173 @@ export interface HomeIndustriesBlock {
 export interface HomeProcessBlock {
   eyebrow?: string | null;
   heading: string;
+  /**
+   * Upload/select the GLB or GLTF model shown in the center process viewer.
+   */
+  model3D?: (number | null) | ThreeDAsset;
+  /**
+   * Tune the process viewer wireframe, fade, and floor grid.
+   */
+  modelAppearance?: {
+    /**
+     * Higher values make the model wire lines stronger.
+     */
+    lineOpacity?: number | null;
+    /**
+     * Controls wireframe line width where the browser supports it.
+     */
+    lineThickness?: number | null;
+    /**
+     * Distance from the camera where model fade begins.
+     */
+    fadeStart?: number | null;
+    /**
+     * Distance from the camera where model fade reaches the background.
+     */
+    fadeEnd?: number | null;
+  };
   steps: {
     title: string;
+    /**
+     * Optional visual shown when this process step is active.
+     */
+    infographicImage?: (number | null) | Media;
     id?: string | null;
   }[];
   id?: string | null;
   blockName?: string | null;
   blockType: 'homeProcess';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "three-d-assets".
+ */
+export interface ThreeDAsset {
+  id: number;
+  title: string;
+  slug: string;
+  format: 'glb' | 'gltf' | 'usdz' | 'fbx' | 'obj' | 'other';
+  thumbnail?: (number | null) | Media;
+  products?: (number | Product)[] | null;
+  scale?: number | null;
+  defaultCamera?: {
+    x?: number | null;
+    y?: number | null;
+    z?: number | null;
+  };
+  /**
+   * Select a reusable lighting preset. Editing the preset updates every linked model automatically.
+   */
+  lightingPreset?: (number | null) | LightingPreset;
+  /**
+   * Controls shown in the 3D viewer for this model. Clip-based actions play a matching animation clip in the GLB (e.g. an action named "fold").
+   */
+  viewerActions?:
+    | (
+        | 'fold-unfold'
+        | 'open-close'
+        | 'extend-retract'
+        | 'exploded-view'
+        | 'play-pause'
+        | 'reset-view'
+        | 'auto-rotate'
+        | 'hotspots'
+      )[]
+    | null;
+  viewerNotes?: string | null;
+  isPublic?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * Reusable scene lighting and renderer settings. Editing a preset updates every linked 3D asset.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lighting-presets".
+ */
+export interface LightingPreset {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  environment: {
+    source: 'preset' | 'hdri' | 'none';
+    preset?:
+      | ('apartment' | 'city' | 'dawn' | 'forest' | 'lobby' | 'night' | 'park' | 'studio' | 'sunset' | 'warehouse')
+      | null;
+    /**
+     * Upload an .hdr or .exr environment map in Media, then select it here.
+     */
+    hdri?: (number | null) | Media;
+    intensity?: number | null;
+    rotation?: {
+      x?: number | null;
+      y?: number | null;
+      z?: number | null;
+    };
+  };
+  background: {
+    mode: 'color' | 'environment' | 'transparent';
+    color?: string | null;
+    intensity?: number | null;
+    blur?: number | null;
+  };
+  lights?: {
+    ambient?: {
+      enabled?: boolean | null;
+      intensity?: number | null;
+      color?: string | null;
+    };
+    hemisphere?: {
+      enabled?: boolean | null;
+      intensity?: number | null;
+      skyColor?: string | null;
+      groundColor?: string | null;
+    };
+    directionalLights?:
+      | {
+          name: string;
+          enabled?: boolean | null;
+          intensity?: number | null;
+          color?: string | null;
+          position?: {
+            x?: number | null;
+            y?: number | null;
+            z?: number | null;
+          };
+          castShadow?: boolean | null;
+          shadowMapSize?: number | null;
+          shadowBias?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  contactShadows?: {
+    enabled?: boolean | null;
+    opacity?: number | null;
+    blur?: number | null;
+    color?: string | null;
+    far?: number | null;
+    scale?: number | null;
+    positionY?: number | null;
+  };
+  renderer: {
+    toneMapping: 'none' | 'linear' | 'reinhard' | 'cineon' | 'aces-filmic' | 'agx' | 'neutral';
+    exposure?: number | null;
+    shadows?: boolean | null;
+    shadowMapType?: ('basic' | 'percentage' | 'soft' | 'variance') | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1139,137 +1365,6 @@ export interface Application {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "three-d-assets".
- */
-export interface ThreeDAsset {
-  id: number;
-  title: string;
-  slug: string;
-  format: 'glb' | 'gltf' | 'usdz' | 'fbx' | 'obj' | 'other';
-  thumbnail?: (number | null) | Media;
-  products?: (number | Product)[] | null;
-  scale?: number | null;
-  defaultCamera?: {
-    x?: number | null;
-    y?: number | null;
-    z?: number | null;
-  };
-  /**
-   * Select a reusable lighting preset. Editing the preset updates every linked model automatically.
-   */
-  lightingPreset?: (number | null) | LightingPreset;
-  /**
-   * Controls shown in the 3D viewer for this model. Clip-based actions play a matching animation clip in the GLB (e.g. an action named "fold").
-   */
-  viewerActions?:
-    | (
-        | 'fold-unfold'
-        | 'open-close'
-        | 'extend-retract'
-        | 'exploded-view'
-        | 'play-pause'
-        | 'reset-view'
-        | 'auto-rotate'
-        | 'hotspots'
-      )[]
-    | null;
-  viewerNotes?: string | null;
-  isPublic?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * Reusable scene lighting and renderer settings. Editing a preset updates every linked 3D asset.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lighting-presets".
- */
-export interface LightingPreset {
-  id: number;
-  title: string;
-  slug: string;
-  description?: string | null;
-  environment: {
-    source: 'preset' | 'hdri' | 'none';
-    preset?:
-      | ('apartment' | 'city' | 'dawn' | 'forest' | 'lobby' | 'night' | 'park' | 'studio' | 'sunset' | 'warehouse')
-      | null;
-    /**
-     * Upload an .hdr or .exr environment map in Media, then select it here.
-     */
-    hdri?: (number | null) | Media;
-    intensity?: number | null;
-    rotation?: {
-      x?: number | null;
-      y?: number | null;
-      z?: number | null;
-    };
-  };
-  background: {
-    mode: 'color' | 'environment' | 'transparent';
-    color?: string | null;
-    intensity?: number | null;
-    blur?: number | null;
-  };
-  lights?: {
-    ambient?: {
-      enabled?: boolean | null;
-      intensity?: number | null;
-      color?: string | null;
-    };
-    hemisphere?: {
-      enabled?: boolean | null;
-      intensity?: number | null;
-      skyColor?: string | null;
-      groundColor?: string | null;
-    };
-    directionalLights?:
-      | {
-          name: string;
-          enabled?: boolean | null;
-          intensity?: number | null;
-          color?: string | null;
-          position?: {
-            x?: number | null;
-            y?: number | null;
-            z?: number | null;
-          };
-          castShadow?: boolean | null;
-          shadowMapSize?: number | null;
-          shadowBias?: number | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  contactShadows?: {
-    enabled?: boolean | null;
-    opacity?: number | null;
-    blur?: number | null;
-    color?: string | null;
-    far?: number | null;
-    scale?: number | null;
-    positionY?: number | null;
-  };
-  renderer: {
-    toneMapping: 'none' | 'linear' | 'reinhard' | 'cineon' | 'aces-filmic' | 'agx' | 'neutral';
-    exposure?: number | null;
-    shadows?: boolean | null;
-    shadowMapType?: ('basic' | 'percentage' | 'soft' | 'variance') | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
@@ -1281,6 +1376,7 @@ export interface Page {
   layout?:
     | (
         | HomeHeroBlock
+        | HomeServicesBlock
         | HomeIndustriesBlock
         | HomeProcessBlock
         | PageHeroBlock
@@ -1327,6 +1423,7 @@ export interface LandingPage {
   layout?:
     | (
         | HomeHeroBlock
+        | HomeServicesBlock
         | HomeIndustriesBlock
         | HomeProcessBlock
         | PageHeroBlock
@@ -1746,6 +1843,7 @@ export interface BrochuresSelect<T extends boolean = true> {
   slug?: T;
   brochureType?: T;
   summary?: T;
+  pageCount?: T;
   coverImage?: T;
   products?: T;
   industries?: T;
@@ -1910,6 +2008,7 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
+        homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
@@ -1952,6 +2051,15 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
   eyebrow?: T;
   heading?: T;
   description?: T;
+  desktopCoverType?: T;
+  desktopCoverImage?: T;
+  desktopCoverVideo?: T;
+  laptopCoverType?: T;
+  laptopCoverImage?: T;
+  laptopCoverVideo?: T;
+  mobileCoverType?: T;
+  mobileCoverImage?: T;
+  mobileCoverVideo?: T;
   primaryLabel?: T;
   primaryHref?: T;
   secondaryLabel?: T;
@@ -1961,6 +2069,26 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
     | T
     | {
         title?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeServicesBlock_select".
+ */
+export interface HomeServicesBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  description?: T;
+  secondaryDescription?: T;
+  cards?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        accentTitle?: T;
         id?: T;
       };
   id?: T;
@@ -1991,10 +2119,20 @@ export interface HomeIndustriesBlockSelect<T extends boolean = true> {
 export interface HomeProcessBlockSelect<T extends boolean = true> {
   eyebrow?: T;
   heading?: T;
+  model3D?: T;
+  modelAppearance?:
+    | T
+    | {
+        lineOpacity?: T;
+        lineThickness?: T;
+        fadeStart?: T;
+        fadeEnd?: T;
+      };
   steps?:
     | T
     | {
         title?: T;
+        infographicImage?: T;
         id?: T;
       };
   id?: T;
@@ -2300,6 +2438,7 @@ export interface LandingPagesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
+        homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
@@ -2390,6 +2529,7 @@ export interface CaseStudiesSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
+        homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
@@ -2589,6 +2729,7 @@ export interface ProductsSelect<T extends boolean = true> {
         id?: T;
       };
   featuredImage?: T;
+  thumbnailImage?: T;
   gallery?:
     | T
     | {
@@ -2641,6 +2782,7 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   loadCapacity?: T;
   surfaceTreatment?: T;
+  brochure?: T;
   brochures?: T;
   model3D?: T;
   isConfigurable?: T;
@@ -2665,6 +2807,7 @@ export interface ProductsSelect<T extends boolean = true> {
     | T
     | {
         homeHero?: T | HomeHeroBlockSelect<T>;
+        homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;

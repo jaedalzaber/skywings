@@ -21,7 +21,7 @@ describe('HomeGlobeSection', () => {
 
     expect(process?.nextElementSibling).toBe(globe)
     expect(globeQueries.getByRole('heading', { level: 2 }).textContent).toContain(
-      'We deliver all over',
+      'Manufactured in the UAE.',
     )
     expect(globe.querySelectorAll('.globe-branch-card')).toHaveLength(2)
     expect(globeQueries.getByText('Sharjah Branch')).toBeTruthy()
@@ -44,14 +44,13 @@ describe('HomeGlobeSection', () => {
     expect(styles).toMatch(
       /\.global-delivery\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);/s,
     )
-    expect(styles).toMatch(
-      /\.global-delivery-main\s*\{[^}]*padding:\s*clamp\(6\.25rem,[^;]+;/s,
-    )
+    expect(styles).toMatch(/\.global-delivery-main\s*\{[^}]*padding:\s*clamp\(6\.25rem,[^;]+;/s)
     expect(styles).toContain("url('/images/home/delivery-map.png')")
-    expect(styles).toMatch(/@keyframes globe-client-slide/)
     expect(styles).toMatch(
-      /\.globe-client-rail\s*\{[^}]*animation:\s*globe-client-slide[^;]+;/s,
+      /\.globe-branch-card::after\s*\{[^}]*bottom:\s*-0\.1875rem;[^}]*height:\s*0\.375rem;[^}]*filter:\s*blur\(0\.375rem\);/s,
     )
+    expect(styles).toMatch(/@keyframes globe-client-slide/)
+    expect(styles).toMatch(/\.globe-client-rail\s*\{[^}]*animation:\s*globe-client-slide[^;]+;/s)
     expect(styles).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.globe-client-rail\s*\{[^}]*animation:\s*none;/s,
     )

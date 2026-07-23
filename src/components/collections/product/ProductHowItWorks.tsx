@@ -1,5 +1,4 @@
-import Image from 'next/image'
-
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
 import type { Product } from '@/payload-types'
 
 import { getMediaImage } from '@/data/media'

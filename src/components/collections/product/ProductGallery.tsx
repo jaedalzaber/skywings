@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { motion, useReducedMotion } from 'motion/react'
 import {
@@ -14,6 +13,7 @@ import {
 
 import { CubeIcon } from '@/components/atoms/icons'
 import { MediaWireframe } from '@/components/atoms/MediaWireframe'
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
 
 import type { ProductModel } from './viewer/types'
 
@@ -38,14 +38,7 @@ function subscribeToMobileGallery(callback: () => void) {
 const Product3DViewer = dynamic(
   () => import('./Product3DViewer').then((mod) => ({ default: mod.Product3DViewer })),
   {
-    loading: () => (
-      <div className="pdp-viewer" aria-busy="true">
-        <div className="pdp-viewer-loading">
-          <span className="pdp-viewer-spinner" />
-          Loading 3D viewer…
-        </div>
-      </div>
-    ),
+    loading: () => null,
     ssr: false,
   },
 )
@@ -95,7 +88,7 @@ export function ProductGallery(props: {
   const scrollThumbIntoView = useCallback((index: number) => {
     const strip = stripRef.current
     const thumb = strip?.children[index] as HTMLElement | undefined
-    thumb?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    thumb?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
   }, [])
 
   const select = useCallback(
@@ -130,7 +123,6 @@ export function ProductGallery(props: {
       startScroll: strip.scrollLeft,
       startX: event.clientX,
     }
-    strip.setPointerCapture(event.pointerId)
   }
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -141,8 +133,8 @@ export function ProductGallery(props: {
   }
 
   const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (stripRef.current?.hasPointerCapture(event.pointerId)) {
-      stripRef.current.releasePointerCapture(event.pointerId)
+    if (stripRef.current?.hasPointerCapture?.(event.pointerId)) {
+      stripRef.current.releasePointerCapture?.(event.pointerId)
     }
     drag.current.dragging = false
   }

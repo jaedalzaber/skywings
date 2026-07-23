@@ -26,8 +26,8 @@ export function HomeGlobeSection() {
       <div className="global-delivery-main flex flex-row">
         <div className="global-delivery-copy">
           <h2 id="global-delivery-title">
-            <span>We deliver all over</span>
-            <strong>Middle-East, Europe</strong>
+            <span>Manufactured in the UAE.</span>
+            <strong>Delivered across the Middle East, Europe</strong>
             <span className="global-delivery-africa">
               <i>&amp;</i> <strong>Africa</strong>
             </span>
@@ -44,7 +44,7 @@ export function HomeGlobeSection() {
           </div>
 
           <div className="our-clients-title">
-            <p>Our Clients From All Around The World</p>
+            <p>Trusted by regional and international project teams</p>
           </div>
         </div>
 

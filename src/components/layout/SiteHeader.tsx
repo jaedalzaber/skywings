@@ -1,10 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
 import type { SiteHeaderData } from '@/data/site'
 
 import { HeaderSurfaceController } from './HeaderSurfaceController'
@@ -13,57 +13,21 @@ type SiteHeaderProps = {
   header: SiteHeaderData
 }
 
-type DrawerLink = {
-  href: string
-  label: string
-}
+function isDisabledNavigationItem(item: SiteHeaderData['navigation'][number]) {
+  const href = item.href.trim()
 
-type ProductGroup = DrawerLink & {
-  children?: DrawerLink[]
-}
-
-const defaultIndustryLinks: DrawerLink[] = [
-  { href: '/industries/construction-and-infrastructure', label: 'Construction & Infrastructure' },
-  {
-    href: '/industries/architectural-and-interior-metalwork',
-    label: 'Architectural & Interior Metalwork',
-  },
-  { href: '/industries/heavy-equipment-and-machinery', label: 'Heavy Equipment & Machinery' },
-  {
-    href: '/industries/aviation-ground-support-equipment',
-    label: 'Aviation Ground Support Equipment',
-  },
-  { href: '/industries/industrial-manufacturing', label: 'Industrial Manufacturing' },
-]
-
-const defaultProductGroups: ProductGroup[] = [
-  {
-    href: '/industries/aviation-ground-support-equipment',
-    label: 'Aviation',
-    children: [
-      { href: '/products/folding-stand', label: 'Folding Stand' },
-      { href: '/products/straight-ladders', label: 'Straight Ladders' },
-      { href: '/products/cowl-pylon-ladders', label: 'Cowl Pylon Ladders' },
-    ],
-  },
-  { href: '/industries/construction-and-infrastructure', label: 'Construction' },
-  {
-    href: '/industries/architectural-and-interior-metalwork',
-    label: 'Exterior & Interior',
-  },
-  { href: '/products', label: 'Brackets & Support Structures' },
-  { href: '/products/equipment-panels-and-enclosures', label: 'Equipment Panels & Enclosures' },
-]
-
-function matchesNavigation(item: SiteHeaderData['navigation'][number], value: string) {
-  return item.label.toLowerCase().includes(value) || item.href.toLowerCase().includes(value)
+  return (
+    href === '#' ||
+    href === '' ||
+    (href === '/' && item.label.trim().toLowerCase() === 'industries')
+  )
 }
 
 export function SiteHeader(props: SiteHeaderProps) {
   const { header } = props
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [expanded, setExpanded] = useState({ industries: true, products: true })
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -71,35 +35,11 @@ export function SiteHeader(props: SiteHeaderProps) {
   const logoUrl = logo?.url || '/images/header/logo.svg'
   const logoIsSvg = logo?.mimeType === 'image/svg+xml' || /\.svg(?:\?.*)?$/i.test(logoUrl)
 
-  const navigation = useMemo(() => {
-    const industries = header.navigation.find((item) => matchesNavigation(item, 'industr'))
-    const products = header.navigation.find((item) => matchesNavigation(item, 'product'))
-    const capabilities = header.navigation.find((item) => matchesNavigation(item, 'capabilit'))
-    const resources = header.navigation.find(
-      (item) => matchesNavigation(item, 'resour') || matchesNavigation(item, '/blog'),
-    )
-    const about = header.navigation.find((item) => matchesNavigation(item, 'about'))
-    const industryChildren: DrawerLink[] =
-      industries?.children?.map((item) => ({ href: item.href, label: item.label })) ?? []
-    const productChildren: DrawerLink[] =
-      products?.children?.map((item) => ({ href: item.href, label: item.label })) ?? []
-
-    return {
-      about: { href: about?.href || '/#about', label: 'About Us' },
-      capabilities: { href: capabilities?.href || '/capabilities', label: 'Capabilities' },
-      industries: industryChildren.length > 0 ? industryChildren : defaultIndustryLinks,
-      products:
-        productChildren.length > 0
-          ? [
-              {
-                children: productChildren,
-                href: products?.href || '/products',
-                label: 'Products',
-              },
-            ]
-          : defaultProductGroups,
-      resources: { href: resources?.href || '/blog', label: 'Resources' },
-    }
+  const mobileNavigation = useMemo(() => {
+    return header.navigation.map((item, index) => ({
+      ...item,
+      key: item.id ?? `${item.href}-${index}`,
+    }))
   }, [header.navigation])
 
   const closeMenu = (restoreFocus = false) => {
@@ -110,6 +50,20 @@ export function SiteHeader(props: SiteHeaderProps) {
   useEffect(() => {
     setMenuOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    setExpanded((current) => {
+      const next: Record<string, boolean> = {}
+
+      mobileNavigation.forEach((item) => {
+        if (item.children?.length) {
+          next[item.key] = current[item.key] ?? true
+        }
+      })
+
+      return next
+    })
+  }, [mobileNavigation])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -175,30 +129,41 @@ export function SiteHeader(props: SiteHeaderProps) {
         </Link>
 
         <nav aria-label="Site sections" className="nav-links">
-          {header.navigation.map((item) => (
-            <div className="nav-item" key={item.id ?? item.href}>
-              <a href={item.href}>
-                <span>{item.label}</span>
-                {item.children?.length ? <span aria-hidden="true" className="nav-chevron" /> : null}
-              </a>
-              {item.children?.length ? (
-                <div className="nav-submenu">
-                  {item.children.map((child) => (
-                    <a href={child.href} key={child.id ?? child.href}>
-                      {child.label}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ))}
+          {header.navigation.map((item) => {
+            const itemDisabled = isDisabledNavigationItem(item)
+
+            return (
+              <div className="nav-item" key={item.id ?? item.href}>
+                {itemDisabled ? (
+                  <button aria-disabled="true" className="nav-link-control" type="button">
+                    <span>{item.label}</span>
+                    {item.children?.length ? (
+                      <span aria-hidden="true" className="nav-chevron" />
+                    ) : null}
+                  </button>
+                ) : (
+                  <a href={item.href}>
+                    <span>{item.label}</span>
+                    {item.children?.length ? (
+                      <span aria-hidden="true" className="nav-chevron" />
+                    ) : null}
+                  </a>
+                )}
+                {item.children?.length ? (
+                  <div className="nav-submenu">
+                    {item.children.map((child) => (
+                      <a href={child.href} key={child.id ?? child.href}>
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
         </nav>
 
         <div className="nav-actions">
-          <button aria-label="Language selector" className="language-selector" type="button">
-            <span>EN</span>
-            <span aria-hidden="true" className="nav-chevron" />
-          </button>
           {header.cta ? (
             <a
               className="nav-cta"
@@ -260,75 +225,64 @@ export function SiteHeader(props: SiteHeaderProps) {
           </div>
 
           <nav aria-label="Mobile site sections" className="mobile-nav-content">
-            <section className="mobile-nav-section">
-              <button
-                aria-controls="mobile-industries-links"
-                aria-expanded={expanded.industries}
-                className="mobile-nav-section-toggle"
-                onClick={() =>
-                  setExpanded((current) => ({ ...current, industries: !current.industries }))
-                }
-                type="button"
-              >
-                <span>Industries</span>
-                <span aria-hidden="true" className="mobile-nav-accordion-chevron" />
-              </button>
-              {expanded.industries ? (
-                <div className="mobile-nav-sublist" id="mobile-industries-links">
-                  {navigation.industries.map((item) => (
-                    <Link href={item.href} key={item.href} onClick={() => closeMenu()}>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </section>
+            {mobileNavigation.map((item) => {
+              const itemDisabled = isDisabledNavigationItem(item)
 
-            <section className="mobile-nav-section">
-              <button
-                aria-controls="mobile-products-links"
-                aria-expanded={expanded.products}
-                className="mobile-nav-section-toggle"
-                onClick={() =>
-                  setExpanded((current) => ({ ...current, products: !current.products }))
-                }
-                type="button"
-              >
-                <span>Products</span>
-                <span aria-hidden="true" className="mobile-nav-accordion-chevron" />
-              </button>
-              {expanded.products ? (
-                <div className="mobile-nav-product-list" id="mobile-products-links">
-                  {navigation.products.map((group) => (
-                    <div className="mobile-nav-product-group" key={`${group.label}-${group.href}`}>
-                      <Link
-                        className="mobile-nav-product-heading"
-                        href={group.href}
-                        onClick={() => closeMenu()}
-                      >
-                        {group.label}
-                      </Link>
-                      {group.children?.map((item) => (
-                        <Link href={item.href} key={item.href} onClick={() => closeMenu()}>
+              return item.children?.length ? (
+                <section className="mobile-nav-section" key={item.key}>
+                  <button
+                    aria-controls={`mobile-${item.key}-links`}
+                    aria-expanded={expanded[item.key] ?? true}
+                    className="mobile-nav-section-toggle"
+                    onClick={() =>
+                      setExpanded((current) => ({
+                        ...current,
+                        [item.key]: !(current[item.key] ?? true),
+                      }))
+                    }
+                    type="button"
+                  >
+                    <span>{item.label}</span>
+                    <span aria-hidden="true" className="mobile-nav-accordion-chevron" />
+                  </button>
+                  {(expanded[item.key] ?? true) ? (
+                    <div className="mobile-nav-sublist" id={`mobile-${item.key}-links`}>
+                      {itemDisabled ? null : (
+                        <Link href={item.href} onClick={() => closeMenu()}>
                           {item.label}
+                        </Link>
+                      )}
+                      {item.children.map((child) => (
+                        <Link
+                          href={child.href}
+                          key={child.id ?? child.href}
+                          onClick={() => closeMenu()}
+                        >
+                          {child.label}
                         </Link>
                       ))}
                     </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
-            {[navigation.capabilities, navigation.resources, navigation.about].map((item) => (
-              <Link
-                className="mobile-nav-primary-link"
-                href={item.href}
-                key={item.label}
-                onClick={() => closeMenu()}
-              >
-                {item.label}
-              </Link>
-            ))}
+                  ) : null}
+                </section>
+              ) : itemDisabled ? (
+                <span
+                  aria-disabled="true"
+                  className="mobile-nav-primary-link mobile-nav-disabled-link"
+                  key={item.key}
+                >
+                  {item.label}
+                </span>
+              ) : (
+                <Link
+                  className="mobile-nav-primary-link"
+                  href={item.href}
+                  key={item.key}
+                  onClick={() => closeMenu()}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
           </nav>
 
           <div className="mobile-nav-contact-wrap">

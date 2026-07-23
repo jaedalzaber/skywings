@@ -1,8 +1,9 @@
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { SectionHeading } from '@/components/atoms/SectionHeading'
-import { RFQForm } from '@/components/forms/RFQForm'
+import { ContactSection } from '@/components/contact/ContactSection'
 import type { ProductFilters } from '@/data/catalog'
 import type { PageLayout } from '@/data/pages'
+import { getSiteFooter } from '@/data/site'
 
 import {
   BlogListingSection,
@@ -15,6 +16,7 @@ import {
 type PageBlocksProps = {
   blocks: PageLayout
   filters?: ProductFilters
+  productInterest?: string
   submitted?: boolean
 }
 
@@ -72,28 +74,21 @@ async function renderBlock(
       return <BrochureListingSection key={key} {...block} />
     case 'blogListing':
       return <BlogListingSection key={key} {...block} />
-    case 'contactRFQ':
+    case 'contactRFQ': {
+      const footer = await getSiteFooter()
+
       return (
-        <section className="rfq-section" key={key}>
-          <div className="rfq-copy">
-            <SectionHeading
-              description={block.description}
-              eyebrow={block.eyebrow}
-              heading={block.heading}
-              wide
-            />
-            <div className="contact-lines">
-              {block.contactEmail ? (
-                <a href={`mailto:${block.contactEmail}`}>{block.contactEmail}</a>
-              ) : null}
-              {block.contactPhone ? (
-                <a href={`tel:${block.contactPhone}`}>{block.contactPhone}</a>
-              ) : null}
-            </div>
-          </div>
-          <RFQForm sourcePage="/contact" submitted={context.submitted} />
-        </section>
+        <ContactSection
+          description={block.description}
+          eyebrow={block.eyebrow}
+          footer={footer}
+          heading={block.heading}
+          key={key}
+          productInterest={context.productInterest}
+          submitted={context.submitted}
+        />
       )
+    }
     case 'cta':
       return (
         <section className="cta-section" key={key}>

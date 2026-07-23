@@ -9,7 +9,7 @@ test.describe('Frontend', () => {
     const heading = page.locator('h1').first()
 
     await expect(heading).toHaveText(
-      'From drawing, sample, or problem to manufactured product.',
+      'Metal products engineered, fabricated, and delivered to spec.',
     )
   })
 })

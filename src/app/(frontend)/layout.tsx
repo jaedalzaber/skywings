@@ -12,6 +12,7 @@ import './styles.css'
 import './home-responsive.css'
 import './product-detail.css'
 import './products-catalog.css'
+import './contact.css'
 
 const bodyFont = Roboto({
   display: 'swap',

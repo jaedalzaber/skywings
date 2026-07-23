@@ -3,7 +3,6 @@ import type { Product } from '@/payload-types'
 
 export function ProductOverview(props: { product: Product }) {
   const { product } = props
-  const keySpecs = product.keySpecs ?? []
   const hasDescription = !richTextIsEmpty(product.description)
 
   return (
@@ -18,25 +17,10 @@ export function ProductOverview(props: { product: Product }) {
               {product.categoryLabel ? <p>Category: {product.categoryLabel}</p> : null}
             </div>
           ) : null}
-
-          {keySpecs.length ? (
-            <dl className="pdp-keyspecs">
-              {keySpecs.map((spec) => (
-                <div className="pdp-keyspec" key={spec.id ?? spec.label}>
-                  <dt>{spec.label}:</dt>
-                  <dd>{spec.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
         </div>
 
         <div className="pdp-overview-description">
-          {hasDescription ? (
-            <RichText value={product.description} />
-          ) : (
-            <p>{product.summary}</p>
-          )}
+          {hasDescription ? <RichText value={product.description} /> : <p>{product.summary}</p>}
         </div>
       </div>
     </section>

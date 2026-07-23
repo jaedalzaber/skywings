@@ -1,4 +1,46 @@
-import type { Block } from 'payload'
+import type { Block, Field } from 'payload'
+
+function coverMediaFields(prefix: 'desktop' | 'laptop' | 'mobile', label: string): Field[] {
+  const typeField = `${prefix}CoverType`
+
+  return [
+    {
+      type: 'row',
+      fields: [
+        {
+          name: typeField,
+          label: `${label} cover type`,
+          type: 'select',
+          defaultValue: 'image',
+          options: [
+            { label: 'Image', value: 'image' },
+            { label: 'Video', value: 'video' },
+          ],
+        },
+        {
+          name: `${prefix}CoverImage`,
+          label: `${label} cover image`,
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            condition: (_, siblingData) => siblingData?.[typeField] !== 'video',
+            description: `Shown on ${label.toLowerCase()} screens when cover type is image.`,
+          },
+        },
+        {
+          name: `${prefix}CoverVideo`,
+          label: `${label} cover video`,
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            condition: (_, siblingData) => siblingData?.[typeField] === 'video',
+            description: `Shown on ${label.toLowerCase()} screens when cover type is video.`,
+          },
+        },
+      ],
+    },
+  ]
+}
 
 export const HomeHeroBlock: Block = {
   slug: 'homeHero',
@@ -17,13 +59,25 @@ export const HomeHeroBlock: Block = {
       name: 'heading',
       type: 'text',
       required: true,
-      defaultValue: 'From drawing, sample, or problem to manufactured product.',
+      defaultValue: 'Metal products engineered, fabricated, and delivered to spec.',
     },
     {
       name: 'description',
       type: 'textarea',
       defaultValue:
-        'Sky Wings brings CNC machining, sheet metal processing, pipe bending, fabrication, welding, assembly, and surface treatment into one connected manufacturing system.',
+        'Sky Wings helps contractors, factories, aviation teams, and industrial buyers turn drawings, samples, and custom requirements into reliable finished metalwork.',
+    },
+    {
+      type: 'collapsible',
+      label: 'Cover media',
+      admin: {
+        initCollapsed: false,
+      },
+      fields: [
+        ...coverMediaFields('desktop', 'Desktop'),
+        ...coverMediaFields('laptop', 'Laptop'),
+        ...coverMediaFields('mobile', 'Mobile'),
+      ],
     },
     {
       type: 'row',
@@ -31,7 +85,7 @@ export const HomeHeroBlock: Block = {
         {
           name: 'primaryLabel',
           type: 'text',
-          defaultValue: 'Request Quote',
+          defaultValue: 'Start an RFQ',
         },
         {
           name: 'primaryHref',
@@ -46,7 +100,7 @@ export const HomeHeroBlock: Block = {
         {
           name: 'secondaryLabel',
           type: 'text',
-          defaultValue: 'View products',
+          defaultValue: 'Explore products',
         },
         {
           name: 'secondaryHref',
@@ -58,7 +112,7 @@ export const HomeHeroBlock: Block = {
     {
       name: 'previewHeading',
       type: 'text',
-      defaultValue: 'Manufacturing under one roof',
+      defaultValue: 'Built for complex requirements',
     },
     {
       name: 'previewItems',

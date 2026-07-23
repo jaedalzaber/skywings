@@ -1,5 +1,5 @@
 import type { SiteFooterData } from '@/data/site'
-import Image from 'next/image'
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
 
 import { FooterNewsletterForm } from './FooterNewsletterForm'
 

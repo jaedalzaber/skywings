@@ -16,9 +16,11 @@ import { RelatedProducts } from './RelatedProducts'
 function buildGalleryImages(product: Product): GalleryImage[] {
   const images: GalleryImage[] = []
   const seen = new Set<string>()
+  const cardThumbnail = getMediaImage(product.thumbnailImage)
 
   const push = (value: unknown) => {
     const image = getMediaImage(value)
+    if (cardThumbnail && image?.url === cardThumbnail.url) return
     if (image && !seen.has(image.url)) {
       seen.add(image.url)
       images.push({ alt: image.alt, url: image.url })

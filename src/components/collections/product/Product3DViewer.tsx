@@ -1,6 +1,6 @@
 'use client'
 
-import { CameraControls, Center, Loader, RoundedBox, useGLTF } from '@react-three/drei'
+import { CameraControls, Center, RoundedBox, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { motion, useReducedMotion } from 'motion/react'
 import {
@@ -324,10 +324,6 @@ export function Product3DViewer(props: {
               sceneRef={sceneRef}
             />
           </Canvas>
-          <Loader
-            containerStyles={{ background: 'transparent', position: 'absolute' }}
-            innerStyles={{ background: 'rgba(255,255,255,0.2)' }}
-          />
         </div>
 
         {enabled.length ? (

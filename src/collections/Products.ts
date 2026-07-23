@@ -1,12 +1,17 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated, publishedOrAuthenticated } from '../access'
+import { TAGS } from '../data/tags'
 import { layoutField } from '../fields/layout'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
+import { makeCollectionRevalidateHooks } from './hooks/revalidate'
 
 export const Products: CollectionConfig = {
   slug: 'products',
+  defaultPopulate: {
+    layout: false,
+  },
   labels: {
     singular: 'Product',
     plural: 'Products',
@@ -25,6 +30,10 @@ export const Products: CollectionConfig = {
   versions: {
     drafts: true,
   },
+  hooks: makeCollectionRevalidateHooks((doc) => [
+    TAGS.products,
+    ...(doc.slug ? [TAGS.product(doc.slug)] : []),
+  ]),
   fields: [
     {
       name: 'title',
@@ -128,6 +137,16 @@ export const Products: CollectionConfig = {
       name: 'featuredImage',
       type: 'upload',
       relationTo: 'media',
+    },
+    {
+      name: 'thumbnailImage',
+      label: 'Card thumbnail image',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Optional image used only in small product cards. Leave empty to use the featured image.',
+      },
     },
     {
       name: 'gallery',
@@ -316,10 +335,24 @@ export const Products: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'brochure',
+      label: 'Product brochure',
+      type: 'upload',
+      relationTo: 'brochures',
+      admin: {
+        description: 'Single PDF brochure for this product. Upload or select one brochure file.',
+      },
+    },
+    {
       name: 'brochures',
+      label: 'Additional brochures',
       type: 'relationship',
       relationTo: 'brochures',
       hasMany: true,
+      admin: {
+        description:
+          'Optional legacy/secondary brochure links. The single product brochure is used first.',
+      },
     },
     {
       name: 'model3D',

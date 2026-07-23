@@ -48,6 +48,15 @@ export const Brochures: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'pageCount',
+      label: 'Page count',
+      type: 'number',
+      min: 1,
+      admin: {
+        description: 'Shown on product detail brochure downloads, e.g. "Pages: 2".',
+      },
+    },
+    {
       name: 'coverImage',
       type: 'upload',
       relationTo: 'media',

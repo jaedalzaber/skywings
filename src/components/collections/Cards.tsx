@@ -1,9 +1,9 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { MediaWireframe } from '@/components/atoms/MediaWireframe'
 import { NumberLabel } from '@/components/atoms/NumberLabel'
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
 import type { BlogPost, Brochure, Capability, Industry, Product } from '@/payload-types'
 
 import { getMediaImage } from '@/data/media'

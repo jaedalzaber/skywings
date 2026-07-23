@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 
 import { ProductImagePlaceholder } from './ProductImagePlaceholder'
+import { SafeImage as Image } from './SafeImage'
 
 /**
  * Product image that falls back to the light placeholder when there is no

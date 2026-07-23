@@ -1,45 +1,16 @@
 'use client'
 
-import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 
-type ServiceCard = {
-  accentTitle?: boolean
-  image: string
-  number: string
-  title: string
+import { SafeImage as Image } from '@/components/atoms/SafeImage'
+import type { HomeServicesLayoutBlock } from '@/data/home'
+
+function serviceNumber(index: number) {
+  return String(index + 1).padStart(2, '0')
 }
 
-const serviceCards: ServiceCard[] = [
-  {
-    image: '/images/home/service-01.png',
-    number: '01',
-    title: 'Custom Equipment Manufacturing',
-  },
-  {
-    image: '/images/home/service-02.png',
-    number: '02',
-    title: 'Structural Steel Fabrication',
-  },
-  {
-    image: '/images/home/service-03.png',
-    number: '03',
-    title: 'Metal Product Fabrication',
-  },
-  {
-    image: '/images/home/service-04.png',
-    number: '04',
-    title: 'Custom Equipment Manufacturing',
-  },
-  {
-    accentTitle: true,
-    image: '/images/home/service-05.png',
-    number: '05',
-    title: 'Erection',
-  },
-]
-
-export function HomeServicesScroller() {
+export function HomeServicesScroller(props: { block: HomeServicesLayoutBlock }) {
+  const { block } = props
   const sectionRef = useRef<HTMLElement | null>(null)
   const pinRef = useRef<HTMLDivElement | null>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
@@ -155,47 +126,50 @@ export function HomeServicesScroller() {
         <div className="services-showcase-shell">
           <div className="services-showcase-heading">
             <div className="services-showcase-title-group">
-              <p className="services-showcase-eyebrow">Our Services</p>
-              <h2 id="services-showcase-title">What We Do</h2>
+              {block.eyebrow ? <p className="services-showcase-eyebrow">{block.eyebrow}</p> : null}
+              <h2 id="services-showcase-title">{block.heading}</h2>
             </div>
 
             <div className="services-showcase-copy">
-              <p>
-                Sky Wings provides <strong>End-to-End Metal Manufacturing</strong>. We take a{' '}
-                <strong>requirement</strong> - a drawing, a sample, a concept, or a problem to
-                solve - and convert it into a <strong>manufactured product</strong>.
-              </p>
-              <p>Our services cover every major stage of metal production under one roof.</p>
+              {block.description ? <p>{block.description}</p> : null}
+              {block.secondaryDescription ? <p>{block.secondaryDescription}</p> : null}
             </div>
           </div>
         </div>
 
         <div className="services-showcase-viewport" ref={viewportRef}>
           <div className="services-showcase-track" ref={trackRef}>
-            {serviceCards.map((card) => (
-              <article className="services-showcase-card" key={card.number}>
-                <p className="services-showcase-card-number">{card.number}</p>
-                <div className="services-showcase-card-surface">
-                  <Image
-                    alt=""
-                    className="services-showcase-card-image"
-                    fill
-                    loading="lazy"
-                    sizes="(max-width: 767px) 66vw, (max-width: 1439px) 26vw, 24rem"
-                    src={card.image}
-                  />
-                  <h3
-                    className={
-                      card.accentTitle
-                        ? 'services-showcase-card-title light'
-                        : 'services-showcase-card-title'
-                    }
-                  >
-                    {card.title}
-                  </h3>
-                </div>
-              </article>
-            ))}
+            {block.cards.map((card, index) => {
+              const imageSrc = card.image?.url || card.fallbackImage
+
+              return (
+                <article
+                  className="services-showcase-card"
+                  key={card.id ?? `${card.title}-${index}`}
+                >
+                  <p className="services-showcase-card-number">{serviceNumber(index)}</p>
+                  <div className="services-showcase-card-surface">
+                    <Image
+                      alt={card.image?.alt ?? ''}
+                      className="services-showcase-card-image"
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 767px) 66vw, (max-width: 1439px) 26vw, 24rem"
+                      src={imageSrc}
+                    />
+                    <h3
+                      className={
+                        card.accentTitle
+                          ? 'services-showcase-card-title light'
+                          : 'services-showcase-card-title'
+                      }
+                    >
+                      {card.title}
+                    </h3>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         </div>
       </div>

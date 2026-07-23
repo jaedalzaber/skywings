@@ -1,8 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated, publishedOrAuthenticated } from '../access'
+import { TAGS } from '../data/tags'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
+import { makeCollectionRevalidateHooks } from './hooks/revalidate'
 
 export const Industries: CollectionConfig = {
   slug: 'industries',
@@ -20,6 +22,11 @@ export const Industries: CollectionConfig = {
   versions: {
     drafts: true,
   },
+  hooks: makeCollectionRevalidateHooks((doc) => [
+    TAGS.industries,
+    TAGS.page('home'),
+    ...(doc.slug ? [TAGS.page(`industries/${doc.slug}`)] : []),
+  ]),
   fields: [
     {
       name: 'title',

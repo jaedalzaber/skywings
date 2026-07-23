@@ -22,3 +22,9 @@ export async function hasSubmitted(searchParams: RouteSearchParams) {
 
   return first(params.submitted) === '1'
 }
+
+export async function getProductParam(searchParams: RouteSearchParams) {
+  const params = await searchParams
+
+  return first(params.product)
+}

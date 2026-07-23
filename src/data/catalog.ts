@@ -23,6 +23,34 @@ const productWithoutLayoutSelect = {
   layout: false,
 } as const
 
+const productListSelect = {
+  accessories: false,
+  applications: false,
+  breadcrumb: false,
+  brochure: false,
+  brochures: false,
+  capabilities: false,
+  categoryLabel: false,
+  configurationOptions: false,
+  description: false,
+  dimensions: false,
+  finishes: false,
+  gallery: false,
+  howItWorks: false,
+  industryLabel: false,
+  keySpecs: false,
+  layout: false,
+  loadCapacity: false,
+  materials: false,
+  mobileGallery: false,
+  model3D: false,
+  relatedCaseStudies: false,
+  relatedProducts: false,
+  specifications: false,
+  surfaceTreatment: false,
+  technicalDrawing: false,
+} as const
+
 function getText(value: unknown) {
   return typeof value === 'string' ? value : ''
 }
@@ -58,6 +86,26 @@ function matchesIndustry(product: Product, industry?: string) {
 
 function matchesType(product: Product, type?: string) {
   return type ? product.productType === type : true
+}
+
+function hasImage(value: unknown) {
+  return Boolean(relationId(value))
+}
+
+function hasCardThumbnail(product: Product) {
+  return hasImage(product.thumbnailImage)
+}
+
+function sortProductsForListing(products: Product[]) {
+  return [...products].sort((a, b) => {
+    const imageRank = Number(hasCardThumbnail(b)) - Number(hasCardThumbnail(a))
+
+    if (imageRank !== 0) {
+      return imageRank
+    }
+
+    return a.title.localeCompare(b.title)
+  })
 }
 
 async function getPublicModelForProduct(product: Product): Promise<Product['model3D'] | null> {
@@ -141,16 +189,19 @@ export const getProducts = cachedQuery(
       draft: false,
       limit: 200,
       overrideAccess: false,
-      select: productWithoutLayoutSelect,
+      select: productListSelect,
       sort: 'title',
     })
 
-    return docs.filter(
-      (product) =>
-        matchesSearch(product, filters.q) &&
-        matchesFamily(product, filters.family) &&
-        matchesIndustry(product, filters.industry) &&
-        matchesType(product, filters.type),
+    return sortProductsForListing(
+      docs.filter(
+        (product) =>
+          hasCardThumbnail(product) &&
+          matchesSearch(product, filters.q) &&
+          matchesFamily(product, filters.family) &&
+          matchesIndustry(product, filters.industry) &&
+          matchesType(product, filters.type),
+      ),
     )
   },
   ['products'],
@@ -213,14 +264,14 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
       draft: false,
       limit: limit + 1,
       overrideAccess: false,
-      select: productWithoutLayoutSelect,
+      select: productListSelect,
       where: {
         and: [{ productFamily: { equals: familyId } }, { id: { not_equals: product.id } }],
       },
     })
 
     if (docs.length) {
-      return docs.slice(0, limit)
+      return sortProductsForListing(docs).slice(0, limit)
     }
   }
 
@@ -230,12 +281,12 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
     draft: false,
     limit: limit + 1,
     overrideAccess: false,
-    select: productWithoutLayoutSelect,
+    select: productListSelect,
     sort: '-updatedAt',
     where: { id: { not_equals: product.id } },
   })
 
-  return docs.slice(0, limit)
+  return sortProductsForListing(docs).slice(0, limit)
 }
 
 export const getBrochures = cachedQuery(

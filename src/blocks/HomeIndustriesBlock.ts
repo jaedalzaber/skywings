@@ -17,13 +17,13 @@ export const HomeIndustriesBlock: Block = {
       name: 'heading',
       type: 'text',
       required: true,
-      defaultValue: 'One product database, multiple industry views.',
+      defaultValue: 'Metalwork built around your industry requirements.',
     },
     {
       name: 'description',
       type: 'textarea',
       defaultValue:
-        'Buyers can browse by sector, then move into relevant product families, catalogues, 3D previews, and quote requests.',
+        'Browse sector-specific products, assemblies, and fabrication capabilities for the way your projects are bought, built, and delivered.',
     },
     {
       name: 'items',

@@ -13,6 +13,7 @@ import { HeroBlock } from './HeroBlock'
 import { HomeHeroBlock } from './HomeHeroBlock'
 import { HomeIndustriesBlock } from './HomeIndustriesBlock'
 import { HomeProcessBlock } from './HomeProcessBlock'
+import { HomeServicesBlock } from './HomeServicesBlock'
 import { LeadFormBlock } from './LeadFormBlock'
 import { LogoCloudBlock } from './LogoCloudBlock'
 import { IndustryListingBlock } from './IndustryListingBlock'
@@ -25,6 +26,7 @@ import { ThreeDShowcaseBlock } from './ThreeDShowcaseBlock'
 
 export const pageBuilderBlocks: Block[] = [
   HomeHeroBlock,
+  HomeServicesBlock,
   HomeIndustriesBlock,
   HomeProcessBlock,
   PageHeroBlock,

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { SafeImg } from '@/components/atoms/SafeImage'
 import type { HomeProcessLayoutBlock } from '@/data/home'
 
 import { HomeProcessModel } from './HomeProcessModel'
@@ -50,6 +51,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
     () =>
       processFallbacks.map((fallback, index) => ({
         ...fallback,
+        infographicImage: block.steps[index]?.infographicImage ?? null,
         title: block.steps[index]?.title || fallback.title,
       })),
     [block.steps],
@@ -108,7 +110,15 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
                 key="visual"
                 transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : 0.18 }}
               >
-                <span>{String(index + 1).padStart(2, '0')}</span>
+                {step.infographicImage ? (
+                  <SafeImg
+                    alt={step.infographicImage.alt}
+                    className="process-step-infographic"
+                    src={step.infographicImage.url}
+                  />
+                ) : (
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                )}
               </motion.span>
             ) : null}
           </AnimatePresence>
@@ -165,10 +175,7 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
     >
       <header className="process-header" data-grid-alignment="process-columns">
         <h2 id="manufacturing-process-title">Our Manufacturing Process</h2>
-        <div className="process-specs" aria-label="Example product specifications">
-          <span>{'// GSE Luggage Trolley'}</span>
-          <span>{'// 1500 Kg Capacity'}</span>
-        </div>
+        <div className="process-specs" aria-label="Example product specifications"></div>
         <div className="process-mark" data-position="top-right" aria-hidden="true">
           <span>SW</span>
         </div>
@@ -184,9 +191,13 @@ export function HomeProcessSection({ block }: { block: HomeProcessLayoutBlock })
         <div
           className="process-model-stage"
           data-testid="process-model-stage"
-          aria-label="Rotating product wireframe"
+          aria-label={block.model3D ? 'Rotating process 3D model' : 'Rotating product wireframe'}
         >
-          <HomeProcessModel />
+          <HomeProcessModel
+            appearance={block.modelAppearance}
+            modelScale={block.model3D?.scale ?? null}
+            modelUrl={block.model3D?.url ?? null}
+          />
         </div>
         <div
           className="process-column process-column-right"

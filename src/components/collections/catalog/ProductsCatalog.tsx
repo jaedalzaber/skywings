@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { ArrowRightIcon } from '@/components/atoms/icons'
 
@@ -10,6 +10,42 @@ import { ProductShopCard, type ProductLite } from './ProductShopCard'
 export type IndustryOption = { slug: string; title: string }
 
 const PAGE_SIZE = 10
+const SUGGESTION_LIMIT = 6
+
+function SearchIcon() {
+  return (
+    <svg
+      aria-hidden
+      className="pcat-search-icon"
+      fill="none"
+      focusable="false"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m16 16 4 4" />
+    </svg>
+  )
+}
+
+function normalize(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function productMatchesSearch(product: ProductLite, query: string) {
+  const normalizedQuery = normalize(query)
+
+  if (!normalizedQuery) {
+    return true
+  }
+
+  return [product.title, product.sku, product.summary]
+    .filter(Boolean)
+    .some((value) => normalize(value).includes(normalizedQuery))
+}
 
 export function ProductsCatalog(props: {
   eyebrow?: string | null
@@ -21,11 +57,43 @@ export function ProductsCatalog(props: {
   const { eyebrow, heading, industries, initialIndustry, products } = props
   const [industry, setIndustry] = useState<string | null>(initialIndustry ?? null)
   const [page, setPage] = useState(0)
+  const [search, setSearch] = useState('')
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
+
+  useEffect(() => {
+    if (initialIndustry !== undefined || typeof window === 'undefined') {
+      return
+    }
+
+    const industryParam = new URLSearchParams(window.location.search).get('industry')
+
+    if (industryParam) {
+      setIndustry(industryParam)
+      setPage(0)
+    }
+  }, [initialIndustry])
 
   const filtered = useMemo(
-    () => (industry ? products.filter((product) => product.industrySlugs.includes(industry)) : products),
-    [industry, products],
+    () =>
+      products.filter(
+        (product) =>
+          (!industry || product.industrySlugs.includes(industry)) &&
+          productMatchesSearch(product, search),
+      ),
+    [industry, products, search],
   )
+
+  const suggestions = useMemo(() => {
+    const query = normalize(search)
+
+    if (!query) {
+      return []
+    }
+
+    return products
+      .filter((product) => productMatchesSearch(product, query))
+      .slice(0, SUGGESTION_LIMIT)
+  }, [products, search])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount - 1)
@@ -34,6 +102,18 @@ export function ProductsCatalog(props: {
   const select = (slug: string | null) => {
     setIndustry(slug)
     setPage(0)
+  }
+
+  const updateSearch = (value: string) => {
+    setSearch(value)
+    setPage(0)
+    setSuggestionsOpen(Boolean(value.trim()))
+  }
+
+  const selectSuggestion = (product: ProductLite) => {
+    setSearch(product.title)
+    setPage(0)
+    setSuggestionsOpen(false)
   }
 
   return (
@@ -53,6 +133,55 @@ export function ProductsCatalog(props: {
           </p>
         </div>
       </header>
+
+      <div className="pcat-search" role="search">
+        <label className="pcat-search-label" htmlFor="product-search">
+          Search products
+        </label>
+        <div className="pcat-search-box">
+          <input
+            aria-autocomplete="list"
+            aria-controls="product-search-suggestions"
+            aria-expanded={suggestionsOpen && suggestions.length > 0}
+            className="pcat-search-input"
+            id="product-search"
+            onBlur={() => window.setTimeout(() => setSuggestionsOpen(false), 120)}
+            onChange={(event) => updateSearch(event.target.value)}
+            onFocus={() => setSuggestionsOpen(Boolean(search.trim()))}
+            placeholder="Search by product, SKU, or use"
+            type="search"
+            value={search}
+          />
+          {search ? (
+            <button
+              aria-label="Clear product search"
+              className="pcat-search-clear"
+              onClick={() => updateSearch('')}
+              type="button"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+          <SearchIcon />
+        </div>
+        {suggestionsOpen && suggestions.length ? (
+          <div className="pcat-suggestions" id="product-search-suggestions" role="listbox">
+            {suggestions.map((product) => (
+              <button
+                className="pcat-suggestion"
+                key={product.id}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectSuggestion(product)}
+                role="option"
+                type="button"
+              >
+                <span>{product.title}</span>
+                {product.sku ? <small>{product.sku}</small> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       {industries.length ? (
         <div className="pcat-filters" role="tablist" aria-label="Filter by industry">
@@ -87,7 +216,7 @@ export function ProductsCatalog(props: {
           ))}
         </div>
       ) : (
-        <p className="pcat-empty">No products match this filter yet.</p>
+        <p className="pcat-empty">No products match this search yet.</p>
       )}
 
       {pageCount > 1 ? (

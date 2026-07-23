@@ -7,12 +7,6 @@ import { TAGS } from './tags'
 export type PageLayout = NonNullable<Page['layout']>
 export type PageLayoutBlock = PageLayout[number]
 
-const pageLayoutWithoutHomeServicesSelect = {
-  layout: {
-    homeServices: false,
-  },
-} as const
-
 async function fetchPageLayoutBySlug(slug: string): Promise<PageLayout | null> {
   const payload = await getPayloadClient()
 
@@ -22,7 +16,6 @@ async function fetchPageLayoutBySlug(slug: string): Promise<PageLayout | null> {
     draft: false,
     limit: 1,
     overrideAccess: false,
-    select: pageLayoutWithoutHomeServicesSelect,
     where: {
       slug: {
         equals: slug,

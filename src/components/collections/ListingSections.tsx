@@ -88,7 +88,7 @@ export async function ProductListingSection(
   }
 
   const productsLite: ProductLite[] = products.map((product, index) => {
-    const image = getMediaImage(product.featuredImage)
+    const image = getMediaImage(product.thumbnailImage)
 
     return {
       id: product.id,
@@ -114,7 +114,7 @@ export async function ProductListingSection(
       eyebrow={props.eyebrow}
       heading={props.heading}
       industries={industryOptions}
-      initialIndustry={props.filters?.industry ?? null}
+      initialIndustry={props.filters?.industry}
       products={productsLite}
     />
   )

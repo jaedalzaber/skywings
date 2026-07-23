@@ -4,9 +4,9 @@ export const capabilitiesLayout: PageLayout = [
   {
     blockType: 'pageHero',
     eyebrow: 'Capabilities',
-    heading: 'Manufacturing capability under one roof.',
+    heading: 'Manufacturing capability under one accountable team.',
     description:
-      'A scalable view of Sky Wings processes, machines, outputs, and future production capacity.',
+      'See how Sky Wings combines machining, sheet metal, pipe bending, fabrication, welding, finishing, and assembly to deliver custom metalwork at project scale.',
     primaryLabel: 'Request a quote',
     primaryHref: '/contact',
     secondaryLabel: 'View products',
@@ -15,9 +15,9 @@ export const capabilitiesLayout: PageLayout = [
   {
     blockType: 'capabilityListing',
     eyebrow: 'Process map',
-    heading: 'From CNC machining to surface treatment.',
+    heading: 'From CNC machining to finished assemblies.',
     description:
-      'Each capability can connect to machines, materials, typical outputs, product families, and brochures.',
+      'Choose the process you need, compare typical outputs, and start a quote with the right technical context.',
   },
 ]
 
@@ -25,9 +25,9 @@ export const industriesLayout: PageLayout = [
   {
     blockType: 'pageHero',
     eyebrow: 'Industries',
-    heading: 'Buyer paths for every sector Sky Wings serves.',
+    heading: 'Metal fabrication for demanding project environments.',
     description:
-      'Browse industry views for construction, infrastructure, industrial manufacturing, architecture, aviation, marine, and commercial work.',
+      'Find products and manufacturing capabilities for construction, infrastructure, industrial manufacturing, architecture, aviation ground support, marine, and commercial projects.',
     primaryLabel: 'Explore products',
     primaryHref: '/products',
     secondaryLabel: 'Request a quote',
@@ -36,9 +36,9 @@ export const industriesLayout: PageLayout = [
   {
     blockType: 'industryListing',
     eyebrow: 'Market views',
-    heading: 'Products and capabilities organized by use case.',
+    heading: 'Start with your sector, then get to the right product faster.',
     description:
-      'Each industry can collect pain points, solutions, product families, brochures, and case studies.',
+      'Each industry view connects relevant products, applications, brochures, and fabrication capabilities.',
   },
 ]
 
@@ -46,7 +46,7 @@ export const productsLayout: PageLayout = [
   {
     blockType: 'productListing',
     eyebrow: 'Products',
-    heading: 'Engineered metal products, built to spec.',
+    heading: 'Engineered metal products, built to your specification.',
     showFilters: true,
   },
 ]
@@ -55,9 +55,9 @@ export const brochuresLayout: PageLayout = [
   {
     blockType: 'pageHero',
     eyebrow: 'Brochures',
-    heading: 'Catalogues and technical documents for buyers.',
+    heading: 'Technical catalogues for faster shortlisting.',
     description:
-      'Use public documents for quick browsing and lead-gated documents for higher-value technical downloads.',
+      'Download company, product, and capability brochures to review dimensions, applications, and manufacturing options before you request a quote.',
     primaryLabel: 'Request a quote',
     primaryHref: '/contact',
     secondaryLabel: 'View products',
@@ -68,30 +68,17 @@ export const brochuresLayout: PageLayout = [
     eyebrow: 'Downloads',
     heading: 'Company, product, capability, and industry brochures.',
     description:
-      'Brochures are connected to products, industries, and capabilities in Payload for reusable catalogue architecture.',
+      'Pick the document that matches your requirement, then send drawings or project details when you are ready for pricing.',
   },
 ]
 
 export const contactLayout: PageLayout = [
   {
-    blockType: 'pageHero',
-    eyebrow: 'Contact',
-    heading: 'Send a requirement and get an engineering-led response.',
-    description:
-      'Share a drawing, sample, product concept, repair requirement, or manufacturing problem to solve.',
-    primaryLabel: 'Start RFQ',
-    primaryHref: '#rfq-form',
-    secondaryLabel: 'Browse products',
-    secondaryHref: '/products',
-  },
-  {
     blockType: 'contactRFQ',
-    eyebrow: 'Request quote',
-    heading: 'Tell us what you need to manufacture.',
+    eyebrow: 'Contact Us',
+    heading: 'Feel Free To Get In Touch With Us.',
     description:
-      'The form captures structured RFQ data in Payload so the team can qualify, estimate, and follow up.',
-    contactEmail: 'info@skywings.ae',
-    contactPhone: '+971 50 538 9979',
+      'Supported by modern machinery and experienced technicians, we deliver customized fabrication solutions.',
   },
 ]
 
@@ -101,7 +88,7 @@ export const blogLayout: PageLayout = [
     eyebrow: 'Blog',
     heading: 'Manufacturing insights, updates, and project stories.',
     description:
-      'A CMS-managed publishing space for product education, industry guidance, and Sky Wings capability updates.',
+      'Read practical notes on fabricated metal products, manufacturing decisions, industry applications, and Sky Wings capability updates.',
     primaryLabel: 'Request a quote',
     primaryHref: '/contact',
     secondaryLabel: 'View products',
@@ -110,8 +97,8 @@ export const blogLayout: PageLayout = [
   {
     blockType: 'blogListing',
     eyebrow: 'Articles',
-    heading: 'Latest admin-managed content.',
+    heading: 'Latest articles and updates.',
     description:
-      'Publish updates from Payload and connect future articles to products, capabilities, and industry pages.',
+      'Explore product education, project guidance, and manufacturing updates from the Sky Wings team.',
   },
 ]

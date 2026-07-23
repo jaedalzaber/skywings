@@ -2,9 +2,13 @@ import { notFound } from 'next/navigation'
 
 import { ProductDetail } from '@/components/collections/product/ProductDetail'
 import { PageBlocks } from '@/components/page-builder/PageBlocks'
-import { getProductBySlug, getRelatedProductsFor } from '@/data/catalog'
+import { getAllProductSlugs, getProductBySlug, getRelatedProductsFor } from '@/data/catalog'
 
-export const dynamic = 'force-dynamic'
+export async function generateStaticParams() {
+  const slugs = await getAllProductSlugs()
+
+  return slugs.map((slug) => ({ slug }))
+}
 
 export default async function ProductDetailPage(props: { params: Promise<{ slug: string }> }) {
   const { slug } = await props.params

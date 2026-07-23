@@ -1,10 +1,13 @@
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { Eyebrow } from '@/components/atoms/Eyebrow'
+import { SafePicture, SafeVideo } from '@/components/atoms/SafeImage'
 import {
+  defaultHomeServicesBlock,
   type HomeHeroLayoutBlock,
   type HomeIndustriesLayoutBlock,
   type HomeLayout,
   type HomeProcessLayoutBlock,
+  type HomeServicesLayoutBlock,
 } from '@/data/home'
 
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
@@ -25,6 +28,32 @@ const heroServices = [
   'Architectural & Interior Metalwork',
 ]
 
+function HeroCoverVideo(props: {
+  className: string
+  poster?: string | null
+  type?: 'image' | 'video' | null
+  video?: HomeHeroLayoutBlock['desktopCoverVideo']
+}) {
+  const { className, poster, type, video } = props
+
+  if (type !== 'video' || !video?.url) {
+    return null
+  }
+
+  return (
+    <SafeVideo
+      autoPlay
+      className={`hero-cover-video ${className}`}
+      loop
+      playsInline
+      poster={poster ?? undefined}
+      preload="auto"
+      sourceType={video.mimeType}
+      src={video.url}
+    />
+  )
+}
+
 export function HomeBlockRenderer(props: { blocks: HomeLayout }) {
   const industriesBlock = props.blocks.find(
     (block): block is HomeIndustriesLayoutBlock => block.blockType === 'homeIndustries',
@@ -32,13 +61,22 @@ export function HomeBlockRenderer(props: { blocks: HomeLayout }) {
   const processBlock = props.blocks.find(
     (block): block is HomeProcessLayoutBlock => block.blockType === 'homeProcess',
   )
-  const heroRendersIndustries =
-    props.blocks.some((block) => block.blockType === 'homeHero') && Boolean(industriesBlock)
+  const servicesBlock = props.blocks.find(
+    (block): block is HomeServicesLayoutBlock => block.blockType === 'homeServices',
+  )
+  const heroRendersHomeSections = props.blocks.some((block) => block.blockType === 'homeHero')
 
   return (
     <>
       {props.blocks.map((block, index) =>
-        renderHomeBlock(block, index, industriesBlock, processBlock, heroRendersIndustries),
+        renderHomeBlock(
+          block,
+          index,
+          industriesBlock,
+          processBlock,
+          servicesBlock,
+          heroRendersHomeSections,
+        ),
       )}
     </>
   )
@@ -49,7 +87,8 @@ function renderHomeBlock(
   index: number,
   industriesBlock: HomeIndustriesLayoutBlock | undefined,
   processBlock: HomeProcessLayoutBlock | undefined,
-  heroRendersIndustries: boolean,
+  servicesBlock: HomeServicesLayoutBlock | undefined,
+  heroRendersHomeSections: boolean,
 ) {
   const key = `${block.blockType}-${block.id ?? index}`
 
@@ -61,16 +100,23 @@ function renderHomeBlock(
           block={block}
           industriesBlock={industriesBlock}
           processBlock={processBlock}
+          servicesBlock={servicesBlock}
         />
       )
+    case 'homeServices':
+      if (heroRendersHomeSections && servicesBlock === block) {
+        return null
+      }
+
+      return <HomeServicesScroller key={key} block={block} />
     case 'homeIndustries':
-      if (heroRendersIndustries && industriesBlock === block) {
+      if (heroRendersHomeSections && industriesBlock === block) {
         return null
       }
 
       return <HomeIndustries key={key} block={block} />
     case 'homeProcess':
-      if (heroRendersIndustries && processBlock === block) return null
+      if (heroRendersHomeSections && processBlock === block) return null
       return <HomeProcess key={key} block={block} />
     default:
       return null
@@ -81,8 +127,9 @@ function HomeHero(props: {
   block: HomeHeroLayoutBlock
   industriesBlock?: HomeIndustriesLayoutBlock
   processBlock?: HomeProcessLayoutBlock
+  servicesBlock?: HomeServicesLayoutBlock
 }) {
-  const { block, industriesBlock, processBlock } = props
+  const { block, industriesBlock, processBlock, servicesBlock = defaultHomeServicesBlock } = props
 
   return (
     <>
@@ -93,11 +140,41 @@ function HomeHero(props: {
         id="top"
       >
         <div className="hero-video-layer" aria-hidden="true">
-          <picture className="hero-image">
-            <source media="(min-width: 90rem)" srcSet="/images/home/hero-desktop.png" />
-            <source media="(min-width: 48rem)" srcSet="/images/home/hero-laptop.png" />
-            <img alt="" src="/images/home/hero-mobile.png" />
-          </picture>
+          <SafePicture
+            className="hero-image"
+            image={{
+              alt: block.mobileCoverImage?.alt ?? '',
+              src: block.mobileCoverImage?.url ?? '/images/home/hero-mobile.png',
+            }}
+            sources={[
+              {
+                media: '(min-width: 90rem)',
+                srcSet: block.desktopCoverImage?.url ?? '/images/home/hero-desktop.png',
+              },
+              {
+                media: '(min-width: 48rem)',
+                srcSet: block.laptopCoverImage?.url ?? '/images/home/hero-laptop.png',
+              },
+            ]}
+          />
+          <HeroCoverVideo
+            className="hero-cover-video--mobile"
+            poster={block.mobileCoverImage?.url ?? '/images/home/hero-mobile.png'}
+            type={block.mobileCoverType}
+            video={block.mobileCoverVideo}
+          />
+          <HeroCoverVideo
+            className="hero-cover-video--laptop"
+            poster={block.laptopCoverImage?.url ?? '/images/home/hero-laptop.png'}
+            type={block.laptopCoverType}
+            video={block.laptopCoverVideo}
+          />
+          <HeroCoverVideo
+            className="hero-cover-video--desktop"
+            poster={block.desktopCoverImage?.url ?? '/images/home/hero-desktop.png'}
+            type={block.desktopCoverType}
+            video={block.desktopCoverVideo}
+          />
           <div className="hero-video-placeholder" />
         </div>
 
@@ -144,7 +221,7 @@ function HomeHero(props: {
           </div>
         </div>
       </section>
-      <HomeServicesScroller />
+      <HomeServicesScroller block={servicesBlock} />
       {industriesBlock ? <HomeIndustriesAccordion block={industriesBlock} /> : null}
       {processBlock ? <HomeProcessSection block={processBlock} /> : null}
       {processBlock ? <HomeGlobeSection /> : null}
