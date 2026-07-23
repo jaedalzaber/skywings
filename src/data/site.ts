@@ -170,7 +170,11 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
   }
 }
 
-const getCachedSiteHeader = cachedQuery(fetchSiteHeader, ['site-header'], [TAGS.globals, TAGS.media])
+const getCachedSiteHeader = cachedQuery(
+  fetchSiteHeader,
+  ['site-header'],
+  [TAGS.globals, TAGS.media],
+)
 
 export async function getSiteHeader(): Promise<SiteHeaderData> {
   try {
@@ -198,16 +202,13 @@ async function fetchSiteFooter(): Promise<SiteFooterData> {
     headline: footer.headline || defaultFooterData.headline,
     legalLinks: footer.legalLinks?.length ? footer.legalLinks : defaultFooterData.legalLinks,
     linkGroups: footer.linkGroups?.length ? footer.linkGroups : defaultFooterData.linkGroups,
-    newsletterButtonLabel:
-      footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
+    newsletterButtonLabel: footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
     newsletterHeading: footer.newsletterHeading || defaultFooterData.newsletterHeading,
-    newsletterPlaceholder:
-      footer.newsletterPlaceholder || defaultFooterData.newsletterPlaceholder,
+    newsletterPlaceholder: footer.newsletterPlaceholder || defaultFooterData.newsletterPlaceholder,
     newsletterPrivacyLinks: footer.newsletterPrivacyLinks?.length
       ? footer.newsletterPrivacyLinks
       : defaultFooterData.newsletterPrivacyLinks,
-    newsletterPrivacyText:
-      footer.newsletterPrivacyText || defaultFooterData.newsletterPrivacyText,
+    newsletterPrivacyText: footer.newsletterPrivacyText || defaultFooterData.newsletterPrivacyText,
     phoneLabel: footer.phoneLabel || defaultFooterData.phoneLabel,
     phoneNumbers: footer.phoneNumbers?.length
       ? footer.phoneNumbers.map(({ number }) => number)
@@ -215,7 +216,11 @@ async function fetchSiteFooter(): Promise<SiteFooterData> {
   }
 }
 
-const getCachedSiteFooter = cachedQuery(fetchSiteFooter, ['site-footer'], [TAGS.globals, TAGS.media])
+const getCachedSiteFooter = cachedQuery(
+  fetchSiteFooter,
+  ['site-footer'],
+  [TAGS.globals, TAGS.media],
+)
 
 export async function getSiteFooter(): Promise<SiteFooterData> {
   try {
