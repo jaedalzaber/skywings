@@ -2,7 +2,9 @@ import type { Footer, Header, Media, SiteSetting } from '@/payload-types'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 
+import { cachedQuery } from './cache'
 import { getPayloadClient } from './payload'
+import { TAGS } from './tags'
 
 export type HeaderNavigationItem = NonNullable<Header['navigation']>[number]
 export type HeaderCTA = NonNullable<Header['cta']>[number]
@@ -145,28 +147,34 @@ function getResolvableFaviconHref(media: Media | null): string {
   return existsSync(localFilePath) ? media.url : defaultSiteMetadata.faviconHref
 }
 
+async function fetchSiteHeader(): Promise<SiteHeaderData> {
+  const payload = await getPayloadClient()
+  const [header, siteSettings] = await Promise.all([
+    payload.findGlobal({
+      slug: 'header',
+      depth: 1,
+      overrideAccess: false,
+    }),
+    payload.findGlobal({
+      slug: 'site-settings',
+      depth: 1,
+      overrideAccess: false,
+    }),
+  ])
+
+  return {
+    ...defaultHeaderData,
+    logo: getMedia(siteSettings.logo),
+    navigation: header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
+    cta: header.cta?.[0] ?? defaultHeaderData.cta,
+  }
+}
+
+const getCachedSiteHeader = cachedQuery(fetchSiteHeader, ['site-header'], [TAGS.globals, TAGS.media])
+
 export async function getSiteHeader(): Promise<SiteHeaderData> {
   try {
-    const payload = await getPayloadClient()
-    const [header, siteSettings] = await Promise.all([
-      payload.findGlobal({
-        slug: 'header',
-        depth: 1,
-        overrideAccess: false,
-      }),
-      payload.findGlobal({
-        slug: 'site-settings',
-        depth: 1,
-        overrideAccess: false,
-      }),
-    ])
-
-    return {
-      ...defaultHeaderData,
-      logo: getMedia(siteSettings.logo),
-      navigation: header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
-      cta: header.cta?.[0] ?? defaultHeaderData.cta,
-    }
+    return await getCachedSiteHeader()
   } catch (error) {
     console.error('Unable to load Payload header global', error)
 
@@ -174,38 +182,44 @@ export async function getSiteHeader(): Promise<SiteHeaderData> {
   }
 }
 
+async function fetchSiteFooter(): Promise<SiteFooterData> {
+  const payload = await getPayloadClient()
+  const footer = await payload.findGlobal({
+    slug: 'footer',
+    depth: 1,
+    overrideAccess: false,
+  })
+
+  return {
+    addresses: footer.addresses?.length ? footer.addresses : defaultFooterData.addresses,
+    copyright: footer.copyright || defaultFooterData.copyright,
+    emailAddress: footer.emailAddress || defaultFooterData.emailAddress,
+    emailLabel: footer.emailLabel || defaultFooterData.emailLabel,
+    headline: footer.headline || defaultFooterData.headline,
+    legalLinks: footer.legalLinks?.length ? footer.legalLinks : defaultFooterData.legalLinks,
+    linkGroups: footer.linkGroups?.length ? footer.linkGroups : defaultFooterData.linkGroups,
+    newsletterButtonLabel:
+      footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
+    newsletterHeading: footer.newsletterHeading || defaultFooterData.newsletterHeading,
+    newsletterPlaceholder:
+      footer.newsletterPlaceholder || defaultFooterData.newsletterPlaceholder,
+    newsletterPrivacyLinks: footer.newsletterPrivacyLinks?.length
+      ? footer.newsletterPrivacyLinks
+      : defaultFooterData.newsletterPrivacyLinks,
+    newsletterPrivacyText:
+      footer.newsletterPrivacyText || defaultFooterData.newsletterPrivacyText,
+    phoneLabel: footer.phoneLabel || defaultFooterData.phoneLabel,
+    phoneNumbers: footer.phoneNumbers?.length
+      ? footer.phoneNumbers.map(({ number }) => number)
+      : defaultFooterData.phoneNumbers,
+  }
+}
+
+const getCachedSiteFooter = cachedQuery(fetchSiteFooter, ['site-footer'], [TAGS.globals, TAGS.media])
+
 export async function getSiteFooter(): Promise<SiteFooterData> {
   try {
-    const payload = await getPayloadClient()
-    const footer = await payload.findGlobal({
-      slug: 'footer',
-      depth: 1,
-      overrideAccess: false,
-    })
-
-    return {
-      addresses: footer.addresses?.length ? footer.addresses : defaultFooterData.addresses,
-      copyright: footer.copyright || defaultFooterData.copyright,
-      emailAddress: footer.emailAddress || defaultFooterData.emailAddress,
-      emailLabel: footer.emailLabel || defaultFooterData.emailLabel,
-      headline: footer.headline || defaultFooterData.headline,
-      legalLinks: footer.legalLinks?.length ? footer.legalLinks : defaultFooterData.legalLinks,
-      linkGroups: footer.linkGroups?.length ? footer.linkGroups : defaultFooterData.linkGroups,
-      newsletterButtonLabel:
-        footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
-      newsletterHeading: footer.newsletterHeading || defaultFooterData.newsletterHeading,
-      newsletterPlaceholder:
-        footer.newsletterPlaceholder || defaultFooterData.newsletterPlaceholder,
-      newsletterPrivacyLinks: footer.newsletterPrivacyLinks?.length
-        ? footer.newsletterPrivacyLinks
-        : defaultFooterData.newsletterPrivacyLinks,
-      newsletterPrivacyText:
-        footer.newsletterPrivacyText || defaultFooterData.newsletterPrivacyText,
-      phoneLabel: footer.phoneLabel || defaultFooterData.phoneLabel,
-      phoneNumbers: footer.phoneNumbers?.length
-        ? footer.phoneNumbers.map(({ number }) => number)
-        : defaultFooterData.phoneNumbers,
-    }
+    return await getCachedSiteFooter()
   } catch (error) {
     console.error('Unable to load Payload footer global', error)
 
@@ -213,31 +227,41 @@ export async function getSiteFooter(): Promise<SiteFooterData> {
   }
 }
 
+async function fetchSiteMetadata(): Promise<SiteMetadataData> {
+  const payload = await getPayloadClient()
+
+  const [siteSettings, seoDefaults] = await Promise.all([
+    payload.findGlobal({
+      slug: 'site-settings',
+      depth: 1,
+      overrideAccess: false,
+    }),
+    payload.findGlobal({
+      slug: 'seo-defaults',
+      depth: 1,
+      overrideAccess: false,
+    }),
+  ])
+
+  const favicon = getMedia(siteSettings.favicon)
+
+  return {
+    description:
+      seoDefaults.defaultDescription || siteSettings.tagline || defaultSiteMetadata.description,
+    faviconHref: getResolvableFaviconHref(favicon),
+    title: seoDefaults.defaultTitle || siteSettings.siteName || defaultSiteMetadata.title,
+  }
+}
+
+const getCachedSiteMetadata = cachedQuery(
+  fetchSiteMetadata,
+  ['site-metadata'],
+  [TAGS.globals, TAGS.media],
+)
+
 export async function getSiteMetadata(): Promise<SiteMetadataData> {
   try {
-    const payload = await getPayloadClient()
-
-    const [siteSettings, seoDefaults] = await Promise.all([
-      payload.findGlobal({
-        slug: 'site-settings',
-        depth: 1,
-        overrideAccess: false,
-      }),
-      payload.findGlobal({
-        slug: 'seo-defaults',
-        depth: 1,
-        overrideAccess: false,
-      }),
-    ])
-
-    const favicon = getMedia(siteSettings.favicon)
-
-    return {
-      description:
-        seoDefaults.defaultDescription || siteSettings.tagline || defaultSiteMetadata.description,
-      faviconHref: getResolvableFaviconHref(favicon),
-      title: seoDefaults.defaultTitle || siteSettings.siteName || defaultSiteMetadata.title,
-    }
+    return await getCachedSiteMetadata()
   } catch (error) {
     console.error('Unable to load Payload site metadata', error)
 

@@ -7,8 +7,10 @@ import type {
   ProductFamily,
 } from '@/payload-types'
 
+import { cachedQuery } from './cache'
 import { getPayloadClient } from './payload'
 import { relationArray, relationArrayIncludesSlug, relationId, relationSlug } from './relations'
+import { TAGS } from './tags'
 
 export type ProductFilters = {
   family?: string
@@ -16,6 +18,10 @@ export type ProductFilters = {
   q?: string
   type?: string
 }
+
+const productWithoutLayoutSelect = {
+  layout: false,
+} as const
 
 function getText(value: unknown) {
   return typeof value === 'string' ? value : ''
@@ -72,69 +78,86 @@ async function getPublicModelForProduct(product: Product): Promise<Product['mode
   return docs[0] ?? null
 }
 
-export async function getCapabilities(): Promise<Capability[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'capabilities',
-    depth: 1,
-    draft: false,
-    limit: 100,
-    overrideAccess: false,
-    sort: 'sortOrder',
-  })
+export const getCapabilities = cachedQuery(
+  async function fetchCapabilities(): Promise<Capability[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'capabilities',
+      depth: 1,
+      draft: false,
+      limit: 100,
+      overrideAccess: false,
+      sort: 'sortOrder',
+    })
 
-  return docs
-}
+    return docs
+  },
+  ['capabilities'],
+  [TAGS.capabilities, TAGS.media],
+)
 
-export async function getIndustries(): Promise<Industry[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'industries',
-    depth: 1,
-    draft: false,
-    limit: 100,
-    overrideAccess: false,
-    sort: 'sortOrder',
-  })
+export const getIndustries = cachedQuery(
+  async function fetchIndustries(): Promise<Industry[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'industries',
+      depth: 1,
+      draft: false,
+      limit: 100,
+      overrideAccess: false,
+      sort: 'sortOrder',
+    })
 
-  return docs
-}
+    return docs
+  },
+  ['industries'],
+  [TAGS.industries, TAGS.media],
+)
 
-export async function getProductFamilies(): Promise<ProductFamily[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'product-families',
-    depth: 1,
-    draft: false,
-    limit: 100,
-    overrideAccess: false,
-    sort: 'sortOrder',
-  })
+export const getProductFamilies = cachedQuery(
+  async function fetchProductFamilies(): Promise<ProductFamily[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'product-families',
+      depth: 1,
+      draft: false,
+      limit: 100,
+      overrideAccess: false,
+      sort: 'sortOrder',
+    })
 
-  return docs
-}
+    return docs
+  },
+  ['product-families'],
+  [TAGS.products],
+)
 
-export async function getProducts(filters: ProductFilters = {}): Promise<Product[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'products',
-    depth: 1,
-    draft: false,
-    limit: 200,
-    overrideAccess: false,
-    sort: 'title',
-  })
+export const getProducts = cachedQuery(
+  async function fetchProducts(filters: ProductFilters = {}): Promise<Product[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 1,
+      draft: false,
+      limit: 200,
+      overrideAccess: false,
+      select: productWithoutLayoutSelect,
+      sort: 'title',
+    })
 
-  return docs.filter(
-    (product) =>
-      matchesSearch(product, filters.q) &&
-      matchesFamily(product, filters.family) &&
-      matchesIndustry(product, filters.industry) &&
-      matchesType(product, filters.type),
-  )
-}
+    return docs.filter(
+      (product) =>
+        matchesSearch(product, filters.q) &&
+        matchesFamily(product, filters.family) &&
+        matchesIndustry(product, filters.industry) &&
+        matchesType(product, filters.type),
+    )
+  },
+  ['products'],
+  [TAGS.products, TAGS.industries, TAGS.media],
+)
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+async function fetchProductBySlug(slug: string): Promise<Product | null> {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({
     collection: 'products',
@@ -142,6 +165,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     draft: false,
     limit: 1,
     overrideAccess: false,
+    select: productWithoutLayoutSelect,
     where: {
       slug: {
         equals: slug,
@@ -155,6 +179,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const model3D = await getPublicModelForProduct(product)
 
   return model3D ? { ...product, model3D } : product
+}
+
+export function getProductBySlug(slug: string): Promise<Product | null> {
+  return cachedQuery(
+    fetchProductBySlug,
+    ['product-by-slug', slug],
+    [TAGS.products, TAGS.product(slug), TAGS.media, TAGS.brochures, TAGS.threeD],
+  )(slug)
 }
 
 /**
@@ -181,6 +213,7 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
       draft: false,
       limit: limit + 1,
       overrideAccess: false,
+      select: productWithoutLayoutSelect,
       where: {
         and: [{ productFamily: { equals: familyId } }, { id: { not_equals: product.id } }],
       },
@@ -197,6 +230,7 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
     draft: false,
     limit: limit + 1,
     overrideAccess: false,
+    select: productWithoutLayoutSelect,
     sort: '-updatedAt',
     where: { id: { not_equals: product.id } },
   })
@@ -204,34 +238,42 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
   return docs.slice(0, limit)
 }
 
-export async function getBrochures(): Promise<Brochure[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'brochures',
-    depth: 1,
-    limit: 100,
-    overrideAccess: false,
-    sort: 'title',
-  })
+export const getBrochures = cachedQuery(
+  async function fetchBrochures(): Promise<Brochure[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'brochures',
+      depth: 1,
+      limit: 100,
+      overrideAccess: false,
+      sort: 'title',
+    })
 
-  return docs
-}
+    return docs
+  },
+  ['brochures'],
+  [TAGS.brochures, TAGS.media],
+)
 
-export async function getBlogPosts(): Promise<BlogPost[]> {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'blog-posts',
-    depth: 1,
-    draft: false,
-    limit: 100,
-    overrideAccess: false,
-    sort: '-publishedAt',
-  })
+export const getBlogPosts = cachedQuery(
+  async function fetchBlogPosts(): Promise<BlogPost[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'blog-posts',
+      depth: 1,
+      draft: false,
+      limit: 100,
+      overrideAccess: false,
+      sort: '-publishedAt',
+    })
 
-  return docs
-}
+    return docs
+  },
+  ['blog-posts'],
+  [TAGS.blog, TAGS.media],
+)
 
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({
     collection: 'blog-posts',
@@ -248,3 +290,47 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
   return docs[0] ?? null
 }
+
+export function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  return cachedQuery(
+    fetchBlogPostBySlug,
+    ['blog-post-by-slug', slug],
+    [TAGS.blog, TAGS.post(slug), TAGS.media],
+  )(slug)
+}
+
+export const getAllProductSlugs = cachedQuery(
+  async function fetchAllProductSlugs(): Promise<string[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 0,
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: { slug: true },
+    })
+    return docs.map((doc) => doc.slug).filter((slug): slug is string => Boolean(slug))
+  },
+  ['all-product-slugs'],
+  [TAGS.products],
+)
+
+export const getAllBlogSlugs = cachedQuery(
+  async function fetchAllBlogSlugs(): Promise<string[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'blog-posts',
+      depth: 0,
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: { slug: true },
+    })
+    return docs.map((doc) => doc.slug).filter((slug): slug is string => Boolean(slug))
+  },
+  ['all-blog-slugs'],
+  [TAGS.blog],
+)
