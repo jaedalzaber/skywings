@@ -830,6 +830,7 @@ html[data-section-nav-active='true'] {
   position: absolute;
   inset: 0;
   z-index: 0;
+  container-type: size;
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(210, 210, 210, 0.18) 48%), #d3d3d3;
@@ -869,6 +870,24 @@ html[data-section-nav-active='true'] {
 }
 
 .hero-cover-video[data-loaded='true'] {
+  opacity: 1;
+}
+
+.hero-youtube-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: max(100cqw, 177.7778cqh);
+  height: max(100cqh, 56.25cqw);
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.18);
+  transition: opacity 500ms ease;
+}
+
+.hero-youtube-video[data-loaded='true'] {
   opacity: 1;
 }
 

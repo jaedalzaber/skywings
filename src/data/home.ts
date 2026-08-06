@@ -24,6 +24,7 @@ export type HomeHeroLayoutBlock = Omit<
   laptopCoverVideo?: MediaFile | null
   mobileCoverImage?: MediaImage | null
   mobileCoverVideo?: MediaFile | null
+  youtubeVideoId?: string | null
 }
 type HomeIndustriesSourceBlock = Extract<HomeLayoutSourceBlock, { blockType: 'homeIndustries' }>
 export type HomeIndustryProduct = {
@@ -170,6 +171,8 @@ export const defaultHomeServicesBlock: HomeServicesLayoutBlock = {
     'CNC machining, sheet metal, pipe bending, fabrication, welding, assembly, finishing, and installation all managed under one roof.',
 }
 
+export const DEFAULT_HERO_YOUTUBE_VIDEO_ID = 'i7gcbK-aOi4'
+
 export const defaultHomeLayout: HomeLayout = [
   {
     blockType: 'homeHero',
@@ -183,6 +186,7 @@ export const defaultHomeLayout: HomeLayout = [
     secondaryHref: '/products',
     previewHeading: 'Built for complex requirements',
     previewItems: defaultHeroPreviewItems,
+    youtubeVideoId: DEFAULT_HERO_YOUTUBE_VIDEO_ID,
   },
   defaultHomeServicesBlock,
   {
@@ -440,6 +444,7 @@ function syncHomeHeroBlock(block: HomeHeroSourceBlock): HomeHeroLayoutBlock {
     previewHeading: replaceLegacyHomeCopy(block.previewHeading),
     primaryLabel: replaceLegacyHomeCopy(block.primaryLabel),
     secondaryLabel: replaceLegacyHomeCopy(block.secondaryLabel),
+    youtubeVideoId: DEFAULT_HERO_YOUTUBE_VIDEO_ID,
   }
 }
 
@@ -515,7 +520,7 @@ async function fetchHomeLayout(): Promise<HomeLayout> {
 
 const getCachedHomeLayout = cachedQuery(
   fetchHomeLayout,
-  ['home-layout', 'industry-related-products-v3', 'hero-cover-media-v4'],
+  ['home-layout', 'industry-related-products-v3', 'hero-cover-media-v5'],
   [TAGS.pages, TAGS.page('home'), TAGS.industries, TAGS.products, TAGS.media],
 )
 

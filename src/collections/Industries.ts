@@ -35,6 +35,14 @@ export const Industries: CollectionConfig = {
     },
     slugField(),
     {
+      name: 'shortLabel',
+      type: 'text',
+      admin: {
+        description: 'Compact label for navigation and breadcrumbs, e.g. "GSE".',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'summary',
       type: 'textarea',
       required: true,

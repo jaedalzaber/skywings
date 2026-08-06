@@ -13,6 +13,7 @@ import {
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
 import { HomeGlobeSection } from './HomeGlobeSection'
 import { HeroContrastController } from './HeroContrastController'
+import { HeroYouTubeBackground } from './HeroYouTubeBackground'
 import { HomeProcessSection } from './HomeProcessSection'
 import { HomeServicesScroller } from './HomeServicesScroller'
 
@@ -161,24 +162,30 @@ function HomeHero(props: {
               },
             ]}
           />
-          <HeroCoverVideo
-            className="hero-cover-video--mobile"
-            poster={block.mobileCoverImage?.url ?? '/images/home/hero-mobile.png'}
-            type={block.mobileCoverType}
-            video={block.mobileCoverVideo}
-          />
-          <HeroCoverVideo
-            className="hero-cover-video--laptop"
-            poster={block.laptopCoverImage?.url ?? '/images/home/hero-laptop.png'}
-            type={block.laptopCoverType}
-            video={block.laptopCoverVideo}
-          />
-          <HeroCoverVideo
-            className="hero-cover-video--desktop"
-            poster={block.desktopCoverImage?.url ?? '/images/home/hero-desktop.png'}
-            type={block.desktopCoverType}
-            video={block.desktopCoverVideo}
-          />
+          {block.youtubeVideoId ? (
+            <HeroYouTubeBackground videoId={block.youtubeVideoId} />
+          ) : (
+            <>
+              <HeroCoverVideo
+                className="hero-cover-video--mobile"
+                poster={block.mobileCoverImage?.url ?? '/images/home/hero-mobile.png'}
+                type={block.mobileCoverType}
+                video={block.mobileCoverVideo}
+              />
+              <HeroCoverVideo
+                className="hero-cover-video--laptop"
+                poster={block.laptopCoverImage?.url ?? '/images/home/hero-laptop.png'}
+                type={block.laptopCoverType}
+                video={block.laptopCoverVideo}
+              />
+              <HeroCoverVideo
+                className="hero-cover-video--desktop"
+                poster={block.desktopCoverImage?.url ?? '/images/home/hero-desktop.png'}
+                type={block.desktopCoverType}
+                video={block.desktopCoverVideo}
+              />
+            </>
+          )}
           <div className="hero-video-placeholder" />
         </div>
 

@@ -7,6 +7,7 @@ import { FAQs } from './FAQs'
 import { Finishes } from './Finishes'
 import { FormSubmissions } from './FormSubmissions'
 import { Industries } from './Industries'
+import { IndustryPages } from './IndustryPages'
 import { LandingPages } from './LandingPages'
 import { Leads } from './Leads'
 import { LightingPresets } from './LightingPresets'
@@ -29,6 +30,7 @@ export const collections = [
   ThreeDAssets,
   Pages,
   LandingPages,
+  IndustryPages,
   BlogPosts,
   CaseStudies,
   Capabilities,

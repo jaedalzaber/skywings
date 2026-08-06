@@ -6,6 +6,8 @@ export const TAGS = {
   pages: 'pages',
   page: (slug: string) => `page:${slug}`,
   industries: 'industries',
+  industryPages: 'industry-pages',
+  industryPage: (slug: string) => `industry-page:${slug}`,
   capabilities: 'capabilities',
   brochures: 'brochures',
   blog: 'blog',

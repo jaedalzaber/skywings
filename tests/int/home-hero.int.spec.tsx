@@ -64,6 +64,7 @@ describe('HomeHero', () => {
     const layout: HomeLayout = [
       {
         ...defaultHomeLayout.find((block) => block.blockType === 'homeHero')!,
+        youtubeVideoId: null,
         desktopCoverType: 'video',
         desktopCoverVideo: video({
           mimeType: 'video/mp4',
@@ -117,6 +118,23 @@ describe('HomeHero', () => {
     )
   })
 
+  test('renders the supplied YouTube video as a control-free hero background', () => {
+    const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
+    const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
+    const iframe = container.querySelector<HTMLIFrameElement>('.hero-youtube-video')
+    const url = new URL(iframe?.src ?? '')
+
+    expect(url.hostname).toBe('www.youtube-nocookie.com')
+    expect(url.pathname).toBe('/embed/i7gcbK-aOi4')
+    expect(url.searchParams.get('autoplay')).toBe('1')
+    expect(url.searchParams.get('mute')).toBe('1')
+    expect(url.searchParams.get('controls')).toBe('0')
+    expect(url.searchParams.get('loop')).toBe('1')
+    expect(url.searchParams.get('playlist')).toBe('i7gcbK-aOi4')
+    expect(iframe?.getAttribute('tabindex')).toBe('-1')
+    expect(container.querySelector('.hero-cover-video')).toBeNull()
+  })
+
   test('exposes hero cover media fields and migration for Payload admin', () => {
     expect(heroBlockSource).toMatch(/coverMediaFields\('desktop', 'Desktop'\)/)
     expect(heroBlockSource).toMatch(/coverMediaFields\('laptop', 'Laptop'\)/)
@@ -125,7 +143,7 @@ describe('HomeHero', () => {
     expect(heroBlockSource).toMatch(/\$\{prefix\}CoverVideo/)
     expect(migrationsIndexSource).toContain('20260723_123000_home_hero_cover_media')
     expect(readFileSync(resolve(process.cwd(), 'src/data/home.ts'), 'utf8')).toContain(
-      'hero-cover-media-v4',
+      'hero-cover-media-v5',
     )
   })
 })

@@ -74,6 +74,7 @@ export interface Config {
     'three-d-assets': ThreeDAsset;
     pages: Page;
     'landing-pages': LandingPage;
+    'industry-pages': IndustryPage;
     'blog-posts': BlogPost;
     'case-studies': CaseStudy;
     capabilities: Capability;
@@ -103,6 +104,7 @@ export interface Config {
     'three-d-assets': ThreeDAssetsSelect<false> | ThreeDAssetsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'landing-pages': LandingPagesSelect<false> | LandingPagesSelect<true>;
+    'industry-pages': IndustryPagesSelect<false> | IndustryPagesSelect<true>;
     'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
     'case-studies': CaseStudiesSelect<false> | CaseStudiesSelect<true>;
     capabilities: CapabilitiesSelect<false> | CapabilitiesSelect<true>;
@@ -486,6 +488,10 @@ export interface Industry {
   id: number;
   title: string;
   slug: string;
+  /**
+   * Compact label for navigation and breadcrumbs, e.g. "GSE".
+   */
+  shortLabel?: string | null;
   summary: string;
   description?: {
     root: {
@@ -1218,8 +1224,55 @@ export interface CTABlock {
  * via the `definition` "FAQBlock".
  */
 export interface FAQBlock {
+  /**
+   * Small label above the heading, e.g. "FAQ".
+   */
+  eyebrow?: string | null;
   heading?: string | null;
+  /**
+   * Optional lighter second line under the heading, e.g. "GSE".
+   */
+  secondaryHeading?: string | null;
+  /**
+   * Groups questions under a label, e.g. "Products" and "Services". Takes precedence over the ungrouped list below.
+   */
+  categories?:
+    | {
+        label: string;
+        questions: {
+          question: string;
+          answer: {
+            root: {
+              type: string;
+              children: {
+                type: any;
+                version: number;
+                [k: string]: unknown;
+              }[];
+              direction: ('ltr' | 'rtl') | null;
+              format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+              indent: number;
+              version: number;
+            };
+            [k: string]: unknown;
+          };
+          defaultOpen?: boolean | null;
+          id?: string | null;
+        }[];
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * When off, opening an answer closes the previously open one.
+   */
+  allowMultipleOpen?: boolean | null;
+  /**
+   * Used when no grouped questions are set.
+   */
   faqs?: (number | Faq)[] | null;
+  /**
+   * Used when no grouped questions are set.
+   */
   items?:
     | {
         question: string;
@@ -1238,9 +1291,22 @@ export interface FAQBlock {
           };
           [k: string]: unknown;
         };
+        defaultOpen?: boolean | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'faq';
@@ -1456,6 +1522,508 @@ export interface LandingPage {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Long-form landing pages for each industry, built from reusable sections.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-pages".
+ */
+export interface IndustryPage {
+  id: number;
+  /**
+   * e.g. Aviation Ground Support Equipment.
+   */
+  title: string;
+  slug: string;
+  /**
+   * Shorter label for menus, e.g. "Aviation GSE". Falls back to the name.
+   */
+  navLabel?: string | null;
+  /**
+   * Optional. Connects this page to the industry taxonomy used by products.
+   */
+  industry?: (number | null) | Industry;
+  /**
+   * Lower numbers appear first in industry listings.
+   */
+  sortOrder?: number | null;
+  /**
+   * Add, reorder, duplicate or hide sections. Every section here works on any industry page.
+   */
+  layout?:
+    | (
+        | IndustryHeroBlock
+        | IndustryIntroBlock
+        | CardCarouselBlock
+        | IndustryValueBlock
+        | ProductGalleryBlock
+        | BrochureBlock
+        | CustomProductCtaBlock
+        | FAQBlock
+        | LogoCloudBlock
+        | RichTextBlock
+      )[]
+    | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryHeroBlock".
+ */
+export interface IndustryHeroBlock {
+  /**
+   * Required. Renders immediately, and stays visible if the video is blocked, slow, or unavailable.
+   */
+  poster: number | Media;
+  /**
+   * Optional. Without a video the poster image is shown on its own.
+   */
+  video?: (number | null) | Media;
+  /**
+   * Optional lighter or differently cropped cut for narrow screens.
+   */
+  mobileVideo?: (number | null) | Media;
+  /**
+   * Describes what the footage shows, for screen readers and when media fails to load.
+   */
+  mediaDescription: string;
+  /**
+   * Reserves space before media loads so the page does not shift.
+   */
+  aspectRatio?: ('16-9' | '21-9' | '4-3' | 'viewport') | null;
+  showOverlay?: boolean | null;
+  /**
+   * Line breaks are preserved.
+   */
+  headline?: string | null;
+  supportingStatement?: string | null;
+  /**
+   * Horizontal placement of the panel across the bottom of the media.
+   */
+  overlayAlignment?: ('left' | 'center' | 'right') | null;
+  overlayTextAlignment?: ('left' | 'center') | null;
+  /**
+   * Shown alongside the overlay panel, e.g. "60+ Products".
+   */
+  stats?:
+    | {
+        /**
+         * e.g. 60+
+         */
+        value: string;
+        /**
+         * e.g. Products
+         */
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'industryHero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryIntroBlock".
+ */
+export interface IndustryIntroBlock {
+  /**
+   * Small label above the heading, e.g. "Aviation GSE".
+   */
+  eyebrow?: string | null;
+  /**
+   * One row per visual line. Emphasised lines render in the heavier weight seen in the design.
+   */
+  headingLines: {
+    text: string;
+    emphasis?: ('strong' | 'light') | null;
+    id?: string | null;
+  }[];
+  /**
+   * Body copy beside the heading.
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Leave the label empty to hide this button.
+   */
+  primaryAction?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Leave the label empty to hide this button.
+   */
+  secondaryAction?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  layout?: ('split' | 'stacked' | 'centered') | null;
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'industryIntro';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CardCarouselBlock".
+ */
+export interface CardCarouselBlock {
+  /**
+   * Small label above the heading.
+   */
+  eyebrow?: string | null;
+  /**
+   * Line breaks are preserved.
+   */
+  heading: string;
+  /**
+   * Card order here is the order shown. Numbering is generated automatically.
+   */
+  cards: {
+    title: string;
+    image: number | Media;
+    /**
+     * Optional short supporting line.
+     */
+    description?: string | null;
+    /**
+     * Optional. Makes the whole card actionable.
+     */
+    href?: string | null;
+    /**
+     * Optional. Defaults to the card position, e.g. 01.
+     */
+    numberOverride?: string | null;
+    id?: string | null;
+  }[];
+  showControls?: boolean | null;
+  /**
+   * Tablet and mobile always fall back to a swipeable scroller regardless of this value.
+   */
+  cardsPerView?: number | null;
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'cardCarousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryValueBlock".
+ */
+export interface IndustryValueBlock {
+  /**
+   * The heading is built from segments so individual words can be emphasised, as in "High-Quality GSE Sales". Segments flow inline; use "Line break after" to start a new line.
+   */
+  headingSegments: {
+    text: string;
+    emphasis?: ('normal' | 'bold') | null;
+    breakAfter?: boolean | null;
+    id?: string | null;
+  }[];
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  featureImage: number | Media;
+  /**
+   * Small line above the logo row, e.g. "Our Clients In Aviation GSE Supply".
+   */
+  logosLabel?: string | null;
+  clientLogos?:
+    | {
+        /**
+         * Used as the accessible name for the logo.
+         */
+        name: string;
+        href?: string | null;
+        logo: number | Media;
+        /**
+         * Only needed when the client name is not the right description.
+         */
+        altOverride?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'industryValue';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductGalleryBlock".
+ */
+export interface ProductGalleryBlock {
+  /**
+   * Line breaks are preserved.
+   */
+  heading: string;
+  /**
+   * Optional supporting text below the heading.
+   */
+  description?: string | null;
+  /**
+   * Leave empty to show every selected product without a filter bar. An "All" option is added automatically.
+   */
+  filters?:
+    | {
+        label: string;
+        /**
+         * Products in this family match the filter.
+         */
+        productFamily?: (number | null) | ProductFamily;
+        id?: string | null;
+      }[]
+    | null;
+  items: {
+    /**
+     * Name, code, image, description and link are read from the product.
+     */
+    product: number | Product;
+    /**
+     * Renders as the raised centre card. Use on one product at a time.
+     */
+    featured?: boolean | null;
+    /**
+     * Optional. For a transparent render that differs from the catalogue.
+     */
+    imageOverride?: (number | null) | Media;
+    id?: string | null;
+  }[];
+  /**
+   * Leave the label empty to hide the button.
+   */
+  browseAction?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'productGallery';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BrochureBlock".
+ */
+export interface BrochureBlock {
+  /**
+   * Line breaks are preserved.
+   */
+  heading: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Link an existing brochure record, or upload a standalone file for this page only.
+   */
+  source?: ('brochure' | 'file') | null;
+  /**
+   * Cover image, page count and file are read from the brochure record.
+   */
+  brochure?: (number | null) | Brochure;
+  file?: (number | null) | Brochure;
+  /**
+   * Optional override. Falls back to the brochure record cover.
+   */
+  coverImage?: (number | null) | Media;
+  format?: string | null;
+  /**
+   * Optional override. Falls back to the brochure record.
+   */
+  pageCount?: number | null;
+  /**
+   * Label for the download button. The file comes from the source above.
+   */
+  downloadAction?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Leave the label empty to hide this button.
+   */
+  secondaryAction?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'brochureDownload';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomProductCtaBlock".
+ */
+export interface CustomProductCtaBlock {
+  /**
+   * Segments flow inline, e.g. "Need " + "Customized Product" (bold) + " For Your Requirement?".
+   */
+  headingSegments: {
+    text: string;
+    emphasis?: ('normal' | 'bold') | null;
+    id?: string | null;
+  }[];
+  description?: string | null;
+  /**
+   * The framed image beside the copy.
+   */
+  featureImage: number | Media;
+  /**
+   * Leave empty if the image is purely decorative.
+   */
+  featureImageAlt?: string | null;
+  /**
+   * Optional watermark behind the section. Rendered decoratively and hidden from screen readers.
+   */
+  backgroundImage?: (number | null) | Media;
+  /**
+   * Leave the label empty to hide this button.
+   */
+  action?: {
+    label?: string | null;
+    href?: string | null;
+    style?: ('primary' | 'secondary' | 'text') | null;
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Background and text treatment for this section.
+   */
+  theme?: ('light' | 'dark' | 'brand') | null;
+  /**
+   * Optional. Enables deep links such as #gse-products.
+   */
+  anchorId?: string | null;
+  /**
+   * Keeps the content but removes the section from the live page.
+   */
+  hidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'customProductCta';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1691,6 +2259,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'landing-pages';
         value: number | LandingPage;
+      } | null)
+    | ({
+        relationTo: 'industry-pages';
+        value: number | IndustryPage;
       } | null)
     | ({
         relationTo: 'blog-posts';
@@ -2377,15 +2949,36 @@ export interface CTABlockSelect<T extends boolean = true> {
  * via the `definition` "FAQBlock_select".
  */
 export interface FAQBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
+  secondaryHeading?: T;
+  categories?:
+    | T
+    | {
+        label?: T;
+        questions?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              defaultOpen?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  allowMultipleOpen?: T;
   faqs?: T;
   items?:
     | T
     | {
         question?: T;
         answer?: T;
+        defaultOpen?: T;
         id?: T;
       };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2472,6 +3065,264 @@ export interface LandingPagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-pages_select".
+ */
+export interface IndustryPagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  navLabel?: T;
+  industry?: T;
+  sortOrder?: T;
+  layout?:
+    | T
+    | {
+        industryHero?: T | IndustryHeroBlockSelect<T>;
+        industryIntro?: T | IndustryIntroBlockSelect<T>;
+        cardCarousel?: T | CardCarouselBlockSelect<T>;
+        industryValue?: T | IndustryValueBlockSelect<T>;
+        productGallery?: T | ProductGalleryBlockSelect<T>;
+        brochureDownload?: T | BrochureBlockSelect<T>;
+        customProductCta?: T | CustomProductCtaBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        logoCloud?: T | LogoCloudBlockSelect<T>;
+        richText?: T | RichTextBlockSelect<T>;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryHeroBlock_select".
+ */
+export interface IndustryHeroBlockSelect<T extends boolean = true> {
+  poster?: T;
+  video?: T;
+  mobileVideo?: T;
+  mediaDescription?: T;
+  aspectRatio?: T;
+  showOverlay?: T;
+  headline?: T;
+  supportingStatement?: T;
+  overlayAlignment?: T;
+  overlayTextAlignment?: T;
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryIntroBlock_select".
+ */
+export interface IndustryIntroBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  headingLines?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        id?: T;
+      };
+  description?: T;
+  primaryAction?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  secondaryAction?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  layout?: T;
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CardCarouselBlock_select".
+ */
+export interface CardCarouselBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  cards?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        description?: T;
+        href?: T;
+        numberOverride?: T;
+        id?: T;
+      };
+  showControls?: T;
+  cardsPerView?: T;
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndustryValueBlock_select".
+ */
+export interface IndustryValueBlockSelect<T extends boolean = true> {
+  headingSegments?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        breakAfter?: T;
+        id?: T;
+      };
+  description?: T;
+  featureImage?: T;
+  logosLabel?: T;
+  clientLogos?:
+    | T
+    | {
+        name?: T;
+        href?: T;
+        logo?: T;
+        altOverride?: T;
+        id?: T;
+      };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductGalleryBlock_select".
+ */
+export interface ProductGalleryBlockSelect<T extends boolean = true> {
+  heading?: T;
+  description?: T;
+  filters?:
+    | T
+    | {
+        label?: T;
+        productFamily?: T;
+        id?: T;
+      };
+  items?:
+    | T
+    | {
+        product?: T;
+        featured?: T;
+        imageOverride?: T;
+        id?: T;
+      };
+  browseAction?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BrochureBlock_select".
+ */
+export interface BrochureBlockSelect<T extends boolean = true> {
+  heading?: T;
+  description?: T;
+  source?: T;
+  brochure?: T;
+  file?: T;
+  coverImage?: T;
+  format?: T;
+  pageCount?: T;
+  downloadAction?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  secondaryAction?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomProductCtaBlock_select".
+ */
+export interface CustomProductCtaBlockSelect<T extends boolean = true> {
+  headingSegments?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        id?: T;
+      };
+  description?: T;
+  featureImage?: T;
+  featureImageAlt?: T;
+  backgroundImage?: T;
+  action?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        style?: T;
+        openInNewTab?: T;
+      };
+  theme?: T;
+  anchorId?: T;
+  hidden?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2649,6 +3500,7 @@ export interface MachinesSelect<T extends boolean = true> {
 export interface IndustriesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
+  shortLabel?: T;
   summary?: T;
   description?: T;
   heroImage?: T;
