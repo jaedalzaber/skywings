@@ -1,6 +1,5 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -9,6 +8,7 @@ import sharp from 'sharp'
 import { collections } from './collections'
 import { Users } from './collections/Users'
 import { globals } from './globals'
+import { cloudinaryStorage } from './storage/cloudinary'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -35,13 +35,17 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    vercelBlobStorage({
+    cloudinaryStorage({
       collections: {
+        // Brochures and 3D assets gate reads on `isPublic`, so their bytes keep
+        // flowing through Payload's /api/<collection>/file route.
         brochures: true,
-        media: true,
+        // Media is world-readable, so skip the proxy and serve Cloudinary's CDN
+        // URL directly.
+        media: { disablePayloadAccessControl: true },
         'three-d-assets': true,
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      rootFolder: 'skywings',
     }),
   ],
 })

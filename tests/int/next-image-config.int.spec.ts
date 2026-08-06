@@ -10,4 +10,10 @@ describe('Next image configuration', () => {
     expect(config).toMatch(/pathname:\s*['"]\/api\/media\/file\/\*\*['"]/)
     expect(config).toMatch(/pathname:\s*['"]\/images\/\*\*['"]/)
   })
+
+  test('allows Cloudinary-hosted media, which bypasses the Payload file route', () => {
+    const config = readFileSync(resolve(process.cwd(), 'next.config.ts'), 'utf8')
+
+    expect(config).toMatch(/hostname:\s*['"]res\.cloudinary\.com['"]/)
+  })
 })

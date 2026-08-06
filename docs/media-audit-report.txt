@@ -1,0 +1,309 @@
+Media documents: 164
+  resolving : 54
+  BROKEN    : 110
+
+--- broken media ---
+  [404] 32b382de26b26416f9aa03c6d8c97bbc.mp4 (id 138)
+  [404] broshure thumb.png (id 102)
+  [404] brushes.png (id 132)
+  [404] cap-01-laser-cutting.png (id 3)
+  [404] cap-02-shearing.png (id 4)
+  [404] cap-03-cnc-and-conventional-machining.png (id 5)
+  [404] cap-04-press-brake-forming.png (id 6)
+  [404] cap-05-plate-and-sheet-rolling.png (id 7)
+  [404] cap-06-radial-and-heavy-drilling.png (id 8)
+  [404] cap-07-hydraulic-pressing.png (id 9)
+  [404] cap-08-welding-and-assembly.png (id 10)
+  [404] cap-09-surface-treatment-and-finishing.png (id 11)
+  [404] ChatGPT Image Jul 26, 2026, 01_42_13 PM.png (id 147)
+  [404] cover 1280.mp4 (id 145)
+  [404] encloser.png (id 129)
+  [404] foldingstandthumb-1.png (id 121)
+  [404] foldingstandthumb.png (id 82)
+  [404] Frame 366.png (id 141)
+  [404] Frame 369.png (id 139)
+  [404] Frame 370.png (id 140)
+  [404] Frame 371.png (id 142)
+  [404] Frame 372.png (id 135)
+  [404] Frame 373.png (id 143)
+  [404] gantry.png (id 133)
+  [404] gse-b1ms-045-b1-maintenance-stand.png (id 35)
+  [404] gse-bc-063-beverage-cart.png (id 50)
+  [404] gse-cdd-006-caster-deck-dolly.png (id 37)
+  [404] gse-cpl-037-cowl-pylon-ladders.png (id 27)
+  [404] gse-cs-039-cargo-stairs.png (id 29)
+  [404] gse-fb-018-fuel-bowser.png (id 45)
+  [404] gse-fbt-005-flatbed-trolley.png (id 36)
+  [404] gse-fs-038-folding-stand.png (id 28)
+  [404] gse-gcp-015-gantry-crane-portable.png (id 43)
+  [404] gse-hms-043-hydraulic-maintenance-steps.png (id 33)
+  [404] gse-ic380-032-inline-conveyor-380v.png (id 22)
+  [404] gse-ld3d-011-ld3-container-dolly.png (id 41)
+  [404] gse-lt-057-luggage-trolley.png (id 49)
+  [404] gse-mas-041-maintenance-access-stair.png (id 31)
+  [404] gse-mcf-065-meal-cart-full-size.png (id 51)
+  [404] gse-ms-040-maintenance-stair.png (id 30)
+  [404] gse-oc-019-oxygen-cart.png (id 46)
+  [404] gse-pd-034-pallet-dispenser.png (id 24)
+  [404] gse-pn-056-pallet-net.png (id 53)
+  [404] gse-psd-042-propeller-stand.png (id 32)
+  [404] gse-rc-modular-conveyor-system.png (id 21)
+  [404] gse-rc380-033-rotator-conveyor-380v.png (id 23)
+  [404] gse-rdd-007-roller-deck-dolly.png (id 38)
+  [404] gse-sl-036-straight-ladders.png (id 26)
+  [404] gse-spr-010-slave-pallet-rack.png (id 40)
+  [404] gse-srr-009-static-roller-rack.png (id 39)
+  [404] gse-tbl-035-towable-belt-loader.png (id 25)
+  [404] gse-tr-020-transfer-ramp.png (id 47)
+  [404] gse-tt-022-tire-trailer.png (id 48)
+  [404] gse-uldc-01-13-uld-containers.png (id 52)
+  [404] gse-uldr-012-uld-rack.png (id 42)
+  [404] gse-wb-017-water-bowser.png (id 44)
+  [404] gse-wmp-044-windshield-maintenance-platform.png (id 34)
+  [404] guard.png (id 130)
+  [404] handrail_1-1.png (id 119)
+  [404] handrail_1.png (id 118)
+  [404] hero.png (id 137)
+  [404] ind-02-architectural-and-interior-metalwork.png (id 13)
+  [404] ind-03-custom-metal-fabrication.png (id 14)
+  [404] ind-04-heavy-equipment-and-machinery.png (id 15)
+  [404] ind-05-industrial-manufacturing.png (id 16)
+  [404] ind-06-oil-and-gas.png (id 17)
+  [404] ind-07-aviation-ground-support-equipment.png (id 18)
+  [404] INDUSTURZ Industrial Design Sample industurz Instagram reel.mp4 (id 144)
+  [404] p1-1.png (id 120)
+  [404] p1.png (id 117)
+  [404] p2.png (id 122)
+  [404] pdf-sky-wings-catalogue.png (id 64)
+  [404] Pergolas and canopies-1.png (id 124)
+  [404] Pergolas and canopies.png (id 123)
+  [404] platform walkway featured-1.png (id 127)
+  [404] platform walkway featured.png (id 126)
+  [404] platform walkway.png (id 125)
+  [404] process 1-1.png (id 136)
+  [404] process 1.png (id 134)
+  [404] rail.png (id 128)
+  [404] Rectangle 424-2.png (id 12)
+  [404] Rectangle 552-1.png (id 109)
+  [404] Rectangle 553-1.png (id 105)
+  [404] Rectangle 554-1.png (id 107)
+  [404] Rectangle 555-1.png (id 101)
+  [404] Rectangle 555-2.png (id 104)
+  [404] Rectangle 556-1.png (id 100)
+  [404] Rectangle 556-2.png (id 103)
+  [404] Rectangle 557-1.png (id 106)
+  [404] Rectangle 558-1.png (id 19)
+  [404] Rectangle 558-2.png (id 110)
+  [404] Rectangle 559-1.png (id 108)
+  [404] roller.png (id 131)
+  [404] s0.png (id 146)
+  [404] s1.png (id 111)
+  [404] s2.png (id 112)
+  [404] s3.png (id 113)
+  [404] s4.png (id 114)
+  [404] s5.png (id 115)
+  [404] s6.png (id 116)
+  [404] sw-am-001-stainless-steel-railings.png (id 60)
+  [404] sw-am-002-pergolas-and-canopies.png (id 61)
+  [404] sw-hf-001-platforms-and-walkways.png (id 58)
+  [404] sw-hf-002-tanks-and-cylindrical-structures.png (id 59)
+  [404] sw-pr-001-shafts-and-rollers.png (id 54)
+  [404] sw-pr-002-bushings-and-couplings.png (id 55)
+  [404] sw-sm-001-equipment-panels-and-enclosures.png (id 56)
+  [404] sw-sm-002-guards-and-protective-covers.png (id 57)
+  [404] sw-tb-001-handrails-and-safety-barriers.png (id 62)
+  [404] sw-tb-002-tubular-machine-guards.png (id 63)
+
+--- documents referencing broken media (76) ---
+  brochures :: GSE Folding Stand Brochure
+      coverImage  ->  broshure thumb.png
+  brochures :: Aviation GSE Technical Datasheets
+      coverImage  ->  pdf-sky-wings-catalogue.png
+  brochures :: Industrial Products Catalogue
+      coverImage  ->  pdf-sky-wings-catalogue.png
+  brochures :: Manufacturing Capabilities Brochure
+      coverImage  ->  pdf-sky-wings-catalogue.png
+  brochures :: GSE Product Catalogue
+      coverImage  ->  pdf-sky-wings-catalogue.png
+  brochures :: Sky Wings Company Profile
+      coverImage  ->  pdf-sky-wings-catalogue.png
+  capabilities :: Surface Treatment & Finishing
+      featuredImage  ->  cap-09-surface-treatment-and-finishing.png
+  capabilities :: Welding & Assembly
+      featuredImage  ->  cap-08-welding-and-assembly.png
+  capabilities :: Hydraulic Pressing
+      featuredImage  ->  cap-07-hydraulic-pressing.png
+  capabilities :: Radial & Heavy Drilling
+      featuredImage  ->  cap-06-radial-and-heavy-drilling.png
+  capabilities :: Plate & Sheet Rolling
+      featuredImage  ->  cap-05-plate-and-sheet-rolling.png
+  capabilities :: Press-Brake Forming
+      featuredImage  ->  cap-04-press-brake-forming.png
+  capabilities :: CNC & Conventional Machining
+      featuredImage  ->  cap-03-cnc-and-conventional-machining.png
+  capabilities :: Shearing
+      featuredImage  ->  cap-02-shearing.png
+  capabilities :: Laser Cutting
+      featuredImage  ->  cap-01-laser-cutting.png
+  industries :: Maintenance & Repair Services
+      heroImage  ->  Rectangle 552-1.png
+  industries :: Marine & Offshore
+      heroImage  ->  Rectangle 558-1.png
+  industries :: Aviation Ground Support Equipment
+      heroImage  ->  Rectangle 559-1.png
+  industries :: Oil & Gas
+      heroImage  ->  Rectangle 554-1.png
+  industries :: Industrial Manufacturing
+      heroImage  ->  Rectangle 557-1.png
+  industries :: Heavy Equipment & Machinery
+      heroImage  ->  Rectangle 553-1.png
+  industries :: Custom Metal Fabrication
+      heroImage  ->  Rectangle 555-2.png
+  industries :: Architectural & Interior Metalwork
+      heroImage  ->  Rectangle 556-2.png
+  industries :: Construction & Infrastructure
+      heroImage  ->  Rectangle 424-2.png
+  products :: Tubular Machine Guards
+      featuredImage  ->  sw-tb-002-tubular-machine-guards.png
+  products :: Handrails And Safety Barriers
+      featuredImage  ->  handrail_1-1.png
+  products :: Handrails And Safety Barriers
+      thumbnailImage  ->  p1-1.png
+  products :: Pergolas And Canopies
+      featuredImage  ->  Pergolas and canopies-1.png
+  products :: Pergolas And Canopies
+      thumbnailImage  ->  p2.png
+  products :: Stainless Steel Railings
+      featuredImage  ->  sw-am-001-stainless-steel-railings.png
+  products :: Stainless Steel Railings
+      thumbnailImage  ->  rail.png
+  products :: Tanks And Cylindrical Structures
+      featuredImage  ->  sw-hf-002-tanks-and-cylindrical-structures.png
+  products :: Platforms And Walkways
+      featuredImage  ->  platform walkway featured-1.png
+  products :: Platforms And Walkways
+      thumbnailImage  ->  platform walkway.png
+  products :: Guards And Protective Covers
+      featuredImage  ->  sw-sm-002-guards-and-protective-covers.png
+  products :: Guards And Protective Covers
+      thumbnailImage  ->  guard.png
+  products :: Equipment Panels And Enclosures
+      featuredImage  ->  sw-sm-001-equipment-panels-and-enclosures.png
+  products :: Equipment Panels And Enclosures
+      thumbnailImage  ->  encloser.png
+  products :: Bushings And Couplings
+      featuredImage  ->  sw-pr-002-bushings-and-couplings.png
+  products :: Bushings And Couplings
+      thumbnailImage  ->  brushes.png
+  products :: Shafts And Rollers
+      featuredImage  ->  sw-pr-001-shafts-and-rollers.png
+  products :: Shafts And Rollers
+      thumbnailImage  ->  roller.png
+  products :: Pallet Net
+      featuredImage  ->  gse-pn-056-pallet-net.png
+  products :: ULD Containers
+      featuredImage  ->  gse-uldc-01-13-uld-containers.png
+  products :: Meal Cart - Full Size
+      featuredImage  ->  gse-mcf-065-meal-cart-full-size.png
+  products :: Beverage Cart
+      featuredImage  ->  gse-bc-063-beverage-cart.png
+  products :: Luggage Trolley
+      featuredImage  ->  gse-lt-057-luggage-trolley.png
+  products :: Tire Trailer
+      featuredImage  ->  gse-tt-022-tire-trailer.png
+  products :: Transfer Ramp
+      featuredImage  ->  gse-tr-020-transfer-ramp.png
+  products :: Oxygen Cart
+      featuredImage  ->  gse-oc-019-oxygen-cart.png
+  products :: Fuel Bowser
+      featuredImage  ->  gse-fb-018-fuel-bowser.png
+  products :: Water Bowser
+      featuredImage  ->  gse-wb-017-water-bowser.png
+  products :: Gantry Crane Portable
+      featuredImage  ->  gse-gcp-015-gantry-crane-portable.png
+  products :: Gantry Crane Portable
+      thumbnailImage  ->  gantry.png
+  products :: ULD Rack
+      featuredImage  ->  gse-uldr-012-uld-rack.png
+  products :: LD3 Container Dolly
+      featuredImage  ->  gse-ld3d-011-ld3-container-dolly.png
+  products :: Slave Pallet Rack
+      featuredImage  ->  gse-spr-010-slave-pallet-rack.png
+  products :: Static Roller Rack
+      featuredImage  ->  gse-srr-009-static-roller-rack.png
+  products :: Roller Deck Dolly
+      featuredImage  ->  gse-rdd-007-roller-deck-dolly.png
+  products :: Caster Deck Dolly
+      featuredImage  ->  gse-cdd-006-caster-deck-dolly.png
+  products :: Flatbed Trolley
+      featuredImage  ->  gse-fbt-005-flatbed-trolley.png
+  products :: B1 Maintenance Stand
+      featuredImage  ->  gse-b1ms-045-b1-maintenance-stand.png
+  products :: Windshield Maintenance Platform
+      featuredImage  ->  gse-wmp-044-windshield-maintenance-platform.png
+  products :: Hydraulic Maintenance Steps
+      featuredImage  ->  gse-hms-043-hydraulic-maintenance-steps.png
+  products :: Propeller Stand
+      featuredImage  ->  gse-psd-042-propeller-stand.png
+  products :: Maintenance Access Stair
+      featuredImage  ->  gse-mas-041-maintenance-access-stair.png
+  products :: Maintenance Stair
+      featuredImage  ->  gse-ms-040-maintenance-stair.png
+  products :: Cargo Stairs
+      featuredImage  ->  gse-cs-039-cargo-stairs.png
+  products :: Folding Stand
+      thumbnailImage  ->  foldingstandthumb-1.png
+  products :: Cowl Pylon Ladders
+      featuredImage  ->  gse-cpl-037-cowl-pylon-ladders.png
+  products :: Straight Ladders
+      featuredImage  ->  gse-sl-036-straight-ladders.png
+  products :: Towable Belt Loader
+      featuredImage  ->  gse-tbl-035-towable-belt-loader.png
+  products :: Pallet Dispenser
+      featuredImage  ->  gse-pd-034-pallet-dispenser.png
+  products :: Rotator Conveyor 380V
+      featuredImage  ->  gse-rc380-033-rotator-conveyor-380v.png
+  products :: Inline Conveyor 380V
+      featuredImage  ->  gse-ic380-032-inline-conveyor-380v.png
+  products :: Modular Conveyor System
+      featuredImage  ->  gse-rc-modular-conveyor-system.png
+
+--- broken but unreferenced (safe to delete: 38) ---
+  32b382de26b26416f9aa03c6d8c97bbc.mp4
+  ChatGPT Image Jul 26, 2026, 01_42_13 PM.png
+  cover 1280.mp4
+  foldingstandthumb.png
+  Frame 366.png
+  Frame 369.png
+  Frame 370.png
+  Frame 371.png
+  Frame 372.png
+  Frame 373.png
+  gse-fs-038-folding-stand.png
+  handrail_1.png
+  hero.png
+  ind-02-architectural-and-interior-metalwork.png
+  ind-03-custom-metal-fabrication.png
+  ind-04-heavy-equipment-and-machinery.png
+  ind-05-industrial-manufacturing.png
+  ind-06-oil-and-gas.png
+  ind-07-aviation-ground-support-equipment.png
+  INDUSTURZ Industrial Design Sample industurz Instagram reel.mp4
+  p1.png
+  Pergolas and canopies.png
+  platform walkway featured.png
+  process 1-1.png
+  process 1.png
+  Rectangle 555-1.png
+  Rectangle 556-1.png
+  Rectangle 558-2.png
+  s0.png
+  s1.png
+  s2.png
+  s3.png
+  s4.png
+  s5.png
+  s6.png
+  sw-am-002-pergolas-and-canopies.png
+  sw-hf-001-platforms-and-walkways.png
+  sw-tb-001-handrails-and-safety-barriers.png
