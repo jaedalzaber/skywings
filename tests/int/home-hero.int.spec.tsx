@@ -125,7 +125,7 @@ describe('HomeHero', () => {
     expect(heroBlockSource).toMatch(/\$\{prefix\}CoverVideo/)
     expect(migrationsIndexSource).toContain('20260723_123000_home_hero_cover_media')
     expect(readFileSync(resolve(process.cwd(), 'src/data/home.ts'), 'utf8')).toContain(
-      'hero-cover-media-v2',
+      'hero-cover-media-v4',
     )
   })
 })

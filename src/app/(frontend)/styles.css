@@ -991,7 +991,7 @@ html[data-section-nav-active='true'] {
   max-width: 4.8ch;
   margin: 0;
   color: #121111;
-  font-size: clamp(3.35rem, 10vw, 4rem);
+  font-size: clamp(1.35rem, 5vw, 2rem);
   font-weight: 900;
   line-height: 0.82;
   text-transform: uppercase;
@@ -1058,6 +1058,7 @@ html[data-section-nav-active='true'] {
   padding: 2rem 1.5rem;
   overflow: hidden;
   background: #ececec;
+  border-radius: .5rem;
 }
 
 .services-showcase-card-surface::after {
@@ -1721,6 +1722,7 @@ h3 {
     padding-right: 0;
     padding-left: 0;
     z-index: 00;
+
   }
 
   .industries-showcase-stack::after {

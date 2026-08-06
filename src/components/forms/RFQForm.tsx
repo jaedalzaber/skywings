@@ -8,55 +8,60 @@ export function RFQForm(props: {
   const { productInterest, sourcePage, submitted } = props
 
   return (
-    <div className="form-panel" id="rfq-form">
+    <div className="form-panel contact-message-form" id="rfq-form">
       {submitted ? (
-        <div className="form-success">
-          <strong>Request received.</strong>
-          <p>Thanks. The team can now review this RFQ inside Payload.</p>
+        <div className="form-success" role="status">
+          <strong>Message received.</strong>
+          <p>Thank you. Our CEO will be in touch soon.</p>
         </div>
       ) : null}
+
       <form action={createRFQ}>
         <input name="sourcePage" type="hidden" value={sourcePage} />
-        <label>
-          Name
-          <input name="buyerName" placeholder="Your name" required />
+        {productInterest ? (
+          <input name="productInterest" type="hidden" value={productInterest} />
+        ) : null}
+
+        <label className="contact-field contact-field-name">
+          <span>Name</span>
+          <input autoComplete="name" name="buyerName" placeholder="name" required />
         </label>
-        <label>
-          Company
-          <input name="company" placeholder="Company / organization" />
-        </label>
-        <label>
-          Email
-          <input name="email" placeholder="name@company.com" required type="email" />
-        </label>
-        <label>
-          Phone
-          <input name="phone" placeholder="+971..." />
-        </label>
-        <label>
-          Product or requirement
-          <input
-            defaultValue={productInterest}
-            name="productInterest"
-            placeholder="Modular conveyor system, platform, enclosure..."
-          />
-        </label>
-        <label>
-          Quantity
-          <input name="quantity" placeholder="1 unit, 20 assemblies..." />
-        </label>
-        <label className="field-full">
-          Message
+
+        <div className="contact-field-row">
+          <label className="contact-field">
+            <span>Email address</span>
+            <input
+              autoComplete="email"
+              name="email"
+              placeholder="Email address"
+              required
+              type="email"
+            />
+          </label>
+
+          <label className="contact-field">
+            <span>Phone (optional)</span>
+            <input autoComplete="tel" name="phone" placeholder="Phone" type="tel" />
+          </label>
+        </div>
+
+        <label className="contact-field contact-field-message">
+          <span>Your message</span>
           <textarea
+            minLength={10}
             name="message"
-            placeholder="Share drawings, dimensions, material, load, finish, industry, or problem to solve."
+            placeholder="The more detail the better..."
             required
-            rows={6}
+            rows={4}
           />
         </label>
-        <button className="button button-primary" type="submit">
-          Submit RFQ
-        </button>
+
+        <div className="contact-submit-group">
+          <button aria-describedby="contact-response-note" type="submit">
+            Send message
+          </button>
+          <p id="contact-response-note">Our CEO will reach out to you very soon.</p>
+        </div>
       </form>
     </div>
   )

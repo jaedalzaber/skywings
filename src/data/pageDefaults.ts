@@ -75,10 +75,10 @@ export const brochuresLayout: PageLayout = [
 export const contactLayout: PageLayout = [
   {
     blockType: 'contactRFQ',
-    eyebrow: 'Contact Us',
-    heading: 'Feel Free To Get In Touch With Us.',
+    eyebrow: 'Direct message',
+    heading: 'Get In Touch',
     description:
-      'Supported by modern machinery and experienced technicians, we deliver customized fabrication solutions.',
+      "Send a direct message to our CEO — a pioneer in Bangladesh's garments industry. Start a conversation and experience how effortless sourcing can be.",
   },
 ]
 

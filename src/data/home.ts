@@ -515,7 +515,7 @@ async function fetchHomeLayout(): Promise<HomeLayout> {
 
 const getCachedHomeLayout = cachedQuery(
   fetchHomeLayout,
-  ['home-layout', 'industry-related-products-v2', 'hero-cover-media-v2'],
+  ['home-layout', 'industry-related-products-v3', 'hero-cover-media-v4'],
   [TAGS.pages, TAGS.page('home'), TAGS.industries, TAGS.products, TAGS.media],
 )
 

@@ -11,19 +11,19 @@ export const ContactRFQBlock: Block = {
     {
       name: 'eyebrow',
       type: 'text',
-      defaultValue: 'Request quote',
+      defaultValue: 'Direct message',
     },
     {
       name: 'heading',
       type: 'text',
       required: true,
-      defaultValue: 'Send a drawing, sample, concept, or production requirement.',
+      defaultValue: 'Get In Touch',
     },
     {
       name: 'description',
       type: 'textarea',
       defaultValue:
-        'Capture buyer details and project requirements into the RFQ collection so the sales and engineering team can qualify the enquiry.',
+        "Send a direct message to our CEO — a pioneer in Bangladesh's garments industry. Start a conversation and experience how effortless sourcing can be.",
     },
     {
       name: 'contactEmail',

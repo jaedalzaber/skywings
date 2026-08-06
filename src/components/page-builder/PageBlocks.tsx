@@ -3,7 +3,6 @@ import { SectionHeading } from '@/components/atoms/SectionHeading'
 import { ContactSection } from '@/components/contact/ContactSection'
 import type { ProductFilters } from '@/data/catalog'
 import type { PageLayout } from '@/data/pages'
-import { getSiteFooter } from '@/data/site'
 
 import {
   BlogListingSection,
@@ -74,21 +73,14 @@ async function renderBlock(
       return <BrochureListingSection key={key} {...block} />
     case 'blogListing':
       return <BlogListingSection key={key} {...block} />
-    case 'contactRFQ': {
-      const footer = await getSiteFooter()
-
+    case 'contactRFQ':
       return (
         <ContactSection
-          description={block.description}
-          eyebrow={block.eyebrow}
-          footer={footer}
-          heading={block.heading}
           key={key}
           productInterest={context.productInterest}
           submitted={context.submitted}
         />
       )
-    }
     case 'cta':
       return (
         <section className="cta-section" key={key}>

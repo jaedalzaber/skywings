@@ -158,7 +158,7 @@ export const getIndustries = cachedQuery(
 
     return docs
   },
-  ['industries'],
+  ['industries-v2'],
   [TAGS.industries, TAGS.media],
 )
 

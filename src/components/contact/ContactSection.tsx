@@ -1,82 +1,63 @@
+import Image from 'next/image'
+
 import { RFQForm } from '@/components/forms/RFQForm'
-import type { SiteFooterData } from '@/data/site'
 
-import { ContactBranches } from './ContactBranches'
-import { PlaneWatermark } from './contact-art'
-import { telHref } from './tel'
-
-/**
- * Contact page section (light, form-forward). Copy comes from the contactRFQ
- * block; contact details and branches come from the Footer global, which
- * already holds the email, phone numbers, and both branch addresses.
- */
-export function ContactSection(props: {
-  description?: string | null
-  eyebrow?: string | null
-  footer: SiteFooterData
-  heading: string
-  productInterest?: string
-  submitted?: boolean
-}) {
-  const { description, eyebrow, footer, heading, productInterest, submitted } = props
-  const [primaryPhone] = footer.phoneNumbers
+export function ContactSection(props: { productInterest?: string; submitted?: boolean }) {
+  const { productInterest, submitted } = props
 
   return (
     <section aria-labelledby="contact-title" className="contact-page">
-      <div className="contact-hero">
-        <PlaneWatermark className="contact-plane" />
-        <div className="contact-hero-inner">
-          <div className="contact-hero-copy">
-            {eyebrow ? <p className="contact-eyebrow">{eyebrow}</p> : null}
-            <h1 className="contact-title" id="contact-title">
-              {heading}
-            </h1>
+      <div className="contact-stage">
+        <figure className="contact-person-card">
+          <Image
+            alt="Mahfuzur Rahman speaking at an industry event"
+            className="contact-person-image"
+            fill
+            priority
+            sizes="(min-width: 1280px) 498px, (min-width: 1024px) 40vw, 100vw"
+            src="/images/contact/mahfuzur-rahman.png"
+          />
 
-            <dl className="contact-channels">
-              <div className="contact-channel">
-                <dt>
-                  <a href={`mailto:${footer.emailAddress}`}>{footer.emailLabel}</a>
-                </dt>
-                <dd>
-                  <a href={`mailto:${footer.emailAddress}`}>{footer.emailAddress}</a>
-                </dd>
-              </div>
+          <figcaption className="contact-person-caption">
+            <span className="contact-person-copy">
+              <strong>Mahfuzur Rahman</strong>
+              <span>CEO</span>
+              <small>Ornate Global Fashion</small>
+            </span>
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="contact-person-mark"
+              height={47}
+              src="/images/contact/ornate-mark.svg"
+              width={50}
+            />
+          </figcaption>
+        </figure>
 
-              <div className="contact-channel">
-                <dt>
-                  {primaryPhone ? (
-                    <a href={telHref(primaryPhone)}>{footer.phoneLabel}</a>
-                  ) : (
-                    footer.phoneLabel
-                  )}
-                </dt>
-                <dd>
-                  <ul className="contact-phone-list" role="list">
-                    {footer.phoneNumbers.map((phone) => (
-                      <li key={phone}>
-                        <a href={telHref(phone)}>{phone}</a>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
-            </dl>
-
-            {description ? <p className="contact-blurb">{description}</p> : null}
-          </div>
-
+        <div className="contact-form-border">
           <div className="contact-form-card">
-            <h2 className="contact-form-title">Request a Quote</h2>
-            <p className="contact-form-note">
-              Share a drawing, sample, or requirement — the team responds with an
-              engineering-led quote.
-            </p>
-            <RFQForm productInterest={productInterest} sourcePage="/contact" submitted={submitted} />
+            <div className="contact-form-content">
+              <header className="contact-form-header">
+                <h1 className="contact-title" id="contact-title">
+                  Get In Touch
+                </h1>
+                <p className="contact-intro">
+                  <strong>Send a direct message to our CEO</strong> — a pioneer in Bangladesh&apos;s
+                  garments industry. Start a conversation and experience how effortless sourcing can
+                  be.
+                </p>
+              </header>
+
+              <RFQForm
+                productInterest={productInterest}
+                sourcePage="/contact"
+                submitted={submitted}
+              />
+            </div>
           </div>
         </div>
       </div>
-
-      <ContactBranches footer={footer} />
     </section>
   )
 }
