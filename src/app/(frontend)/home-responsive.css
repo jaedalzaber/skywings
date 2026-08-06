@@ -13,6 +13,8 @@
 }
 
 [data-responsive-layout='hero'] {
+  --hero-description-color: #363636;
+  --hero-heading-color: #191919;
   --hero-marquee-height: 0rem;
   --hero-heading-overlay-height: 9.75rem;
   --hero-summary-reserved-height: clamp(10.5rem, 30svh, 14rem);
@@ -100,7 +102,7 @@
 [data-responsive-layout='hero'] h1 {
   max-width: 11em;
   margin: 0;
-  color: #191919;
+  color: var(--hero-heading-color);
   font-family: var(--font-title), Inter, sans-serif;
   font-size: 1.9375rem;
   font-weight: 400;
@@ -121,10 +123,20 @@
 
 [data-responsive-layout='hero'] .hero-text {
   margin: 0;
-  color: #363636;
+  color: var(--hero-description-color);
   font-size: 0.75rem;
   line-height: 1.4;
   letter-spacing: 0.03em;
+}
+
+[data-responsive-layout='hero'][data-hero-copy-tone='light'] {
+  --hero-heading-color: #ffffff;
+  --hero-description-color: #ffffff;
+}
+
+[data-responsive-layout='hero'] .hero-copy h1,
+[data-responsive-layout='hero'] .hero-summary .hero-text {
+  transition: color 360ms ease-in-out;
 }
 
 [data-responsive-layout='hero'] .hero-actions {
@@ -578,7 +590,7 @@
 
 @media (min-width: 48rem) and (max-width: 89.999rem) {
   [data-responsive-layout='hero'] {
-    --hero-text-height: 25svh;
+    --hero-text-height: 20svh;
     --hero-video-height: calc(100svh - var(--hero-text-height) - var(--hero-marquee-height));
     flex-direction: row;
     min-height: 100svh;
@@ -865,7 +877,7 @@
 @media (min-width: 90rem) {
   [data-responsive-layout='hero'] {
     --hero-marquee-height: 3.875rem;
-    --hero-text-height: 25svh;
+    --hero-text-height: 20svh;
     --hero-video-height: calc(100svh - var(--hero-text-height) - var(--hero-marquee-height));
     flex-direction: row;
     min-height: 100svh;
@@ -893,8 +905,8 @@
     margin-top: 0;
     min-height: calc(var(--hero-text-height) + var(--hero-marquee-height));
     border-top: 1px solid rgba(255, 255, 255, 0.46);
-    background: rgba(217, 217, 217, 0.75);
-    backdrop-filter: blur(2.365625rem);
+    background: rgba(217, 217, 217, 0.15);
+    backdrop-filter: blur(0.665625rem);
   }
 
   [data-responsive-layout='hero'] .hero-content {

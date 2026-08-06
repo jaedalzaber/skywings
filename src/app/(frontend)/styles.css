@@ -2135,15 +2135,16 @@ h3 {
 .global-delivery-copy {
   position: relative;
   z-index: 3;
+  min-width: 200rem;
 }
 
 .global-delivery h2 {
   display: grid;
-  max-width: 20ch;
+  max-width: 24ch;
   margin: 0;
   color: #ffffff;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(2.55rem, 3.37vw, 4.25rem);
+  font-size: clamp(2.55rem, 3.37vw, 3.25rem);
   font-weight: 300;
   line-height: 0.93;
   letter-spacing: 0;
@@ -2433,7 +2434,7 @@ h3 {
 
   .global-delivery-copy {
     align-self: start;
-    min-width: 150rem;
+    min-width: 200rem;
   }
 
   .globe-branches {

@@ -130,21 +130,37 @@ function getMedia(value: SiteSetting['logo'] | SiteSetting['favicon']): Media | 
   return typeof value === 'object' && value ? value : null
 }
 
+function hasLocalMediaFile(url: string): boolean {
+  const localMediaPrefix = '/api/media/file/'
+
+  if (!url.startsWith(localMediaPrefix)) {
+    return true
+  }
+
+  const filename = decodeURIComponent(url.slice(localMediaPrefix.length))
+  const localFilePath = path.join(process.cwd(), 'media', filename)
+
+  return existsSync(localFilePath)
+}
+
+export function getResolvableMedia(
+  value: SiteSetting['logo'] | SiteSetting['favicon'],
+): Media | null {
+  const media = getMedia(value)
+
+  return media?.url && hasLocalMediaFile(media.url) ? media : null
+}
+
 function getResolvableFaviconHref(media: Media | null): string {
   if (!media?.url) {
     return defaultSiteMetadata.faviconHref
   }
 
-  const localMediaPrefix = '/api/media/file/'
-
-  if (!media.url.startsWith(localMediaPrefix)) {
+  if (hasLocalMediaFile(media.url)) {
     return media.url
   }
 
-  const filename = decodeURIComponent(media.url.slice(localMediaPrefix.length))
-  const localFilePath = path.join(process.cwd(), 'media', filename)
-
-  return existsSync(localFilePath) ? media.url : defaultSiteMetadata.faviconHref
+  return defaultSiteMetadata.faviconHref
 }
 
 async function fetchSiteHeader(): Promise<SiteHeaderData> {
@@ -164,7 +180,7 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
 
   return {
     ...defaultHeaderData,
-    logo: getMedia(siteSettings.logo),
+    logo: getResolvableMedia(siteSettings.logo),
     navigation: header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
     cta: header.cta?.[0] ?? defaultHeaderData.cta,
   }

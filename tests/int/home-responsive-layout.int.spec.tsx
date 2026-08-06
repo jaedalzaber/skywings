@@ -255,6 +255,18 @@ describe('responsive home layout', () => {
     )
   })
 
+  test('adapts the hero title and description contrast to the media behind them', () => {
+    expect(stylesheet).toMatch(/--hero-heading-color:\s*#191919;/)
+    expect(stylesheet).toMatch(/--hero-description-color:\s*#363636;/)
+    expect(stylesheet).toMatch(
+      /\[data-responsive-layout='hero'\]\[data-hero-copy-tone='light'\]\s*\{[^}]*--hero-heading-color:\s*#ffffff;[^}]*--hero-description-color:\s*#ffffff;/s,
+    )
+    expect(stylesheet).toMatch(
+      /\[data-responsive-layout='hero'\] \.hero-copy h1,\s*\[data-responsive-layout='hero'\] \.hero-summary \.hero-text\s*\{[^}]*transition:\s*color 360ms ease-in-out;/s,
+    )
+    expect(stylesheet).not.toMatch(/mix-blend-mode:\s*difference;/)
+  })
+
   test('starts the hero at the document top beneath the floating header', () => {
     expect(stylesheet).toMatch(
       /\.site-shell:has\(\[data-responsive-layout='hero'\]\) \.nav-container \{[^}]*height: 0;/s,

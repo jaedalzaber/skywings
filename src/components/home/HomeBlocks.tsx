@@ -12,6 +12,7 @@ import {
 
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
 import { HomeGlobeSection } from './HomeGlobeSection'
+import { HeroContrastController } from './HeroContrastController'
 import { HomeProcessSection } from './HomeProcessSection'
 import { HomeServicesScroller } from './HomeServicesScroller'
 
@@ -44,6 +45,7 @@ function HeroCoverVideo(props: {
     <SafeVideo
       autoPlay
       className={`hero-cover-video ${className}`}
+      crossOrigin="anonymous"
       loop
       playsInline
       poster={poster ?? undefined}
@@ -139,11 +141,13 @@ function HomeHero(props: {
         data-responsive-layout="hero"
         id="top"
       >
+        <HeroContrastController />
         <div className="hero-video-layer" aria-hidden="true">
           <SafePicture
             className="hero-image"
             image={{
               alt: block.mobileCoverImage?.alt ?? '',
+              crossOrigin: 'anonymous',
               src: block.mobileCoverImage?.url ?? '/images/home/hero-mobile.png',
             }}
             sources={[

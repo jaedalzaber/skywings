@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest'
 
 import { resolveHomeHeroCoverMedia } from '@/data/home'
 import { getMediaImage, isMediaImage, isMediaVideo } from '@/data/media'
+import { getResolvableMedia } from '@/data/site'
+import type { Media } from '@/payload-types'
 
 describe('media normalization', () => {
   test('does not treat video uploads as images', () => {
@@ -35,5 +37,23 @@ describe('media normalization', () => {
         url: '/api/media/file/mobile-hero.mp4',
       },
     })
+  })
+
+  test('ignores local media records whose files are not available on disk', () => {
+    const missingLogo = {
+      id: 1,
+      url: '/api/media/file/missing-skywings-logo.svg',
+    } as Media
+
+    expect(getResolvableMedia(missingLogo)).toBeNull()
+  })
+
+  test('keeps externally hosted media records', () => {
+    const cloudinaryLogo = {
+      id: 2,
+      url: 'https://res.cloudinary.com/demo/image/upload/skywings/media/logo.svg',
+    } as Media
+
+    expect(getResolvableMedia(cloudinaryLogo)).toBe(cloudinaryLogo)
   })
 })
