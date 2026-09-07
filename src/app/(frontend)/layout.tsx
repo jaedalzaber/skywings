@@ -46,7 +46,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en">
-      <body className={`${bodyFont.variable} ${titleFont.variable}`}>
+      <body className={`${bodyFont.variable} ${titleFont.variable}`} suppressHydrationWarning>
         <SmoothScroll />
         <SectionSnapController />
         <div className="site-shell">

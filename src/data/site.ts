@@ -43,6 +43,15 @@ export type SiteMetadataData = {
   title: string
 }
 
+const industryNavigationChildren: NonNullable<HeaderNavigationItem['children']> = [
+  { label: 'Construction & Infrastructure', href: '/industries' },
+  { label: 'Aviation Ground Support Equipment', href: '/industries' },
+  { label: 'Heavy Equipment & Machinery', href: '/industries' },
+  { label: 'Architectural & Interior Metalwork', href: '/industries' },
+  { label: 'Industrial Manufacturing', href: '/industries' },
+  { label: 'Custom Metal Fabrication', href: '/industries' },
+]
+
 export const defaultHeaderData: SiteHeaderData = {
   brandName: 'Sky Wings',
   brandTagline: 'Engineering Industries LLC',
@@ -50,7 +59,7 @@ export const defaultHeaderData: SiteHeaderData = {
     {
       label: 'Industries',
       href: '/industries',
-      children: [{ label: 'Aviation Ground Support Equipment', href: '/industries' }],
+      children: industryNavigationChildren,
     },
     { label: 'Products', href: '/products' },
     { label: 'Configurators', href: '/#configurators' },
@@ -163,6 +172,23 @@ function getResolvableFaviconHref(media: Media | null): string {
   return defaultSiteMetadata.faviconHref
 }
 
+function normalizeHeaderNavigation(navigation: HeaderNavigationItem[]): HeaderNavigationItem[] {
+  return navigation.map((item) => {
+    if (item.label.trim().toLowerCase() !== 'industries') {
+      return item
+    }
+
+    if ((item.children?.length ?? 0) > 1) {
+      return item
+    }
+
+    return {
+      ...item,
+      children: industryNavigationChildren,
+    }
+  })
+}
+
 async function fetchSiteHeader(): Promise<SiteHeaderData> {
   const payload = await getPayloadClient()
   const [header, siteSettings] = await Promise.all([
@@ -181,7 +207,9 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
   return {
     ...defaultHeaderData,
     logo: getResolvableMedia(siteSettings.logo),
-    navigation: header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
+    navigation: normalizeHeaderNavigation(
+      header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
+    ),
     cta: header.cta?.[0] ?? defaultHeaderData.cta,
   }
 }
