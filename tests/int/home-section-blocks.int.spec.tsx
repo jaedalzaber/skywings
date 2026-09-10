@@ -49,15 +49,23 @@ describe('home section blocks', () => {
     ])
   })
 
-  test('takes the machining heading, figures and machine groups from the block', () => {
+  // The groups are the capability records, synced onto the block server-side.
+  test('takes the machining heading, figures and capability groups from the block', () => {
     const { container } = renderWith({
       ...defaultHomeMachiningBlock,
       eyebrow: 'What we run',
       groups: [
         {
           id: 'press-brakes',
-          images: [{ alt: 'Press brake', url: '/images/home/service-01.png' }],
-          machines: ['PRESS BRAKE 200T'],
+          machines: [{ id: '7', label: 'PRESS BRAKE 200T' }],
+          slides: [
+            {
+              id: 'process-0',
+              image: { alt: 'Press brake', url: '/images/home/service-01.png' },
+              kind: 'process',
+              machineId: null,
+            },
+          ],
           title: 'Press braking',
         },
       ],
@@ -126,13 +134,13 @@ describe('home section blocks', () => {
     })
     const section = within(container.querySelector('#locations') as HTMLElement)
 
+    // The lead, then the regions joined as a list.
     expect(section.getByRole('heading', { level: 2 }).textContent).toBe(
-      'Two plants, one team.Shipping worldwide.',
+      'Two plants, one team. Gulf & Asia',
     )
-    expect(container.querySelector('.locations-reach')?.textContent).toBe('Gulf·Asia')
     expect(section.getByRole('heading', { level: 3, name: /Hamriyah/ })).toBeTruthy()
     expect(section.getByText('Works')).toBeTruthy()
-    expect(section.getByText('Hamriyah Free Zone,')).toBeTruthy()
+    expect(section.getByText('Plot 4, Hamriyah Free Zone, Sharjah, UAE')).toBeTruthy()
   })
 
   /*
@@ -144,12 +152,16 @@ describe('home section blocks', () => {
     const { container } = render(
       <HomeBlockRenderer
         blocks={defaultHomeLayout}
-        locations={{ addresses: [{ address: 'Plot 9014, Sajaa Industrial Area, Sharjah, UAE', phone: '+971 1' }] }}
+        locations={{
+          addresses: [
+            { address: 'Plot 9014, Sajaa Industrial Area, Sharjah, UAE', phone: '+971 1' },
+          ],
+        }}
       />,
     )
     const section = within(container.querySelector('#locations') as HTMLElement)
 
-    expect(section.getByText('Plot 9014,')).toBeTruthy()
+    expect(section.getByText('Plot 9014, Sajaa Industrial Area, Sharjah, UAE')).toBeTruthy()
     expect(section.getByText('+971 1')).toBeTruthy()
   })
 })

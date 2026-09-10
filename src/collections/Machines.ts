@@ -1,11 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated, publishedOrAuthenticated } from '../access'
+import { TAGS } from '../data/tags'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
+import { makeCollectionRevalidateHooks } from './hooks/revalidate'
 
 export const Machines: CollectionConfig = {
   slug: 'machines',
+  // The capabilities page reads machines under this tag; see getMachines().
+  hooks: makeCollectionRevalidateHooks(() => [TAGS.machines]),
   access: {
     read: publishedOrAuthenticated,
     create: authenticated,

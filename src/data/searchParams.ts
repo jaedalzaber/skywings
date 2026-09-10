@@ -23,6 +23,13 @@ export async function hasSubmitted(searchParams: RouteSearchParams) {
   return first(params.submitted) === '1'
 }
 
+/** A form sent back because the server refused what it posted. */
+export async function hasSubmitError(searchParams: RouteSearchParams) {
+  const params = await searchParams
+
+  return first(params.error) === '1'
+}
+
 export async function getProductParam(searchParams: RouteSearchParams) {
   const params = await searchParams
 

@@ -321,9 +321,13 @@ export interface Product {
    */
   cardHoverImage?: (number | null) | Media;
   /**
-   * How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost.
+   * How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost. 0 on every side fills the card edge to edge, cropping the image to fit.
    */
   cardImagePadding?: number | null;
+  cardImagePaddingTop?: number | null;
+  cardImagePaddingRight?: number | null;
+  cardImagePaddingBottom?: number | null;
+  cardImagePaddingLeft?: number | null;
   gallery?:
     | {
         image: number | Media;
@@ -841,9 +845,6 @@ export interface HomeMachiningBlock {
         id?: string | null;
       }[]
     | null;
-  /**
-   * One row per cell. The first is open on arrival; the rest open one at a time when clicked.
-   */
   groups?:
     | {
         title: string;
@@ -1136,13 +1137,13 @@ export interface LightingPreset {
  * via the `definition` "HomeLocationsBlock".
  */
 export interface HomeLocationsBlock {
-  lead?: string | null;
   /**
-   * Set lighter under the headline.
+   * Set light, above the regions.
    */
+  lead?: string | null;
   reach?: string | null;
   /**
-   * Listed under the headline, separated by dots.
+   * Set heavy under the headline and joined as a list: "Middle-East, Europe & Africa".
    */
   regions?:
     | {
@@ -1151,7 +1152,7 @@ export interface HomeLocationsBlock {
       }[]
     | null;
   /**
-   * Falls back to the image set on the Footer (Locations image).
+   * A portrait aerial, about 4:7. "UAE" is set across its foot in white, so keep the lower part of the picture free of detail. Falls back to the image set on the Footer (Locations image).
    */
   image?: (number | null) | Media;
   /**
@@ -2246,6 +2247,8 @@ export interface CustomProductCtaBlock {
   blockType: 'customProductCta';
 }
 /**
+ * Articles for the Resources hub. Use H2 for sections and H3 for sub-sections -- they become the table of contents.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blog-posts".
  */
@@ -2253,8 +2256,27 @@ export interface BlogPost {
   id: number;
   title: string;
   slug: string;
+  /**
+   * Sets the filter it appears under and the breadcrumb above its title.
+   */
+  category?: ('guides' | 'design' | 'techniques' | 'materials' | 'insights' | 'case-studies') | null;
+  /**
+   * Leads the hub, above the grid. With none ticked, the newest article leads instead.
+   */
+  featured?: boolean | null;
   author?: (number | null) | User;
   publishedAt?: string | null;
+  /**
+   * Shown under the title. Leave empty to credit the Sky Wings engineering team.
+   */
+  byline?: {
+    name?: string | null;
+    role?: string | null;
+    avatar?: (number | null) | Media;
+  };
+  /**
+   * One or two sentences, shown on the article card and as the page description.
+   */
   excerpt: string;
   featuredImage?: (number | null) | Media;
   content: {
@@ -3689,8 +3711,17 @@ export interface CustomProductCtaBlockSelect<T extends boolean = true> {
 export interface BlogPostsSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
+  category?: T;
+  featured?: T;
   author?: T;
   publishedAt?: T;
+  byline?:
+    | T
+    | {
+        name?: T;
+        role?: T;
+        avatar?: T;
+      };
   excerpt?: T;
   featuredImage?: T;
   content?: T;
@@ -3945,6 +3976,10 @@ export interface ProductsSelect<T extends boolean = true> {
   thumbnailImage?: T;
   cardHoverImage?: T;
   cardImagePadding?: T;
+  cardImagePaddingTop?: T;
+  cardImagePaddingRight?: T;
+  cardImagePaddingBottom?: T;
+  cardImagePaddingLeft?: T;
   gallery?:
     | T
     | {

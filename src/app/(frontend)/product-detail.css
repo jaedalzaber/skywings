@@ -712,7 +712,8 @@
   padding-inline-start: 0px;
 }
 
-.pdp-related-card a {
+.pdp-related-card a,
+.pdp-related-link {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -734,7 +735,7 @@
   padding: 0.75rem;
 }
 
-.pdp-related-card:hover .pdp-related-media {
+.pdp-related-card:not([data-static]):hover .pdp-related-media {
   outline: 1px solid var(--pdp-line-strong);
 }
 

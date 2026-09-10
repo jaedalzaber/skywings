@@ -1,24 +1,52 @@
 /*
- * Client-safe defaults for the home machining capability section. Kept apart
- * from '@/data/home' so the client component can value-import them without
- * pulling the Payload client into the browser bundle -- the same split the
- * locations and process sections use.
+ * Client-safe shapes and defaults for the home machining capability section.
+ * Kept apart from '@/data/home' so the client component can value-import them
+ * without pulling the Payload client into the browser bundle -- the same split
+ * the locations and process sections use.
+ *
+ * The section is a summary of /capabilities, not a list of its own: its rows
+ * are the capability processes, its machines and photographs are the ones on
+ * those records. `toHomeMachiningGroups` is the one place that turns the
+ * capabilities page's data into the home panel's, so the two cannot drift.
  */
+import {
+  buildCapabilitySlides,
+  defaultCapabilityProcesses,
+  machineLabel,
+  type CapabilityProcess,
+} from './capabilityDefaults'
+
 export type HomeMachiningImage = {
   alt: string
   url: string
 }
 
+export type HomeMachiningMachine = {
+  id: string
+  /** "Bodor · C-Series — Laser machine", set in mono capitals. */
+  label: string
+}
+
+/** One photograph in a group's carousel. */
+export type HomeMachiningSlide = {
+  id: string
+  image: HomeMachiningImage
+  /**
+   * `process`: the work itself, cropped to fill the frame. `machine`: a
+   * machine photograph, shown whole -- a machine cut off at its edges says
+   * less than a smaller one uncropped.
+   */
+  kind: 'machine' | 'process'
+  /** Set on a machine's photographs, so its row in the list can light up. */
+  machineId: string | null
+}
+
 export type HomeMachiningGroup = {
   /** Stable key, also used to build the panel's aria ids. */
   id: string
-  /** Photographs of the cell, stepped through with the panel arrows. */
-  images: HomeMachiningImage[]
-  /**
-   * Machine names, set one per line in mono. Written as they appear on the
-   * shop floor asset list, so repeated models are repeated here on purpose.
-   */
-  machines: string[]
+  machines: HomeMachiningMachine[]
+  /** The process at work first, then each machine's photographs in list order. */
+  slides: HomeMachiningSlide[]
   title: string
 }
 
@@ -27,10 +55,47 @@ export type HomeMachiningStat = {
   value: string
 }
 
+/**
+ * The capabilities page's processes as the home panel shows them: the title,
+ * the machines, and the photographs -- no summary and no typical outputs,
+ * which are what /capabilities is for.
+ *
+ * A machine without a photograph keeps its row but adds no slide: the
+ * capabilities page holds a placeholder for it, the home carousel only shows
+ * pictures. A process with neither machines nor photographs is left off, since
+ * its panel would open onto nothing; it appears once either is added.
+ */
+export function toHomeMachiningGroups(
+  processes: readonly CapabilityProcess[],
+): HomeMachiningGroup[] {
+  return processes
+    .map((process) => ({
+      id: process.slug || process.id,
+      machines: process.machines.map((machine) => ({
+        id: machine.id,
+        label: machineLabel(machine),
+      })),
+      slides: buildCapabilitySlides(process).flatMap((slide) =>
+        slide.image
+          ? [
+              {
+                id: slide.id,
+                image: { alt: slide.image.alt, url: slide.image.url },
+                kind: slide.kind,
+                machineId: slide.machineId,
+              },
+            ]
+          : [],
+      ),
+      title: process.title,
+    }))
+    .filter((group) => group.machines.length > 0 || group.slides.length > 0)
+}
+
 /*
  * Set beside the heading, in the half of the row the title cell leaves. The
- * machine count is the length of the lists below rounded down, so the two
- * stay honest against each other as the shop list grows.
+ * company's own figures, edited on the block; the machine list below is the
+ * named machine park from the profile, not the full asset register.
  */
 export const defaultHomeMachiningStats: readonly HomeMachiningStat[] = [
   { label: 'Machines', value: '30+' },
@@ -42,115 +107,10 @@ export const defaultHomeMachiningIntro = {
   heading: 'Machining\ncapability',
 }
 
-/*
- * Photographs are not shot yet: these point at the service stills already in
- * the repo so the panels read as intended, and SafeImg drops to its grey
- * placeholder for anything missing. Swap the urls as the shop photography
- * lands -- nothing else in the section needs to change.
+/**
+ * The committed profile content, for when the CMS cannot be reached. It has no
+ * photographs -- those only ever live on the Capabilities and Machines records.
  */
-export const defaultHomeMachiningGroups: readonly HomeMachiningGroup[] = [
-  {
-    id: 'laser-cutting',
-    title: 'Laser cutting',
-    machines: [
-      'FIBER LASER 6KW — 3000 x 1500',
-      'FIBER LASER 4KW — 3000 x 1500',
-      'PLASMA CUTTING TABLE',
-    ],
-    images: [
-      { alt: 'Fiber laser cutting sheet steel', url: '/images/home/service-01.png' },
-      { alt: 'Cut parts leaving the laser bed', url: '/images/home/machining-laser-02.jpg' },
-    ],
-  },
-  {
-    id: 'cnc-machining',
-    title: 'CNC machining',
-    machines: [
-      'VERTICAL MACHINING CENTER VMC-855',
-      'VERTICAL MACHINING CENTER VMC-855',
-      'VERTICAL MACHINING CENTER VMC-1160',
-      'CNC LATHE CK6150',
-      'CNC LATHE CK6150',
-      'RADIAL DRILLING MACHINE Z3050',
-    ],
-    images: [
-      { alt: 'Machining centre cutting an aluminium part', url: '/images/home/service-02.png' },
-      { alt: 'Tool carousel on the machining centre', url: '/images/home/machining-cnc-02.jpg' },
-    ],
-  },
-  {
-    id: 'bending-forming',
-    title: 'Bending and forming',
-    machines: [
-      'CNC PRESS BRAKE 160T — 3200',
-      'CNC PRESS BRAKE 100T — 3200',
-      'HYDRAULIC SHEARING MACHINE QC12K',
-      'PLATE ROLLING MACHINE W11-16',
-    ],
-    images: [{ alt: 'Press brake forming a steel panel', url: '/images/home/service-03.png' }],
-  },
-  {
-    id: 'welding-fabrication',
-    title: 'Welding and fabrication',
-    machines: [
-      'MIG WELDING STATION — 500A',
-      'MIG WELDING STATION — 500A',
-      'TIG WELDING STATION — 400A',
-      'TIG WELDING STATION — 400A',
-      'SPOT WELDING MACHINE DN-63',
-      'WELDING POSITIONER — 2T',
-    ],
-    images: [
-      { alt: 'Welder working on a fabricated frame', url: '/images/home/service-04.png' },
-      { alt: 'Fabricated assembly on the welding jig', url: '/images/home/machining-weld-02.jpg' },
-    ],
-  },
-  {
-    id: 'surface-treatment',
-    title: 'Surface treatment',
-    machines: [
-      'SHOT BLASTING CHAMBER',
-      'POWDER COATING LINE — CURING OVEN 7M',
-      'WET SPRAY BOOTH',
-      'HOT-DIP GALVANISING (PARTNER FACILITY)',
-    ],
-    images: [
-      {
-        alt: 'Powder coated components leaving the curing oven',
-        url: '/images/home/service-05.png',
-      },
-    ],
-  },
-  {
-    id: 'assembly',
-    title: 'Assembly',
-    machines: [
-      'ASSEMBLY BAY 1 — OVERHEAD CRANE 5T',
-      'ASSEMBLY BAY 2 — OVERHEAD CRANE 10T',
-      'HYDRAULIC TEST BENCH',
-      'TORQUE CONTROLLED FASTENING SET',
-    ],
-    images: [
-      {
-        alt: 'Equipment being assembled in the fabrication bay',
-        url: '/images/home/machining-assembly-01.jpg',
-      },
-    ],
-  },
-  {
-    id: 'measurement',
-    title: 'Measurement and inspection',
-    machines: [
-      'COORDINATE MEASURING ARM — 3.0M',
-      'HEIGHT GAUGE 600 / DIGITAL',
-      'COATING THICKNESS GAUGE',
-      'ULTRASONIC WELD TESTING SET',
-    ],
-    images: [
-      {
-        alt: 'Inspection of a machined component',
-        url: '/images/home/machining-inspection-01.jpg',
-      },
-    ],
-  },
-]
+export const defaultHomeMachiningGroups: readonly HomeMachiningGroup[] = toHomeMachiningGroups(
+  defaultCapabilityProcesses,
+)

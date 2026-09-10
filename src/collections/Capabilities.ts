@@ -1,11 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated, publishedOrAuthenticated } from '../access'
+import { TAGS } from '../data/tags'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
+import { makeCollectionRevalidateHooks } from './hooks/revalidate'
 
 export const Capabilities: CollectionConfig = {
   slug: 'capabilities',
+  /*
+   * getCapabilities() is cached under this tag, and nothing used to clear it:
+   * a photo uploaded to a process in the admin stayed invisible on the site
+   * until the cache was wiped by hand.
+   */
+  hooks: makeCollectionRevalidateHooks(() => [TAGS.capabilities]),
   access: {
     read: publishedOrAuthenticated,
     create: authenticated,

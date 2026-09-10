@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { ProductDetail } from '@/components/collections/product/ProductDetail'
 import { ProductGallery } from '@/components/collections/product/ProductGallery'
+import { RelatedProducts } from '@/components/collections/product/RelatedProducts'
 import { DEFAULT_LIGHTING_PRESET } from '@/lib/three/lightingPreset'
 import type { Media, Product } from '@/payload-types'
 
@@ -124,6 +125,21 @@ const relatedProduct = {
     id: 7,
     url: '/images/products/ladders-card.png',
   }),
+  // A gallery and a description: enough of a page to link to.
+  description: {
+    root: {
+      children: [{ children: [{ text: 'Straight ladders.', type: 'text' }], type: 'paragraph' }],
+    },
+  },
+  gallery: [{ id: 'rg1', image: media({ id: 8, url: '/images/products/ladders-2.png' }) }],
+} as unknown as Product
+
+// Listed, but not written up yet: no gallery, no description.
+const unfinishedProduct = {
+  id: 21,
+  title: 'Cowl Pylon Ladders',
+  slug: 'cowl-pylon-ladders',
+  featuredImage: media({ id: 9, url: '/images/products/cowl.png' }),
 } as unknown as Product
 
 function setMobileViewport(matches: boolean) {
@@ -153,9 +169,18 @@ describe('ProductDetail', () => {
     expect(productsCollectionSource).toMatch(/defaultPopulate:\s*\{\s*layout:\s*false,/s)
   })
 
-  test('product listing reads a lighter card shape and ranks featured-image products first', () => {
-    expect(catalogSource).toMatch(/const productListSelect = \{[\s\S]*gallery: false,/)
+  /*
+   * The gallery and description stay in the listing read, though no card shows
+   * them: together they decide whether a card links to a page at all. Finished
+   * products rank ahead of those with only a card image.
+   */
+  test('product listing reads a lighter card shape and ranks finished products first', () => {
     expect(catalogSource).toMatch(/const productListSelect = \{[\s\S]*layout: false,/)
+    expect(catalogSource).not.toMatch(/const productListSelect = \{[^}]*gallery: false,/)
+    expect(catalogSource).not.toMatch(/const productListSelect = \{[^}]*description: false,/)
+    expect(catalogSource).toMatch(
+      /const pageRank = Number\(hasProductPage\(b\)\) - Number\(hasProductPage\(a\)\)[\s\S]*?Number\(hasCardThumbnail\(b\)\)/,
+    )
     expect(catalogSource).toMatch(/select: productListSelect,/)
     expect(catalogSource).toMatch(/function hasCardThumbnail\(product: Product\)/)
     expect(catalogSource).toMatch(/hasCardThumbnail\(product\) &&\s*matchesSearch/)
@@ -165,13 +190,23 @@ describe('ProductDetail', () => {
     expect(catalogSource).toMatch(/return sortProductsForListing\(\s*docs\.filter\(/)
   })
 
-  test('product routes can use cached rendering instead of forced dynamic SSR', () => {
+  /*
+   * Product pages are prerendered. The listing renders per request, for the
+   * page its address names -- that is what gives every catalogue page a real
+   * address and real HTML -- but from the same cached read of the collection,
+   * so a request costs filtering a cached list, not a database query. Neither
+   * forces dynamic rendering wholesale.
+   */
+  test('product pages are prerendered; the listing renders its address from cached data', () => {
     expect(productsPageSource).not.toContain("dynamic = 'force-dynamic'")
-    expect(productsPageSource).not.toContain('searchParams')
     expect(productsPageSource).not.toContain('getProductFilters')
+    expect(productsPageSource).toMatch(/getCatalogView\(\)/)
+    expect(productsPageSource).toMatch(/props\.searchParams/)
     expect(productDetailPageSource).not.toContain("dynamic = 'force-dynamic'")
     expect(productDetailPageSource).toMatch(/export async function generateStaticParams\(\)/)
-    expect(productDetailPageSource).toMatch(/getAllProductSlugs\(\)/)
+    // Only products with a page are prerendered; the rest go on to their shelf.
+    expect(productDetailPageSource).toMatch(/getProductPageSlugs\(\)/)
+    expect(productDetailPageSource).toMatch(/if \(product && hasProductPage\(product\)\)/)
   })
 
   /*
@@ -224,7 +259,7 @@ describe('ProductDetail', () => {
   })
 
   test('renders every populated section from the product', () => {
-    render(<ProductDetail product={fullProduct} related={[relatedProduct]} />)
+    render(<ProductDetail product={fullProduct} related={[relatedProduct, unfinishedProduct]} />)
 
     expect(screen.getByRole('heading', { level: 1, name: 'Folding Stand' })).toBeDefined()
     expect(screen.getByText('Aviation / GSE / Stands')).toBeDefined()
@@ -262,8 +297,18 @@ describe('ProductDetail', () => {
     // Related
     const related = screen.getByRole('link', { name: /Straight Ladders/ })
     expect(related.getAttribute('href')).toBe('/products/straight-ladders')
-    expect(within(related).queryByAltText('Straight ladder card thumbnail')).toBeNull()
-    expect(within(related).getByAltText('Folding stand render')).toBeDefined()
+    /*
+     * A related product is a card for another product, so it carries that
+     * product's card image, as every product card does -- the thumbnail, else
+     * the featured image. (It once showed the featured image only; most
+     * products have only a thumbnail, so the row came out as placeholders.)
+     * The gallery rule above is separate and unchanged.
+     */
+    expect(within(related).getByAltText('Straight ladder card thumbnail')).toBeDefined()
+
+    // A related product with no page of its own is shown, but leads nowhere.
+    expect(screen.getByText('Cowl Pylon Ladders')).toBeDefined()
+    expect(screen.queryByRole('link', { name: /Cowl Pylon Ladders/ })).toBeNull()
   })
 
   test('keeps the quote CTA to one option column on non-mobile layouts', () => {
@@ -402,5 +447,41 @@ describe('ProductDetail', () => {
     await waitFor(() => {
       expect(secondThumb.hasAttribute('data-active')).toBe(true)
     })
+  })
+
+  /*
+   * The related row reads the card image every other product card uses: the
+   * thumbnail, else the featured image. It used to read the featured image
+   * alone -- and most products carry only a thumbnail, so Folding Stand's
+   * related row was five placeholders over products that all have renders.
+   */
+  test('shows each related product by its card image, thumbnail first', () => {
+    const media = (url: string) => ({ alt: url, id: url.length, mimeType: 'image/png', url })
+    render(
+      <RelatedProducts
+        products={
+          [
+            { id: 1, slug: 'b4', thumbnailImage: media('/b4-thumb.png'), title: 'B4' },
+            {
+              featuredImage: media('/b1-featured.png'),
+              id: 2,
+              slug: 'b1',
+              thumbnailImage: media('/b1-thumb.png'),
+              title: 'B1',
+            },
+            { featuredImage: media('/tail-featured.png'), id: 3, slug: 'tail', title: 'Tail Dock' },
+          ] as unknown as Product[]
+        }
+      />,
+    )
+
+    const sources = Array.from(document.querySelectorAll('.pdp-related-media img')).map((img) =>
+      decodeURIComponent(img.getAttribute('src') ?? ''),
+    )
+    // Only a thumbnail; both, with the thumbnail preferred; only a featured image.
+    expect(sources[0]).toContain('/b4-thumb.png')
+    expect(sources[1]).toContain('/b1-thumb.png')
+    expect(sources[2]).toContain('/tail-featured.png')
+    expect(document.querySelectorAll('.pdp-related-media img')).toHaveLength(3)
   })
 })

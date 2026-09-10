@@ -5,60 +5,73 @@ import { afterEach, describe, expect, test } from 'vitest'
 
 import { HomeBlockRenderer } from '@/components/home/HomeBlocks'
 import { defaultHomeLayout } from '@/data/home'
-import {
-  defaultLocations,
-  defaultLocationsImage,
-  splitAddress,
-} from '@/data/homeLocationsDefaults'
+import { defaultLocations, splitAddress } from '@/data/homeLocationsDefaults'
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8')
 const stylesheet = read('src/app/(frontend)/styles.css')
 const component = read('src/components/home/HomeLocationsSection.tsx')
 
-const SCENE_MEDIA = '(min-width: 64rem) and (prefers-reduced-motion: no-preference)'
-const sceneStart = stylesheet.indexOf(`@media ${SCENE_MEDIA}`, stylesheet.indexOf('.locations {'))
-const base = stylesheet.slice(stylesheet.indexOf('.locations {'), sceneStart)
-const scene = stylesheet.slice(sceneStart, stylesheet.indexOf('.page-hero,', sceneStart))
+// The section's own rules: from its block comment to the next section's.
+const css = stylesheet.slice(
+  stylesheet.indexOf('.locations {'),
+  stylesheet.indexOf('.page-hero,', stylesheet.indexOf('.locations {')),
+)
+const wide = css.slice(css.indexOf('@media (min-width: 64rem)'))
 
 function renderLocations(locations?: Parameters<typeof HomeBlockRenderer>[0]['locations']) {
-  const { container } = render(<HomeBlockRenderer blocks={defaultHomeLayout} locations={locations} />)
+  const { container } = render(
+    <HomeBlockRenderer blocks={defaultHomeLayout} locations={locations} />,
+  )
   const section = container.querySelector('#locations') as HTMLElement
 
   return { container, section, queries: within(section) }
 }
 
+/*
+ * The close of the home page: a portrait aerial with "UAE" across its foot,
+ * and beside it "We deliver all over Middle-East, Europe & Africa" over the
+ * two branches, stepping down and to the right under blue rules.
+ */
 describe('HomeLocationsSection', () => {
   afterEach(cleanup)
 
-  test('follows the process section: image left, copy right, on a white surface', () => {
+  test('follows the process section: picture left, copy right, on white', () => {
     const { container, section } = renderLocations()
 
     expect(container.querySelector('#manufacturing-process')?.nextElementSibling).toBe(section)
-    // Last of the home sections.
     expect(section.nextElementSibling).toBeNull()
     expect(section.getAttribute('data-nav-surface')).toBe('white')
-    expect(section.getAttribute('data-scroll-scene')).toBe('locations')
     const grid = section.querySelector('.locations-grid') as HTMLElement
     expect(grid.children[0].classList.contains('locations-media')).toBe(true)
     expect(grid.children[1].classList.contains('locations-copy')).toBe(true)
-    expect(base).toMatch(/\.locations \{[^}]*background:\s*#ffffff;/s)
-    // No cards, shadows or frosted panels anywhere in the section.
-    expect(base + scene).not.toMatch(/box-shadow|backdrop-filter/)
+    expect(css).toMatch(/\.locations \{[^}]*background:\s*#ffffff;/s)
+    expect(wide).toMatch(
+      /\.locations-grid \{[^}]*grid-template-columns:\s*minmax\(0, 31%\) minmax\(0, 1fr\);/s,
+    )
+    // Portrait, and the copy runs the picture's full height: reach at the top,
+    // branches settled at the foot.
+    expect(wide).toMatch(/\.locations-media \{\s*aspect-ratio:\s*4 \/ 7;/s)
+    expect(wide).toMatch(/\.locations-copy \{[^}]*justify-content:\s*space-between;/s)
+    expect(css).not.toMatch(/box-shadow|backdrop-filter|position:\s*sticky/)
   })
 
-  test('sets the headline in two lines with the reach line under it', () => {
+  test('sets the lead light and the regions heavy, joined as a list', () => {
     const { queries, section } = renderLocations()
 
     const heading = queries.getByRole('heading', { level: 2 })
-    expect(heading.textContent).toBe('UAE manufacturing presence.Regional and international reach.')
-    const lines = section.querySelectorAll('.locations-title-line')
-    expect(lines).toHaveLength(2)
-    expect(lines[1].classList.contains('locations-title-line--light')).toBe(true)
-    expect(section.querySelector('.locations-reach')?.textContent).toBe('Middle East·Europe·Africa')
-    expect(base).toMatch(/\.locations-reach \{[^}]*color:\s*var\(--blue\);[^}]*text-transform:\s*uppercase;/s)
+    expect(heading.textContent).toBe('We deliver all over Middle-East, Europe & Africa')
+    expect(section.querySelector('.locations-title-lead')?.textContent).toBe('We deliver all over')
+    expect(section.querySelector('.locations-title-regions')?.textContent).toBe(
+      'Middle-East, Europe & Africa',
+    )
+    expect(section.querySelector('.locations-title-amp')?.textContent).toBe('&')
+    expect(css).toMatch(
+      /\.locations-title \{[^}]*font-weight:\s*800;[^}]*text-transform:\s*uppercase;/s,
+    )
+    expect(css).toMatch(/\.locations-title-lead,\s*\.locations-title-amp \{\s*font-weight:\s*300;/s)
   })
 
-  test('lists Sharjah then Thoban, each under a thin blue rule, from the defaults', () => {
+  test('lists Sharjah then Thoban, each under a blue rule the width of its name', () => {
     const { queries, section } = renderLocations()
     const items = Array.from(section.querySelectorAll('.locations-item'))
 
@@ -68,29 +81,46 @@ describe('HomeLocationsSection', () => {
       const expected = defaultLocations[index]
       expect(item.querySelector('.locations-name strong')?.textContent).toBe(expected.name)
       expect(item.querySelector('.locations-name span')?.textContent).toBe(expected.kind)
-      // Name and rule share one box, so the rule ends where the name ends.
       const head = item.firstElementChild as HTMLElement
       expect(head.className).toBe('locations-item-head')
       expect(head.children[0].className).toBe('locations-name')
       expect(head.children[1].className).toBe('locations-rule')
-      expect(item.querySelector('.locations-address')?.textContent).toBe(expected.addressLines.join(''))
-      expect(item.querySelectorAll('.locations-address br')).toHaveLength(expected.addressLines.length - 1)
+      // One run of copy, wrapped by the measure rather than at each comma.
+      expect(item.querySelector('.locations-address')?.textContent).toBe(
+        expected.addressLines.join(' '),
+      )
     }
-    expect(defaultLocations[0].addressLines).toEqual([
-      'A2, Plot No. 10576015-3,',
-      'Sajaa Industrial Area,',
-      'Sharjah, UAE',
-    ])
     expect(queries.getByRole('link', { name: '+971 509 469 979' }).getAttribute('href')).toBe(
       'tel:+971509469979',
     )
     expect(queries.getByRole('link', { name: '+971 505 389 979' }).getAttribute('href')).toBe(
       'tel:+971505389979',
     )
-    expect(base).toMatch(/\.locations-rule \{[^}]*height:\s*1px;[^}]*background:\s*var\(--blue\);/s)
-    // It runs back across the facility's indent to the copy column's edge.
-    expect(base).toMatch(/\.locations-rule \{[^}]*margin:[^;]*calc\(-1 \* var\(--locations-indent\)\);/s)
-    expect(base).toMatch(/\.locations-item-head \{\s*width:\s*max-content;/s)
+    expect(css).toMatch(/\.locations-rule \{[^}]*height:\s*2px;[^}]*background:\s*var\(--blue\);/s)
+    // The rule runs back across the branch's indent to the copy column's edge.
+    expect(css).toMatch(
+      /\.locations-rule \{[^}]*margin:[^;]*calc\(-1 \* var\(--locations-indent\)\);/s,
+    )
+    expect(css).toMatch(/\.locations-item-head \{\s*width:\s*max-content;/s)
+    expect(css).toMatch(/\.locations-address \{[^}]*max-width:\s*31ch;/s)
+  })
+
+  /*
+   * The indents are lengths, not percentages: the rule's negative margin has
+   * to resolve against the column, not against the name box it sits in,
+   * which a percentage would. Viewport units rather than container units --
+   * the process section's accordion keeps container sizing out of the sheet.
+   */
+  test('steps the branches down and to the right of the copy column', () => {
+    expect(wide).toMatch(
+      /\.locations-item\[data-location='1'\] \{\s*--locations-indent:\s*min\(13vw, 10rem\);/s,
+    )
+    expect(wide).toMatch(
+      /\.locations-item\[data-location='2'\] \{\s*--locations-indent:\s*min\(36\.5vw, 28rem\);/s,
+    )
+    expect(css).not.toMatch(/cqi|container-type/)
+    // Phones stack plainly: no indent, so each rule underlines its own name.
+    expect(css).toMatch(/\.locations \{[^}]*--locations-indent:\s*0px;/s)
   })
 
   test('takes address, phone and photograph from the footer, keeping the names', () => {
@@ -104,131 +134,71 @@ describe('HomeLocationsSection', () => {
 
     const items = Array.from(section.querySelectorAll('.locations-item'))
     expect(items[0].querySelector('strong')?.textContent).toBe('Sharjah')
-    // "Unit 4" is too short for a line of its own; it stays with the street.
     expect(items[0].querySelector('.locations-address')?.textContent).toBe(
-      'Unit 4, Somewhere Industrial Area,Sharjah',
+      'Unit 4, Somewhere Industrial Area, Sharjah',
     )
     expect(items[1].querySelector('strong')?.textContent).toBe('Thoban')
     expect(queries.getByRole('link', { name: '+971 500 000 002' }).getAttribute('href')).toBe(
       'tel:+971500000002',
     )
-    expect(queries.getByAltText('Uploaded aerial').getAttribute('src')).toBe('/api/media/file/aerial.jpg')
-    // The footer's real addresses set as the three lines the design calls for.
-    expect(splitAddress('A2, Plot No. 10576 015-3, Sajja Industrial Area, Sharjah, UAE')).toEqual([
-      'A2, Plot No. 10576 015-3,',
-      'Sajja Industrial Area,',
-      'Sharjah, UAE',
-    ])
+    expect(queries.getByAltText('Uploaded aerial').getAttribute('src')).toBe(
+      '/api/media/file/aerial.jpg',
+    )
     expect(splitAddress('Plot No. D-81, Thoban Industrial Area, Fujairah, UAE')).toEqual([
       'Plot No. D-81,',
       'Thoban Industrial Area,',
       'Fujairah, UAE',
     ])
-    expect(splitAddress('A, B, C')).toEqual(['A, B, C'])
   })
 
-  test('falls back to the committed photograph until one is uploaded', () => {
-    const { queries } = renderLocations()
-
-    expect(queries.getByAltText(defaultLocationsImage.alt).getAttribute('src')).toBe(
-      defaultLocationsImage.url,
-    )
-  })
-
-  test('sets the oversized country mark over the foot of the photograph', () => {
+  /*
+   * No photograph uploaded: no <img> pointing at a file that is not there. The
+   * frame's own sky-toned ground carries the white mark until one arrives.
+   */
+  test('holds the frame on its own ground until a photograph is uploaded', () => {
     const { section } = renderLocations()
-    const mark = section.querySelector('.locations-media-mark') as HTMLElement
 
-    expect(mark.textContent).toBe('UAE')
+    expect(section.querySelector('.locations-media img')).toBeNull()
+    expect(css).toMatch(/\.locations-media-frame \{[^}]*background:\s*linear-gradient\(/s)
+  })
+
+  test('draws the UAE mark across the foot of the picture', () => {
+    const { section } = renderLocations()
+    const mark = section.querySelector('.locations-mark') as HTMLElement
+
     expect(mark.getAttribute('aria-hidden')).toBe('true')
-    expect(mark.parentElement?.className).toBe('locations-media-frame')
-    expect(base).toMatch(/\.locations-media-mark \{[^}]*bottom:\s*-0\.06em;[^}]*left:\s*-0\.04em;[^}]*font-size:\s*clamp\(5rem, 11vw, 11rem\);/s)
+    expect(mark.parentElement?.classList.contains('locations-media')).toBe(true)
+    expect(mark.querySelector('svg path')?.getAttribute('fill')).toBe('currentColor')
+    expect(css).toMatch(
+      /\.locations-mark \{[^}]*right:\s*6%;[^}]*bottom:\s*2\.5%;[^}]*width:\s*73%;[^}]*color:\s*#ffffff;/s,
+    )
   })
 
   /*
-   * The scroll contract: no pin and no wheel handling anywhere -- the image
-   * is CSS-sticky and every movement is a scrubbed tween on page scroll, so
-   * the next section can rise in naturally and scrolling up reverses it.
+   * One-shot reveals from the shared primitives: the picture opens like a
+   * shutter, the headline arrives by the word, and each branch draws its rule
+   * before its details -- the second a beat behind the first.
    */
-  test('holds the image with sticky positioning and scrubs the reveals from page scroll', () => {
-    expect(component).toMatch(/import\('gsap\/ScrollTrigger'\)/)
-    expect(component).not.toMatch(/\bpin[:,]|pinSpacing|pinType/)
-    expect(component).not.toMatch(/addEventListener\(\s*['"]wheel['"]/)
-    expect(component).not.toMatch(/setInterval|autoplay|preventDefault/)
-    expect(component).toContain(`'${SCENE_MEDIA}'`)
-    expect(component).toMatch(/onFirstMediaMatch\(LOCATIONS_SCENE_MEDIA/)
-    // Entrance: image into place and headline up, while the section rises.
-    expect(component).toMatch(/start: 'top 88%',\s*trigger: section,/)
-    expect(component).toMatch(/entrance\.fromTo\(\s*media,\s*\{ opacity: 0, y: 32 \}/)
-    expect(component).toMatch(/\{ opacity: 0, y: 26 \}/)
-    // Subtle drift on the photograph across the whole section.
-    expect(component).toMatch(/\{ yPercent: -4 \}/)
-    expect(component).toMatch(/yPercent: 4,/)
-    // Each facility in turn: rule out, then name and address up.
-    // Short, and finished high enough that a facility is formed by the lock.
-    expect(component).toMatch(/end: 'top 74%',[\s\S]*?start: 'top 92%',\s*trigger: item,/)
-    expect(component).toMatch(/\{ scaleX: 0 \}/)
-    expect(component).toMatch(/'\.locations-name, \.locations-detail'/)
-    expect(component).toMatch(/context\.revert\(\)/)
+  test('arrives once through the shared reveals, with no scroll scene', () => {
+    const { section } = renderLocations()
 
-    /*
-     * Bottom-anchored, not top: the image rises in with the section, holds
-     * with its lower edge one --locations-bottom-pad above the foot of the
-     * viewport, then lifts away with the section. Its height is what is left
-     * of the viewport between the bar and that gap, so nothing is cut off.
-     */
-    expect(scene).toMatch(
-      /\.locations-media \{[^}]*align-self:\s*end;\s*position:\s*sticky;\s*bottom:\s*var\(--locations-bottom-pad\);/s,
-    )
-    // A bottom-offset sticky box is only pulled up towards the foot of the
-    // viewport when it rests below it, so resting at the foot is required.
-    expect(scene).not.toMatch(/\.locations-media \{[^}]*[^-]top:/s)
-    expect(base).toMatch(/--locations-bottom-pad:\s*1\.5rem;/)
-    expect(scene).toMatch(
-      /\.locations-media-frame \{\s*height:\s*calc\(\s*100svh - var\(--header-height\) - var\(--locations-bottom-pad\) - var\(--locations-pad\)\s*\);/s,
-    )
-    expect(scene).toMatch(/\.locations-grid \{[^}]*grid-template-columns:\s*var\(--locations-media-col\) minmax\(0, 1fr\);/s)
-    expect(base).toMatch(/--locations-media-col:\s*minmax\(0, 33%\);/)
-  })
-
-  /*
-   * The scroll budget. The column is taller than the image by exactly the
-   * stretch the image spends held at the foot of the viewport -- 18svh, not
-   * the screens of white the min-height bands used to buy. The groups are
-   * spaced by ordinary gaps, so the headline, Sharjah and Thoban all reveal
-   * within roughly one viewport of scrolling and end as the static layout.
-   */
-  test('keeps the whole story inside a compact scroll', () => {
-    expect(scene).toMatch(/\.locations-grid \{[^}]*min-height:\s*118svh;/s)
-    expect(scene).toMatch(/\.locations-copy \{\s*gap:\s*clamp\(2rem, 12svh, 6\.5rem\);/s)
-    expect(scene).toMatch(/\.locations-list \{\s*gap:\s*clamp\(2rem, 14svh, 7\.5rem\);/s)
-    // Short desktops bring the whole set down a step so it still lands in one screen.
-    expect(stylesheet).toMatch(
-      /@media \(min-width: 64rem\) and \(max-height: 46rem\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.locations-title \{/s,
-    )
-    // No band-sized min-heights or spacers standing in for content.
-    expect(scene).not.toMatch(/min-height:\s*\d+svh;[^}]*\}\s*\.locations-item/s)
-    expect(scene).not.toMatch(/\.locations-head \{/)
-    expect(scene).not.toMatch(/\.locations-item \{[^}]*min-height/s)
-    expect(scene).not.toMatch(/\.locations-item:last-child/)
-    // The facilities step down and to the right, the second further in.
-    expect(scene).toMatch(/\.locations-item\[data-location='1'\] \{\s*--locations-indent:\s*clamp\(/s)
-    expect(scene).toMatch(/\.locations-item\[data-location='2'\] \{\s*--locations-indent:\s*clamp\(/s)
-  })
-
-  test('stacks plainly on phones and under reduced motion', () => {
-    expect(base).toMatch(/\.locations-grid \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s)
-    expect(base).toMatch(/\.locations-media-frame \{[^}]*height:\s*clamp\(22rem, 70svh, 36rem\);/s)
-    expect(base).not.toMatch(/position:\s*sticky/)
-    // No indent, so each rule simply underlines its own name.
-    expect(base).toMatch(/\.locations \{[^}]*--locations-indent:\s*0px;/s)
-    expect(base).toMatch(/\.locations-item \{\s*padding-left:\s*var\(--locations-indent\);\s*\}/s)
-  })
-
-  test('shares the header-condense refresh and imports nothing but types from the server data layer', () => {
-    expect(component).toMatch(/import \{ onFirstMediaMatch, watchHeaderCondense \} from '\.\/scrollTriggerRefresh'/)
-    expect(component).toMatch(/watchHeaderCondense\(ScrollTrigger\)/)
-    const valueImports = component.match(/^import\s+(?!type\s)[^\n]*from '@\/data\/(home|site)'/gm) ?? []
+    expect(section.querySelector('.locations-media')?.hasAttribute('data-reveal')).toBe(true)
+    expect(section.querySelectorAll('.locations-title .reveal-word').length).toBeGreaterThan(5)
+    for (const item of Array.from(section.querySelectorAll('.locations-item'))) {
+      expect(item.hasAttribute('data-reveal')).toBe(true)
+      expect(item.querySelector('.locations-rule')?.hasAttribute('data-reveal')).toBe(true)
+    }
+    // The unclipped figure watches for the viewport; the frame inside it opens.
+    // A clipped element never counts as in view, so it could not open itself.
+    expect(component).toMatch(/<RevealGroup as="figure" className="locations-media"/)
+    expect(component).toMatch(/className="locations-media-frame" motion="shutter"/)
+    expect(section.querySelector('.locations-media-frame')?.hasAttribute('data-reveal')).toBe(true)
+    expect(component).toMatch(/className="locations-rule"\s+motion="line"/)
+    expect(component).toMatch(/delay=\{0\.1 \+ index \* 0\.18\}/)
+    expect(component).not.toMatch(/gsap|ScrollTrigger|useEffect|data-scroll-scene/)
+    // Types only from the server data layer, so Payload stays out of the bundle.
+    const valueImports =
+      component.match(/^import\s+(?!type\s)[^\n]*from '@\/data\/(home|site)'/gm) ?? []
     expect(valueImports).toEqual([])
   })
 })

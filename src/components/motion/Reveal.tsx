@@ -16,9 +16,9 @@ import { Fragment, type ComponentPropsWithRef, type ReactNode } from 'react'
  * `<header class="machining-head">` the stylesheet expects. Nothing about the
  * layout changes; only how it arrives.
  *
- * Scroll-scrubbed scenes (the process accordion, the locations spread) stay on
- * GSAP: they follow the scrollbar frame by frame, which is a different job
- * from a one-shot reveal and does not belong in the same abstraction.
+ * The scroll-scrubbed scene (the process accordion) stays on GSAP: it follows
+ * the scrollbar frame by frame, which is a different job from a one-shot
+ * reveal and does not belong in the same abstraction.
  *
  * A reduced-motion preference is honoured in the stylesheet rather than here,
  * by a rule that pins anything marked `data-reveal` to its resting state.

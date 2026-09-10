@@ -146,11 +146,22 @@ export const PRODUCT_FAMILIES: readonly ProductFamilySeed[] = [
       'Dollies, racks and carts for moving ULDs, pallets, baggage and mail across the apron.',
     sortOrder: 210,
   },
+  /*
+   * Containers and pallets were one family until the range grew to a product
+   * per container type. They are bought separately -- a container by its
+   * contour, a pallet and its net by base size -- so they file separately.
+   */
   {
-    slug: 'uld-containers-and-pallets',
-    title: 'ULD Containers & Pallets',
-    summary: 'ULD containers, aircraft pallets and pallet nets for unit load handling.',
+    slug: 'uld-containers',
+    title: 'ULD Containers',
+    summary: 'Lower-deck and main-deck unit load devices, LD1 through LD29 and M-1H.',
     sortOrder: 220,
+  },
+  {
+    slug: 'pallets-and-nets',
+    title: 'Pallets & Nets',
+    summary: 'Air cargo pallets and the restraint nets that secure freight on them.',
+    sortOrder: 225,
   },
   {
     slug: 'access-and-maintenance-equipment',
@@ -187,7 +198,8 @@ export const INDUSTRY_FAMILY_FOCUS: Readonly<Record<string, readonly string[]>> 
   'aviation-ground-support-equipment': [
     'conveyors-and-loaders',
     'cargo-and-baggage-handling',
-    'uld-containers-and-pallets',
+    'uld-containers',
+    'pallets-and-nets',
     'access-and-maintenance-equipment',
     'engine-lifting-and-servicing',
     'passenger-and-cabin-service',
@@ -289,7 +301,23 @@ export const SUPERSEDED_FAMILIES: Readonly<Record<string, string>> = {
   'modular-conveyor-system': 'material-handling-and-conveying',
   // The old catch-all, superseded by the six aviation families.
   'aviation-ground-support-equipment': 'conveyors-and-loaders',
+  // Split in two. Containers are the default home; pallets and nets are
+  // moved on by SKU (PALLET_AND_NET_SKUS below).
+  'uld-containers-and-pallets': 'uld-containers',
 }
+
+/**
+ * The pallets and the net from the old combined ULD family, which belong in
+ * Pallets & Nets rather than in its successor.
+ */
+export const PALLET_AND_NET_SKUS: readonly string[] = [
+  'GSE-PAG-P1-051',
+  'GSE-PMC-P6-052',
+  'GSE-PLA-P9-053',
+  'GSE-FQA-P8-054',
+  'GSE-PKC-055',
+  'GSE-PN-056',
+]
 
 /** Family slugs a given industry focuses on. */
 /**

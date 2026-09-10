@@ -1,6 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { useEffect, useLayoutEffect } from 'react'
+
+// useLayoutEffect warns when it runs during SSR (this component is still
+// rendered there for the first response); it does nothing server-side either
+// way, so the effect body is identical -- this only silences that warning.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 /**
  * Sections declare the header treatment they need with `data-nav-surface`,
@@ -26,7 +32,25 @@ const surfaceSelector = '[data-nav-surface]'
 const stuckThreshold = 8
 
 export function HeaderSurfaceController() {
-  useEffect(() => {
+  /*
+   * The root layout -- and this component with it -- stays mounted across
+   * every client-side navigation; only the page content under it swaps. This
+   * effect used to run once, at that first mount, and cache whichever
+   * `[data-nav-surface]` sections existed on the very first page. A later
+   * Link navigation would replace those sections in the DOM, but the scroll
+   * listener kept measuring the old, now-detached elements -- a detached
+   * element's getBoundingClientRect() is all zeros, which never satisfies the
+   * "under the header" check below, so `navSurface` was cleared. With no
+   * theme active, the header fell back to its blurred default backdrop-filter
+   * over whatever the page was mid-swapping in -- a flash of grey blur right
+   * where the new dark section should have been.
+   *
+   * Keyed on the route, so a navigation re-scans for the new page's sections
+   * before the browser paints it (a layout effect, not a regular one).
+   */
+  const pathname = usePathname()
+
+  useIsomorphicLayoutEffect(() => {
     const root = document.documentElement
     const header = document.querySelector<HTMLElement>('.nav-container')
 
@@ -93,7 +117,8 @@ export function HeaderSurfaceController() {
       delete root.dataset.navSurface
       delete root.dataset.navStuck
     }
-  }, [])
+    // Re-scans on every route change; see the comment above the hook.
+  }, [pathname])
 
   return null
 }

@@ -6,15 +6,18 @@
  * Metal Products", the gantry crane under "Industrial Solutions" -- and only
  * half the printed catalogue existed as Product documents at all.
  *
- * This seeds six aviation families, files every catalogue item into one, and
+ * This seeds seven aviation families, files every catalogue item into one, and
  * creates the entries that were missing. Products are matched on SKU, so
  * re-running only moves families and fills gaps; it never duplicates a row.
  *
- * The old catch-all "Aviation Ground Support Equipment" family is left in
- * place but has its industryFocus cleared, which drops it out of the Products
- * menu without deleting a document anything might still reference.
+ * Families the range has moved out of -- the old catch-all "Aviation Ground
+ * Support Equipment", and "ULD Containers & Pallets" before it was split -- are
+ * left in place but have their industryFocus cleared, which drops them out of
+ * the Products menu without deleting a document anything might still
+ * reference.
  *
  *   pnpm run seed:aviation-catalog
+ *   (DRY_RUN=1 to list what would be created or refiled, and write nothing)
  */
 import process from 'node:process'
 
@@ -22,14 +25,14 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 const INDUSTRY_SLUG = 'aviation-ground-support-equipment'
-const LEGACY_FAMILY_SLUG = 'aviation-ground-support-equipment'
 
 const CONVEYORS = 'conveyors-and-loaders'
 const ACCESS = 'access-and-maintenance-equipment'
 const CARGO = 'cargo-and-baggage-handling'
 const ENGINE = 'engine-lifting-and-servicing'
 const CABIN = 'passenger-and-cabin-service'
-const ULD = 'uld-containers-and-pallets'
+const ULD = 'uld-containers'
+const PALLETS = 'pallets-and-nets'
 
 const FAMILIES = [
   {
@@ -67,13 +70,34 @@ const FAMILIES = [
       'Galley trolleys, catering carts and terminal equipment built to airline cabin service standards.',
     sortOrder: 5,
   },
+  /*
+   * On the taxonomy's scale (productTaxonomy.ts), not 1-5 above: these two
+   * are created by this script, and a 6 or 7 would sort them ahead of every
+   * family on the site. The existing five were renumbered there long ago.
+   */
   {
     slug: ULD,
-    title: 'ULD Containers & Pallets',
-    summary:
-      'Certified unit load devices, air cargo pallets and restraint nets for widebody and narrowbody loading.',
-    sortOrder: 6,
+    title: 'ULD Containers',
+    summary: 'Lower-deck and main-deck unit load devices, LD1 through LD29 and M-1H.',
+    sortOrder: 220,
   },
+  {
+    slug: PALLETS,
+    title: 'Pallets & Nets',
+    summary: 'Air cargo pallets and the restraint nets that secure freight on them.',
+    sortOrder: 225,
+  },
+]
+
+/*
+ * Families this catalogue has moved out of. They keep their documents -- older
+ * content may reference them -- but leave the Products menu once empty.
+ */
+const RETIRED_FAMILY_SLUGS = [
+  // The old catch-all, before the range was split by role.
+  'aviation-ground-support-equipment',
+  // Containers and pallets, before they were split into two families.
+  'uld-containers-and-pallets',
 ]
 
 type Entry = { sku: string; title: string; summary: string; family: string }
@@ -440,40 +464,77 @@ const CATALOG: Entry[] = [
     summary:
       'Unit load devices covering LD1, LD2, LD3, LD3-45, LD4, LD6, LD7, LD8, LD9, LD11, LD26, LD29 and M-1H.',
   },
+
+  /*
+   * Each container in that range as a product of its own, so a buyer who
+   * needs an LD3 finds an LD3 rather than a page about thirteen of them. The
+   * SKUs are the model codes on the product photographs; the types come from
+   * the range entry above, in the same order. ULDCM-11 is the one main-deck
+   * type in the list, M-1H.
+   */
+  ...(
+    [
+      ['GSE-ULDC-01', 'LD1'],
+      ['GSE-ULDC-02', 'LD2'],
+      ['GSE-ULDC-03', 'LD3'],
+      ['GSE-ULDC-0345', 'LD3-45'],
+      ['GSE-ULDC-04', 'LD4'],
+      ['GSE-ULDC-06', 'LD6'],
+      ['GSE-ULDC-07', 'LD7'],
+      ['GSE-ULDC-08', 'LD8'],
+      ['GSE-ULDC-09', 'LD9'],
+      ['GSE-ULDC-11', 'LD11'],
+      ['GSE-ULDC-26', 'LD26'],
+      ['GSE-ULDC-29', 'LD29'],
+    ] as const
+  ).map(
+    ([sku, type]): Entry => ({
+      sku,
+      title: `${type} ULD Container`,
+      family: ULD,
+      summary: `${type} lower-deck unit load device for containerised air cargo and baggage.`,
+    }),
+  ),
+  {
+    sku: 'GSE-ULDCM-11',
+    title: 'M-1H ULD Container',
+    family: ULD,
+    summary: 'M-1H main-deck unit load device for high-volume air cargo.',
+  },
   {
     sku: 'GSE-PAG-P1-051',
     title: 'PAG P1 2A4P Pallet',
-    family: ULD,
+    family: PALLETS,
     summary: 'Standard PAG air cargo pallet for widebody aircraft loading.',
   },
   {
     sku: 'GSE-PMC-P6-052',
     title: 'PMC P6 2M3P Pallet',
-    family: ULD,
+    family: PALLETS,
     summary: 'Heavy-duty PMC pallet for widebody air cargo operations.',
   },
   {
     sku: 'GSE-PLA-P9-053',
     title: 'PLA P9 2L3P Pallet',
-    family: ULD,
+    family: PALLETS,
     summary: 'Compact PLA pallet for smaller air cargo handling requirements.',
   },
   {
     sku: 'GSE-FQA-P8-054',
     title: 'FQA P8 Pallet',
-    family: ULD,
+    family: PALLETS,
     summary: 'FQA aircraft pallet for compact cargo loading operations.',
   },
   {
     sku: 'GSE-PKC-055',
     title: 'PKC 2K3P Pallet',
-    family: ULD,
+    family: PALLETS,
     summary: 'PKC pallet for compact ULD and cargo handling support.',
   },
   {
     sku: 'GSE-PN-056',
     title: 'Pallet Net',
-    family: ULD,
+    family: PALLETS,
     summary: 'Cargo pallet net for securing freight during aircraft transport.',
   },
 ]
@@ -483,6 +544,8 @@ const formatSlug = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+
+const dryRun = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true'
 
 const payload = await getPayload({ config })
 
@@ -517,10 +580,42 @@ for (const family of FAMILIES) {
   }
 
   if (existing.docs.length) {
-    const id = (existing.docs[0] as { id: number }).id
-    await payload.update({ collection: 'product-families', id, data })
-    familyIdBySlug.set(family.slug, id)
-    console.log('family updated:', family.title)
+    const doc = existing.docs[0] as {
+      id: number
+      industryFocus?: unknown[] | null
+      sortOrder?: number | null
+      summary?: string | null
+      title: string
+    }
+    familyIdBySlug.set(family.slug, doc.id)
+
+    /*
+     * An existing family is left as it is. Its order and copy are set by the
+     * taxonomy seed and by hand in the admin, and this script only needs the
+     * id to file products under -- so a difference is reported, not reverted.
+     * UPDATE_FAMILIES=1 writes the values above over it.
+     */
+    const drifted = [
+      doc.title !== data.title && 'title',
+      (doc.summary ?? '') !== data.summary && 'summary',
+      doc.sortOrder !== data.sortOrder && 'sortOrder',
+      !(doc.industryFocus ?? []).includes(industryId) && 'industryFocus',
+    ].filter(Boolean)
+    if (!drifted.length) continue
+
+    if (process.env.UPDATE_FAMILIES !== '1') {
+      console.log('family kept:', family.title, '(differs in ' + drifted.join(', ') + ')')
+      continue
+    }
+
+    if (!dryRun) await payload.update({ collection: 'product-families', id: doc.id, data })
+    console.log(
+      dryRun ? 'would update family:' : 'family updated:',
+      family.title,
+      '(' + drifted.join(', ') + ')',
+    )
+  } else if (dryRun) {
+    console.log('would create family:', family.title)
   } else {
     const doc = await payload.create({ collection: 'product-families', data })
     familyIdBySlug.set(family.slug, (doc as { id: number }).id)
@@ -555,16 +650,24 @@ for (const entry of CATALOG) {
       continue
     }
 
-    await payload.update({
-      collection: 'products',
-      id: doc.id,
-      data: {
-        industries: needsIndustry ? [...industries, industryId] : industries,
-        productFamily: familyId,
-      },
-    })
+    if (!dryRun) {
+      await payload.update({
+        collection: 'products',
+        id: doc.id,
+        data: {
+          industries: needsIndustry ? [...industries, industryId] : industries,
+          productFamily: familyId,
+        },
+      })
+    }
     refiled += 1
-    console.log('refiled:', entry.sku, '->', entry.family)
+    console.log(dryRun ? 'would refile:' : 'refiled:', entry.sku, '->', entry.family)
+    continue
+  }
+
+  if (dryRun) {
+    created += 1
+    console.log('would create:', entry.sku, entry.title, '(' + formatSlug(entry.title) + ')')
     continue
   }
 
@@ -585,27 +688,43 @@ for (const entry of CATALOG) {
   console.log('created:', entry.sku, entry.title)
 }
 
-// Drop the catch-all family out of the Products menu without deleting a
-// document that older content may still reference.
-if (!familyIdBySlug.has(LEGACY_FAMILY_SLUG)) {
-  const legacy = await payload.find({
+// Drop retired families out of the Products menu without deleting documents
+// that older content may still reference -- once nothing is filed under them.
+for (const slug of RETIRED_FAMILY_SLUGS) {
+  if (familyIdBySlug.has(slug)) continue
+
+  const retired = await payload.find({
     collection: 'product-families',
-    where: { slug: { equals: LEGACY_FAMILY_SLUG } },
+    where: { slug: { equals: slug } },
     depth: 0,
     limit: 1,
   })
+  const doc = retired.docs[0] as { id: number; industryFocus?: unknown[] | null } | undefined
+  if (!doc?.industryFocus?.length) continue
 
-  if (legacy.docs.length) {
+  const { totalDocs: stillFiled } = await payload.count({
+    collection: 'products',
+    where: { productFamily: { equals: doc.id } },
+  })
+
+  if (stillFiled && !dryRun) {
+    console.log(`kept in the menu: ${slug} still holds ${stillFiled} product(s)`)
+  } else if (dryRun) {
+    console.log(`would remove ${slug} from the Products menu`)
+  } else {
     await payload.update({
       collection: 'product-families',
-      id: (legacy.docs[0] as { id: number }).id,
+      id: doc.id,
       data: { industryFocus: [] },
     })
-    console.log('legacy catch-all family removed from the Products menu')
+    console.log(`${slug} removed from the Products menu`)
   }
 }
 
 console.log('')
-console.log('created ' + created + ' | refiled ' + refiled + ' | already correct ' + unchanged)
+console.log(
+  (dryRun ? 'DRY RUN, nothing written -- ' : '') +
+    'created ' + created + ' | refiled ' + refiled + ' | already correct ' + unchanged,
+)
 
 process.exit(0)

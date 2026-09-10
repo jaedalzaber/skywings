@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
       {
         pathname: '/images/**',
       },
+      {
+        // Media mirrored out of Cloudinary by `pnpm run mirror:media`.
+        pathname: '/media/**',
+      },
     ],
     remotePatterns: [
       {
@@ -24,6 +28,19 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // The Cloudinary adapter serves brochures and 3D assets from these committed
+  // upload folders before falling back to the CDN, so the file route needs
+  // them in its serverless bundle.
+  outputFileTracingIncludes: {
+    '/api/**': ['./brochures/**', './three-d-assets/**'],
+  },
+  // The blog became the Resources hub; old links and bookmarks follow it there.
+  async redirects() {
+    return [
+      { source: '/blog', destination: '/resources', permanent: true },
+      { source: '/blog/:slug', destination: '/resources/:slug', permanent: true },
+    ]
   },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {

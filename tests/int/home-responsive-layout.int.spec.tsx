@@ -173,6 +173,21 @@ describe('responsive home layout', () => {
     )
   })
 
+  /*
+   * The bar eases as it tightens but snaps back open. Easing it open slid the
+   * page under it for 200ms after --header-height had already jumped, and
+   * Chrome left a stripe of stale pixels below the bar on the dark
+   * capabilities page. The transition belongs to the condensed state only, so
+   * leaving that state takes none.
+   */
+  test('eases the header closed but not open', () => {
+    const base = baseStylesheet.match(/\n\.topbar \{[^}]*\}/)?.[0] ?? ''
+    expect(base).not.toMatch(/transition:/)
+    expect(baseStylesheet).toMatch(
+      /html\[data-nav-stuck='true'\] \.topbar \{[^}]*transition:\s*min-height 200ms ease,\s*padding-block 200ms ease;/s,
+    )
+  })
+
   test('scrolls the industries heading away instead of pinning it', () => {
     expect(stylesheet).toMatch(
       /\[data-responsive-layout='industries'\] \.industries-showcase-intro \{[^}]*position:\s*relative;/s,

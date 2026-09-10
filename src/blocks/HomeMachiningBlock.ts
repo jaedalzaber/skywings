@@ -2,11 +2,13 @@ import type { Block } from 'payload'
 
 /**
  * The dark machining capability section: a heading cell and an accordion of
- * machine groups, each opening onto its machine list and photographs.
+ * the capability processes, each opening onto its machine list and
+ * photographs.
  *
- * Every field is optional in practice -- the section falls back, field by
- * field, to the committed defaults in src/data/homeMachiningDefaults.ts, so
- * clearing one line in the admin restores that line rather than leaving a gap.
+ * This block carries the heading and the figures. The rows are the
+ * Capabilities collection, with the Machines filed under each -- edit the
+ * processes, machines and their photographs there, and both the home page and
+ * /capabilities follow.
  */
 export const HomeMachiningBlock: Block = {
   slug: 'homeMachining',
@@ -41,12 +43,17 @@ export const HomeMachiningBlock: Block = {
       ],
     },
     {
+      /*
+       * No longer read: the rows come from the Capabilities and Machines
+       * collections, so the home page and /capabilities show one shop list.
+       * Hidden rather than removed -- dropping the field would drop its tables,
+       * and the schema push is additive only.
+       */
       name: 'groups',
       label: 'Machine groups',
       type: 'array',
       admin: {
-        description:
-          'One row per cell. The first is open on arrival; the rest open one at a time when clicked.',
+        hidden: true,
       },
       fields: [
         {

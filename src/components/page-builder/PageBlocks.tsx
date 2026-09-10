@@ -3,6 +3,7 @@ import { SectionHeading } from '@/components/atoms/SectionHeading'
 import { ContactSection } from '@/components/contact/ContactSection'
 import type { ProductFilters } from '@/data/catalog'
 import type { PageLayout } from '@/data/pages'
+import { getSiteFooter } from '@/data/site'
 
 import {
   BlogListingSection,
@@ -14,6 +15,7 @@ import {
 
 type PageBlocksProps = {
   blocks: PageLayout
+  error?: boolean
   filters?: ProductFilters
   productInterest?: string
   submitted?: boolean
@@ -76,6 +78,9 @@ async function renderBlock(
     case 'contactRFQ':
       return (
         <ContactSection
+          block={block}
+          error={context.error}
+          footer={await getSiteFooter()}
           key={key}
           productInterest={context.productInterest}
           submitted={context.submitted}

@@ -1,0 +1,697 @@
+/*
+ * Capabilities page.
+ *
+ * The home page's machining-capability section, taken to a whole page: the
+ * same dark ground, framed title cell, brand-blue bars and light panels, with
+ * the values below mirroring the .machining tokens in styles.css so the two
+ * read as one system. The difference is behaviour -- nothing here opens or
+ * closes. Every process stands open, so the bars are headings, not controls.
+ */
+
+/*
+ * The page is dark end to end. The ground is painted on body as well as on the
+ * page wrapper, because .site-shell pads around <main> at some widths and
+ * that padding would otherwise show as a light band above the footer.
+ */
+body:has(.capabilities-page) {
+  background: #1c1c1c;
+}
+
+.capabilities-page {
+  --capabilities-surface: #1c1c1c;
+  --capabilities-line: rgba(255, 255, 255, 0.14);
+  --capabilities-muted: #9a9a9a;
+  --capabilities-accent: var(--blue);
+  --capabilities-panel: #dedede;
+  /* Output cards: a step lighter than the panel they sit on. */
+  --capabilities-card: #efefef;
+  --capabilities-ink: #171717;
+  --capabilities-soft-ink: #555555;
+  /* Hairlines drawn on the light panel rather than the dark ground. */
+  --capabilities-panel-line: rgba(23, 23, 23, 0.14);
+  --capabilities-pad: clamp(1.25rem, 3vw, 2.5rem);
+  /*
+   * Inside a process card, a notch tighter than the page's own padding: the
+   * cards are read one after another, and the looser measure made each run
+   * past a screen.
+   */
+  --capabilities-panel-pad: clamp(1rem, 2vw, 1.75rem);
+  /* The dark gap between one process and the next. */
+  --capabilities-gap: clamp(1.5rem, 3.5vw, 3rem);
+  /*
+   * The pinned sub-navigation's height. It is also what a jump to a process
+   * clears (with the header), so the bar never lands underneath it.
+   */
+  --capabilities-subnav-height: 3.25rem;
+  --capabilities-mono: 'SF Mono', 'Consolas', monospace;
+  position: relative;
+  width: var(--bleed-width);
+  /*
+   * Pulled up under the sticky bar and padded back down by the same amount,
+   * as the product catalogue's intro band is. The dark ground then runs
+   * behind the bar from the first pixel, so HeaderSurfaceController finds a
+   * dark surface under it at the top of the page too -- without this the bar
+   * sat white over a dark page until the first scroll.
+   *
+   * Margin and padding both track --header-height, so when the bar condenses
+   * the two move together and the content does not shift.
+   */
+  margin-block-start: calc(-1 * var(--header-height));
+  margin-inline: var(--bleed-margin);
+  padding-top: var(--header-height);
+  color: #ffffff;
+  background: var(--capabilities-surface);
+}
+
+.capabilities-inner {
+  padding: clamp(3rem, 7vw, 6rem) var(--page-inset) clamp(3.5rem, 8vw, 7rem);
+}
+
+/* ---- Head: framed title cell on the left, intro on the right ---- */
+
+.capabilities-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/*
+ * A closed cell: the processes start a clear gap below the head rather than
+ * butting onto it, so the cell draws its own bottom rule.
+ */
+.capabilities-head-title {
+  padding: var(--capabilities-pad);
+  border: 1px solid var(--capabilities-line);
+}
+
+.capabilities-eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--capabilities-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.capabilities-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* Settled on the bottom edge, so the list lines up with the foot of the title cell. */
+.capabilities-head-aside {
+  display: grid;
+  align-content: end;
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+  padding: var(--capabilities-pad) 0 var(--capabilities-pad) var(--capabilities-pad);
+}
+
+.capabilities-intro {
+  max-width: 34rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1rem, 1.3vw, 1.1875rem);
+  line-height: 1.55;
+}
+
+/* The processes, listed beside the intro in two columns of hairline rows. */
+.capabilities-index ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--capabilities-line);
+  list-style: none;
+}
+
+.capabilities-index li {
+  border-bottom: 1px solid var(--capabilities-line);
+}
+
+.capabilities-index a {
+  display: block;
+  padding: 0.625rem 0;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.capabilities-index a:is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.capabilities-index a:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* ---- Sub-navigation ---- */
+
+/*
+ * Not there at the top of the page -- the head's list does that job. Once the
+ * processes reach the header it slides down from beneath it, and slides back
+ * up after the last one; CapabilitiesSubnav sets data-shown from the scroll
+ * position. Fixed rather than sticky so it takes no room in the page while
+ * hidden; full-bleed, with its links on the page container.
+ *
+ * Under the header in the stack (the bar is z-index 50), so it comes out from
+ * behind it rather than across it. --header-height follows the bar into its
+ * condensed state, so the two stay flush.
+ */
+.capabilities-subnav {
+  position: fixed;
+  z-index: 40;
+  top: var(--header-height);
+  right: 0;
+  left: 0;
+  padding-inline: var(--page-inset);
+  /*
+   * Ruled above and below. Drawn on this bar's own opaque background, which
+   * paints under its borders, so a translucent rule here stays a quiet grey
+   * line -- unlike the header's, whose fill stops short of its border.
+   */
+  border-top: 1px solid var(--capabilities-line);
+  border-bottom: 1px solid var(--capabilities-line);
+  background: var(--capabilities-surface);
+  opacity: 0;
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition:
+    transform 0.32s ease,
+    opacity 0.32s ease,
+    visibility 0.32s;
+}
+
+.capabilities-subnav[data-shown='true'] {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+
+/*
+ * With the sub-navigation down, its own top rule is the one line between the
+ * two bars, so the header's steps aside -- two stacked rules read as a thick
+ * seam. It takes the bar's colour rather than disappearing: transparent would
+ * not do, as the header's fill stops above that line and it would open a 1px
+ * gap onto the page scrolling underneath.
+ */
+html:has(.capabilities-subnav[data-shown='true']) .topbar {
+  border-bottom-color: var(--nav-surface);
+}
+
+/* Scrolls sideways when the processes outrun the width, bar hidden. */
+.capabilities-subnav-list {
+  display: flex;
+  min-height: var(--capabilities-subnav-height);
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.capabilities-subnav-list::-webkit-scrollbar {
+  display: none;
+}
+
+.capabilities-subnav-list li {
+  flex: none;
+}
+
+.capabilities-subnav-link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 clamp(0.875rem, 1.6vw, 1.375rem);
+  color: var(--capabilities-muted);
+  font-size: 0.875rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  /* The mark: a blue rule along the foot, drawn inside so nothing shifts. */
+  box-shadow: inset 0 -2px 0 transparent;
+  transition:
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.capabilities-subnav-list li:first-child .capabilities-subnav-link {
+  padding-left: 0;
+}
+
+.capabilities-subnav-link:is(:hover, :focus-visible) {
+  color: #ffffff;
+}
+
+/* The process being read. */
+.capabilities-subnav-link[aria-current='true'] {
+  color: #ffffff;
+  box-shadow: inset 0 -2px 0 var(--capabilities-accent);
+}
+
+.capabilities-subnav-link:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+}
+
+/* ---- Processes ---- */
+
+/* Set clear of the head, then the same dark gap between every process. */
+.capabilities-list {
+  display: grid;
+  gap: var(--capabilities-gap);
+  margin: clamp(2.5rem, 5vw, 4.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A jump lands the bar below the header and the pinned sub-navigation. */
+.capabilities-process {
+  scroll-margin-top: calc(var(--header-height) + var(--capabilities-subnav-height) + 1rem);
+}
+
+/* The home section's open-row bar, as a heading: no control, no close. */
+.capabilities-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: clamp(3.25rem, 4.2vw, 4.5rem);
+  margin: 0;
+  padding: 0.75rem var(--capabilities-panel-pad);
+  color: #ffffff;
+  background: var(--capabilities-accent);
+  font-size: clamp(1.125rem, 1.8vw, 1.625rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.capabilities-panel {
+  color: var(--capabilities-ink);
+  background: var(--capabilities-panel);
+}
+
+/*
+ * Machines and photographs, as the home panel has them: the list on the left,
+ * the carousel on the right from 64rem, stacked above it on anything smaller.
+ */
+.capabilities-park {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.capabilities-park-copy {
+  display: grid;
+  align-content: start;
+  gap: clamp(1rem, 1.8vw, 1.5rem);
+  padding: var(--capabilities-panel-pad);
+}
+
+.capabilities-process-summary {
+  max-width: 40rem;
+  margin: 0;
+  font-size: clamp(1rem, 1.3vw, 1.1875rem);
+  line-height: 1.55;
+}
+
+/* The profile's small grey captions: "Our machines", "Typical outputs". */
+.capabilities-label {
+  margin: 0 0 0.75rem;
+  color: var(--capabilities-soft-ink);
+  font-family: var(--capabilities-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---- Machine list ---- */
+
+.capabilities-machine-list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--capabilities-panel-line);
+  list-style: none;
+}
+
+/*
+ * One machine a row, in the home panel's mono: the plate on the machine, then
+ * what it is. A row with photographs is a button that brings them up.
+ */
+.capabilities-machine-row {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.8rem 0.875rem 0.8rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--capabilities-panel-line);
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+button.capabilities-machine-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* The machine the carousel is showing: a blue rule down its leading edge. */
+.capabilities-machine-row[data-active='true']::before {
+  position: absolute;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  left: 0;
+  width: 3px;
+  background: var(--capabilities-accent);
+  content: '';
+}
+
+.capabilities-machine-line {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.625rem;
+  row-gap: 0.15rem;
+  font-family: var(--capabilities-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.capabilities-machine-maker {
+  font-weight: 700;
+}
+
+/* The home list's dash, between the plate and the type. */
+.capabilities-machine-maker + .capabilities-machine-type::before {
+  margin-right: 0.625rem;
+  content: '—';
+}
+
+/* ---- Carousel ---- */
+
+.capabilities-carousel {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  background: #d6d6d6;
+}
+
+.capabilities-carousel-frame {
+  position: relative;
+  flex: 1 1 auto;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+.capabilities-carousel-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A machine is shown whole, on a light ground, rather than cropped to fill. */
+.capabilities-carousel-frame[data-kind='machine'] {
+  background: #f4f4f4;
+}
+
+.capabilities-carousel-frame[data-kind='machine'] .capabilities-carousel-image {
+  box-sizing: border-box;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  object-fit: contain;
+}
+
+/*
+ * The photograph is the content: nothing is printed over or under it. What a
+ * machine is reads once already, in the mono list beside it -- repeating its
+ * plate and description under every frame as the carousel stepped through
+ * them only pushed the arrows around and doubled the text on the page.
+ */
+
+/* The home panel's split arrow bar, directly under the full photograph. */
+.capabilities-carousel-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--capabilities-panel-line);
+  background: #e6e6e6;
+}
+
+.capabilities-carousel-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem;
+  border: 0;
+  border-left: 1px solid var(--capabilities-panel-line);
+  color: var(--capabilities-ink);
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.capabilities-carousel-arrow:first-child {
+  border-left: 0;
+}
+
+.capabilities-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.capabilities-machine-row:focus-visible,
+.capabilities-carousel-arrow:focus-visible {
+  outline: 2px solid var(--capabilities-accent);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.capabilities-machine-row:hover,
+  .capabilities-carousel-arrow:hover {
+    background: rgba(23, 23, 23, 0.06);
+  }
+}
+
+/* ---- Outputs ---- */
+
+.capabilities-outputs {
+  padding: var(--capabilities-panel-pad);
+  border-top: 1px solid var(--capabilities-panel-line);
+}
+
+/*
+ * A row of thumbnails at one shared height rather than a grid of equal-width
+ * cells: each card's width is left to its own image's natural proportions --
+ * a wide flat part reads wide, a narrow turned one reads narrow -- instead of
+ * every photo being cropped to fit a box it was not shot for.
+ */
+.capabilities-output-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capabilities-output {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  max-width: 100%;
+  overflow: hidden;
+  background: var(--capabilities-card);
+}
+
+.capabilities-output-media {
+  /* The only sizing the box carries -- width comes from the image inside it,
+     not a fixed ratio. Kept small so a row reads as one tidy strip. */
+  height: clamp(4.75rem, 6vw, 5.75rem);
+  background: #f7f7f7;
+}
+
+.capabilities-output-image {
+  display: block;
+  height: 100%;
+  width: auto;
+  /*
+   * A very wide or very narrow photograph is still capped here rather than
+   * left to size the card by its own extreme ratio -- one flat panel shot
+   * from above, or the odd wide multi-part flatlay, would otherwise dwarf
+   * every square card beside it and read as the row breaking rank. Within
+   * the cap, cover and contain render identically because the box already
+   * is the image's own ratio; only a capped outlier is ever cropped.
+   */
+  max-width: 9.5rem;
+  object-fit: cover;
+}
+
+/* A span has no intrinsic size to size the card from, unlike a real photo --
+   given a width here so an empty slot still holds a visible, roughly square
+   place in the row rather than collapsing to nothing. */
+.capabilities-output-media .capabilities-image-empty {
+  position: static;
+  inset: auto;
+  width: clamp(4.75rem, 6vw, 5.75rem);
+  height: 100%;
+}
+
+/*
+ * The profile's dark caption band under each part. Capped to the same width
+ * as the photograph above it -- without this, a long label with nowhere to
+ * wrap was the thing actually setting a card's width, so a small square photo
+ * could sit in a card wider than the image itself, leaving a gap of bare
+ * background beside it and unbalancing the row.
+ *
+ * Held to a fixed two-line height for the same reason: every card's photo is
+ * the same height already, so a label that wraps to two lines must not be the
+ * one thing left free to make its own card taller than the rest of the row.
+ * A one-line label just sits centred in the extra room.
+ */
+.capabilities-output-label {
+  display: flex;
+  align-items: center;
+  min-height: 2.875rem;
+  max-width: 9.5rem;
+  padding: 0.5rem 0.625rem;
+  color: #ffffff;
+  background: #2c2c2c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/*
+ * An image slot with nothing uploaded yet: a quiet tone of its container, so
+ * the grid holds its shape until the photograph arrives from the admin.
+ */
+.capabilities-image-empty {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: rgba(23, 23, 23, 0.07);
+}
+
+/* ---- Closing band ---- */
+
+.capabilities-close {
+  margin-top: clamp(3rem, 7vw, 6rem);
+  padding-top: clamp(2rem, 4vw, 3rem);
+  border-top: 1px solid var(--capabilities-line);
+}
+
+.capabilities-close-inner {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 52rem;
+}
+
+.capabilities-close-heading {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.capabilities-close-statement {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1.0625rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+}
+
+.capabilities-close-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+/* The global buttons are drawn for a light page; restated for the dark one. */
+.capabilities-close .button-primary {
+  border-color: var(--capabilities-accent);
+  color: #ffffff;
+  background: var(--capabilities-accent);
+}
+
+.capabilities-close .button-primary:hover {
+  background: #1d45b3;
+}
+
+.capabilities-close .button-secondary {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  background: transparent;
+}
+
+.capabilities-close .button-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.capabilities-close .button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* ---- Breakpoints ---- */
+
+/* Phones: the head stacks, so the title cell closes itself. */
+@media (max-width: 47.99rem) {
+  .capabilities-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .capabilities-head-title {
+    border-bottom: 1px solid var(--capabilities-line);
+  }
+
+  .capabilities-head-aside {
+    padding: var(--capabilities-pad) 0;
+  }
+
+  .capabilities-index ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 64rem) {
+  .capabilities-park {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+
+  /* Beside the list, the photograph stretches to the list's height. */
+  .capabilities-carousel-frame {
+    aspect-ratio: auto;
+    min-height: clamp(12rem, 17vw, 16.5rem);
+  }
+}
+
+/* The bar still comes and goes; it just appears rather than sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .capabilities-subnav,
+  .capabilities-subnav-link,
+  .capabilities-machine-row,
+  .capabilities-carousel-arrow {
+    transition: none;
+  }
+}

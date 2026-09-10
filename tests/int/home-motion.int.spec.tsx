@@ -79,7 +79,9 @@ describe('home entrance motion', () => {
     // Looking a component up mid-render gives it a new identity every time,
     // which would remount the card underneath it and reload its image.
     expect(primitives).toMatch(/const MOTION_TAGS = \{/)
-    expect(primitives).toMatch(/const Component = MOTION_TAGS\[tag\] as unknown as AnyMotionComponent/)
+    expect(primitives).toMatch(
+      /const Component = MOTION_TAGS\[tag\] as unknown as AnyMotionComponent/,
+    )
     expect(primitives).not.toMatch(/const motionTag = /)
   })
 
@@ -142,6 +144,9 @@ describe('home entrance motion', () => {
       // .engineering-media is deliberately left plain; see the section.
       '.engineering-head',
       '.engineering-disciplines',
+      '.locations-media',
+      '.locations-title',
+      '.locations-item',
     ]) {
       const element = container.querySelector(selector)
       expect(element, `${selector} should render`).not.toBeNull()
@@ -150,17 +155,14 @@ describe('home entrance motion', () => {
   })
 
   /*
-   * The two scrubbed scenes follow the scrollbar frame by frame, which is a
+   * The scrubbed scene follows the scrollbar frame by frame, which is a
    * different job from a one-shot reveal. Mixing the two on one element means
    * two libraries writing the same inline styles.
    */
-  test('leaves the scroll-scrubbed scenes to GSAP', () => {
-    for (const source of [
-      'src/components/home/HomeProcessSection.tsx',
-      'src/components/home/HomeLocationsSection.tsx',
-    ]) {
-      expect(read(source), source).not.toMatch(/motion\/Reveal|<Reveal/)
-    }
+  test('leaves the scroll-scrubbed scene to GSAP', () => {
+    expect(read('src/components/home/HomeProcessSection.tsx')).not.toMatch(/motion\/Reveal|<Reveal/)
     expect(primitives).not.toMatch(/gsap/)
+    // The locations section is one-shot reveals now, and nothing else.
+    expect(read('src/components/home/HomeLocationsSection.tsx')).not.toMatch(/gsap/)
   })
 })

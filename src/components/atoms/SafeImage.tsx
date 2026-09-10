@@ -39,9 +39,7 @@ export function SafeImage(props: SafeImageProps) {
     return (
       <span
         aria-hidden="true"
-        className={['safe-image-fallback', className, fallbackClassName]
-          .filter(Boolean)
-          .join(' ')}
+        className={['safe-image-fallback', className, fallbackClassName].filter(Boolean).join(' ')}
         style={fallbackStyle(props)}
       />
     )
@@ -64,6 +62,32 @@ export function SafeImage(props: SafeImageProps) {
 export function SafeImg(props: ImgHTMLAttributes<HTMLImageElement>) {
   const { alt = '', className, onError, ...imageProps } = props
   const [failed, setFailed] = useState(false)
+  const ref = useRef<HTMLImageElement | null>(null)
+
+  /*
+   * onError alone misses the commonest failure. The <img> arrives in the
+   * server HTML, so a missing file can 404 before React has hydrated -- the
+   * error event fires with no handler attached, is never replayed, and the
+   * browser's broken-image icon and alt text stay on screen for good.
+   *
+   * So on mount, an image that has already finished loading with no pixels is
+   * checked. naturalWidth alone is not proof: an SVG without intrinsic size
+   * reads 0 in some browsers and is fine, so decode() settles it -- it
+   * resolves for any image that can be drawn and rejects for a broken one.
+   */
+  useEffect(() => {
+    const image = ref.current
+    if (!image?.complete || image.naturalWidth > 0 || typeof image.decode !== 'function') return
+
+    let active = true
+    image.decode().catch(() => {
+      if (active) setFailed(true)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [imageProps.src])
 
   if (failed) {
     return (
@@ -83,6 +107,7 @@ export function SafeImg(props: ImgHTMLAttributes<HTMLImageElement>) {
         setFailed(true)
         onError?.(event)
       }}
+      ref={ref}
     />
   )
 }

@@ -2,6 +2,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { Inter, Roboto } from 'next/font/google'
 
+import { PageScrollbar } from '@/components/layout/PageScrollbar'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SectionSnapController } from '@/components/layout/SectionSnapController'
@@ -13,6 +14,8 @@ import './product-detail.css'
 import './products-catalog.css'
 import './contact.css'
 import './industry.css'
+import './capabilities.css'
+import './resources.css'
 
 const bodyFont = Roboto({
   display: 'swap',
@@ -60,6 +63,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         </noscript>
         <SmoothScroll />
         <SectionSnapController />
+        <PageScrollbar />
         <div className="site-shell">
           <SiteHeader header={header} />
           <main>{children}</main>

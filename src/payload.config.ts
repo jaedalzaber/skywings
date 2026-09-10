@@ -9,6 +9,7 @@ import { collections } from './collections'
 import { Users } from './collections/Users'
 import { globals } from './globals'
 import { cloudinaryStorage } from './storage/cloudinary'
+import { localDeliveryManifest, serveLocalCopies } from './storage/localDelivery'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -45,6 +46,9 @@ export default buildConfig({
         media: { disablePayloadAccessControl: true },
         'three-d-assets': true,
       },
+      // Serve files the deployment already carries instead of spending
+      // Cloudinary credits on them. See src/storage/localDelivery.ts.
+      localDelivery: serveLocalCopies ? localDeliveryManifest : undefined,
       rootFolder: 'skywings',
     }),
   ],

@@ -276,7 +276,7 @@
     transform 200ms ease;
 }
 
-.pcat-card:hover {
+.pcat-card:not([data-static]):hover {
   border-color: var(--pcat-line-strong);
   box-shadow: 0 14px 32px rgba(18, 22, 45, 0.09);
   transform: translateY(-2px);

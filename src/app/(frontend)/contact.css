@@ -1,338 +1,421 @@
-/* Contact composition from Figma node 22:74. The stage stays aligned to the
-   site container while the form surface continues through the right viewport edge. */
+/*
+ * Contact page.
+ *
+ * Dark from the top of the page through the footer, in the capabilities
+ * page's values: a #1c1c1c ground, hairlines at 14% white, brand-blue for the
+ * one action. "Contact" set large across the top over a rule, then the brief
+ * on the left and the enquiry form on the right, then the branches. The
+ * footer follows through data-page-tone (styles.css).
+ */
+
 .contact-page {
-  --contact-nav-height: 2.625rem;
-  width: 100vw;
-  margin: calc(-1rem - var(--contact-nav-height)) calc(50% - 50vw) -1rem;
-  padding: calc(var(--contact-nav-height) + 3.5rem) 0 4rem;
-  overflow: clip;
-  background: #fdfbf9;
-  color: #1b1917;
-  font-family: var(--font-title), Inter, sans-serif;
-}
-
-.contact-stage {
-  display: grid;
-  width: min(calc(100% - 2rem), var(--max));
-  margin: 0 auto;
-  gap: 1rem;
-}
-
-.contact-person-card {
+  --contact-surface: #1c1c1c;
+  --contact-line: rgba(255, 255, 255, 0.14);
+  --contact-muted: #9a9a9a;
+  --contact-field: #232323;
+  --contact-field-line: rgba(255, 255, 255, 0.16);
+  --contact-accent: var(--blue);
   position: relative;
-  width: 100%;
-  min-height: 31rem;
-  margin: 0;
-  overflow: hidden;
-  border-radius: 0.875rem;
-  background: #08101f;
+  width: var(--bleed-width);
+  /*
+   * Pulled up under the sticky bar and padded back down by the same amount,
+   * as on the capabilities page, so the bar finds a dark surface under it
+   * from the first pixel rather than sitting white over a dark page.
+   */
+  margin-block-start: calc(-1 * var(--header-height));
+  margin-inline: var(--bleed-margin);
+  padding-top: var(--header-height);
+  color: #ffffff;
+  background: var(--contact-surface);
+  /* Native controls -- autofill, the textarea's grip, date pickers -- in dark. */
+  color-scheme: dark;
 }
 
-.contact-person-image {
-  object-fit: cover;
-  object-position: center;
+.contact-inner {
+  padding: clamp(1.5rem, 4vw, 3.5rem) var(--page-inset) clamp(3.5rem, 8vw, 7rem);
 }
 
-.contact-person-caption {
-  position: absolute;
-  right: 0.5625rem;
-  bottom: 0.625rem;
-  left: 0.5625rem;
+/* ---- Head: the word, and the address to write to ---- */
+
+.contact-head {
   display: flex;
-  min-height: 7.8125rem;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.25rem 1.8125rem 1.1875rem;
-  border: 0.5px solid rgba(255, 255, 255, 0.44);
-  border-radius: 0.5625rem;
-  background: linear-gradient(75deg, rgba(48, 48, 48, 0.42), rgba(170, 170, 170, 0.18));
-  color: #f5f1eb;
-  backdrop-filter: blur(0.369rem);
-}
-
-.contact-person-copy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  line-height: 1.08;
-}
-
-.contact-person-copy strong,
-.contact-person-copy > span {
-  font-size: clamp(1.35rem, 6vw, 1.75rem);
-  letter-spacing: 0;
-}
-
-.contact-person-copy strong {
-  font-weight: 600;
-}
-
-.contact-person-copy > span {
-  margin-top: 0.25rem;
-  font-weight: 200;
-}
-
-.contact-person-copy small {
-  margin-top: 0.25rem;
-  color: rgba(245, 241, 235, 0.56);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.contact-person-mark {
-  width: 3.108rem;
-  height: 2.91rem;
-  flex: 0 0 auto;
-  object-fit: contain;
-}
-
-.contact-form-border {
-  width: 100%;
-  padding: 0.25rem;
-  border-radius: 0.875rem;
-  background: linear-gradient(118deg, #ffdf76 0%, #ffc665 44%, #ff8a5f 72%, #ff6262 100%);
-}
-
-.contact-form-card {
-  min-height: 100%;
-  padding: 3rem 1.25rem 2.25rem;
-  border-radius: 0.6875rem;
-  background: #fdfbf9;
-}
-
-.contact-form-content {
-  display: flex;
-  width: 100%;
-  max-width: 36.6875rem;
-  flex-direction: column;
-  gap: 2.6875rem;
-}
-
-.contact-form-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2.1875rem;
+  gap: 0.75rem 2rem;
+  padding-bottom: clamp(1rem, 2.4vw, 2rem);
+  border-bottom: 1px solid var(--contact-line);
 }
 
 .contact-title {
   margin: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(2.5rem, 12vw, 3.3125rem);
-  font-weight: 300;
-  letter-spacing: 0;
-  line-height: 1.08;
+  font-size: clamp(4.25rem, 16vw, 14rem);
+  font-weight: 500;
+  line-height: 0.82;
+  letter-spacing: -0.055em;
+  text-transform: lowercase;
+}
+
+.contact-head-email {
+  margin: 0;
+  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
+  line-height: 1.3;
+}
+
+.contact-head-email a,
+.contact-direct a {
+  color: #ffffff;
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+.contact-head-email a:is(:hover, :focus-visible),
+.contact-direct a:is(:hover, :focus-visible) {
+  text-decoration: underline;
+}
+
+.contact-page a:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* ---- Body: brief left, form right ---- */
+
+.contact-body {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  padding-top: clamp(2rem, 4.5vw, 4rem);
+}
+
+.contact-brief {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+}
+
+.contact-eyebrow {
+  margin: 0;
+  color: var(--contact-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contact-lead {
+  max-width: 13em;
+  margin: 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.75rem, 3.2vw, 2.875rem);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
 }
 
 .contact-intro {
-  max-width: 61ch;
+  max-width: 30rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  line-height: 1.55;
+}
+
+/* The direct lines, as hairline rows. */
+.contact-direct {
+  max-width: 30rem;
+  margin: 0.75rem 0 0;
+  border-top: 1px solid var(--contact-line);
+}
+
+.contact-direct > div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--contact-line);
+}
+
+.contact-direct dt {
+  color: var(--contact-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contact-direct dd {
   margin: 0;
   font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.59;
 }
 
-.contact-intro strong {
-  font-weight: 700;
+/* ---- The form ---- */
+
+.rfq-form {
+  position: relative;
+  /* A quote link or the redirect after sending lands here, clear of the bar. */
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
 }
 
-.contact-message-form,
-.contact-message-form form {
-  width: 100%;
+.rfq-form form {
+  display: grid;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
+  margin: 0;
 }
 
-.contact-message-form form {
-  display: flex;
+.rfq-form-group {
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
-  background: transparent;
-  flex-direction: column;
-  gap: 1.625rem;
 }
 
-.contact-field-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.contact-message-form .contact-field {
-  display: flex;
-  min-width: 0;
-  gap: 0.5rem;
-  flex-direction: column;
-  color: #101828;
+/* Floated so the legend lays out as an ordinary heading above the fields. */
+.rfq-form-group > legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: clamp(1.125rem, 1.5vw, 1.3125rem);
+  font-weight: 400;
   line-height: 1.2;
 }
 
-.contact-message-form .contact-field input,
-.contact-message-form .contact-field textarea {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.875rem;
-  border: 1.5px solid #d0d5dd;
-  border-radius: 0.875rem;
-  outline: 0;
-  background: transparent;
-  color: #101828;
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: 0.90625rem;
-  font-weight: 400;
-  line-height: normal;
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+.rfq-form-group > legend + * {
+  clear: both;
 }
 
-.contact-message-form .contact-field textarea {
-  min-height: 6.3125rem;
-  resize: vertical;
+.rfq-form-group > :not(legend) + :not(legend) {
+  margin-top: 0.75rem;
 }
 
-.contact-message-form .contact-field input::placeholder,
-.contact-message-form .contact-field textarea::placeholder {
-  color: #98a2b3;
-  opacity: 1;
-}
-
-.contact-message-form .contact-field input:focus-visible,
-.contact-message-form .contact-field textarea:focus-visible {
-  border-color: #6161a8;
-  box-shadow: 0 0 0 3px rgba(1, 1, 54, 0.1);
-}
-
-.contact-submit-group {
-  display: flex;
-  flex-direction: column;
+.rfq-form-row {
+  display: grid;
   gap: 0.75rem;
 }
 
-.contact-submit-group button {
+/*
+ * The label sits inside the box, above what is typed, so each field reads as
+ * one quiet panel; the whole box takes the click and shows the focus.
+ */
+.rfq-field {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--contact-field-line);
+  border-radius: 0.375rem;
+  background: var(--contact-field);
+  cursor: text;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.rfq-field:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.rfq-field:focus-within {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: #262626;
+}
+
+.rfq-field > span {
+  color: var(--contact-muted);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.rfq-field em,
+.rfq-form-actions em {
+  color: #7f9cff;
+  font-style: normal;
+}
+
+.rfq-field input,
+.rfq-field textarea {
+  display: block;
   width: 100%;
-  min-height: 3.1875rem;
-  padding: 0.75rem 1.5rem;
+  min-width: 0;
+  padding: 0;
   border: 0;
-  border-radius: 0.875rem;
-  background: #010136;
+  outline: 0;
   color: #ffffff;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.rfq-field textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.rfq-field input::placeholder,
+.rfq-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+}
+
+/* Chrome paints autofilled fields light; hold them to the panel. */
+.rfq-field input:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  box-shadow: 0 0 0 100vmax var(--contact-field) inset;
+  transition: background-color 9999s ease-out;
+}
+
+/* A product link (?product=) arrives with the product named above the brief. */
+.rfq-form-product {
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-left: 2px solid var(--contact-accent);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.rfq-form-product span {
+  color: var(--contact-muted);
+}
+
+.rfq-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+.rfq-form-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0 1.5rem;
+  border: 1px solid var(--contact-accent);
+  border-radius: 0.375rem;
+  color: #ffffff;
+  background: var(--contact-accent);
   cursor: pointer;
-  font-family: var(--font-title), Inter, sans-serif;
+  font: inherit;
   font-size: 1rem;
   font-weight: 600;
-  line-height: 1.2;
   transition:
-    background-color 150ms ease,
-    transform 150ms ease;
+    background-color 180ms ease,
+    transform 180ms ease;
 }
 
-.contact-submit-group button:hover {
-  background: #11115a;
+.rfq-form-actions button svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 180ms ease;
 }
 
-.contact-submit-group button:active {
-  transform: translateY(1px);
+.rfq-form-actions button:hover {
+  background: #1d45b3;
 }
 
-.contact-submit-group button:focus-visible {
-  outline: 3px solid rgba(1, 1, 54, 0.3);
-  outline-offset: 2px;
+.rfq-form-actions button:hover svg {
+  transform: translateX(3px);
 }
 
-.contact-submit-group p {
+.rfq-form-actions button:active {
+  transform: scale(0.98);
+}
+
+.rfq-form-actions button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.rfq-form-actions p {
   margin: 0;
-  color: #98a2b3;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: normal;
-  text-align: center;
+  color: var(--contact-muted);
+  font-size: 0.8125rem;
 }
 
-.contact-message-form .form-success {
-  margin: 0 0 1.25rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid #b9d7bc;
-  border-radius: 0.625rem;
-  background: #edf3ec;
-  color: #214c28;
-  font-family: var(--font-title), Inter, sans-serif;
+.rfq-form-notice {
+  margin: 0 0 1.75rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid;
+  border-radius: 0.375rem;
+  line-height: 1.45;
 }
 
-.contact-message-form .form-success p {
-  margin: 0.2rem 0 0;
+.rfq-form-notice[data-kind='success'] {
+  border-color: rgba(127, 156, 255, 0.45);
+  background: rgba(36, 83, 212, 0.16);
 }
+
+.rfq-form-notice[data-kind='error'] {
+  border-color: rgba(249, 112, 102, 0.5);
+  background: rgba(180, 35, 24, 0.16);
+}
+
+.rfq-form-notice p {
+  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Out of sight and out of reach: only a bot fills it. */
+.rfq-form-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- The branches, under the form ---- */
+
+/* The hero's own foot padding already opens the gap. */
+.contact-page .locations {
+  padding-top: 0;
+}
+
+/* On the grid, not the inner wrapper, so the rule spans the content as the head's does. */
+.contact-page .locations-grid {
+  padding-top: clamp(3rem, 7vw, 6rem);
+  border-top: 1px solid var(--contact-line);
+}
+
+/* ---- Breakpoints ---- */
 
 @media (min-width: 40rem) {
-  .contact-page {
-    --contact-nav-height: 2.375rem;
-    margin-top: calc(-1.25rem - var(--contact-nav-height));
-    margin-bottom: -1.25rem;
-    padding-top: calc(var(--contact-nav-height) + 4rem);
-  }
-
-  .contact-stage {
-    width: min(calc(100% - 2.5rem), var(--max));
-    gap: 1.4375rem;
-  }
-
-  .contact-person-card {
-    min-height: 38rem;
-  }
-
-  .contact-field-row {
+  .rfq-form-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .contact-form-card {
-    padding-inline: clamp(2rem, 6vw, 4rem);
+/* The word on its own line on phones, the address under it. */
+@media (max-width: 39.99rem) {
+  .contact-head {
+    flex-direction: column;
   }
 }
 
 @media (min-width: 64rem) {
-  .contact-page {
-    --contact-nav-height: 3.5rem;
-    margin-top: calc(-1.5rem - var(--contact-nav-height));
-    margin-bottom: 0;
-    padding: calc(var(--contact-nav-height) + 3rem) 0 5rem;
+  .contact-body {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(3rem, 7vw, 8rem);
   }
 
-  .contact-stage {
-    width: min(calc(100% - 3rem), var(--max));
-    grid-template-columns: minmax(22rem, 40.8%) minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .contact-person-card,
-  .contact-form-border {
-    min-height: 47rem;
-  }
-
-  .contact-form-border {
-    width: calc(100% + max(1.5rem, calc((100vw - var(--max)) / 2)));
-    border-radius: 0.875rem 0 0 0.875rem;
-  }
-
-  .contact-form-card {
-    padding: 4.1875rem 2rem 2.8125rem clamp(3rem, 5vw, 4.625rem);
-    border-radius: 0.6875rem 0 0 0.6875rem;
-  }
-}
-
-@media (min-width: 80rem) {
-  .contact-stage {
-    grid-template-columns: 31.125rem minmax(0, 1fr);
+  /* The brief stays in view beside a form that is taller than it. */
+  .contact-brief {
+    position: sticky;
+    top: calc(var(--header-height) + 2rem);
+    align-self: start;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .contact-message-form .contact-field input,
-  .contact-message-form .contact-field textarea,
-  .contact-submit-group button {
+  .rfq-field,
+  .rfq-form-actions button,
+  .rfq-form-actions button svg {
     transition: none;
   }
 }

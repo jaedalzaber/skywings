@@ -134,7 +134,7 @@ export function BlogCard(props: { post: BlogPost }) {
 
   return (
     <article className="list-article">
-      <Link href={`/blog/${post.slug}`}>
+      <Link href={`/resources/${post.slug}`}>
         <span className="wire-label">
           {post.publishedAt
             ? new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(

@@ -9,6 +9,7 @@ export const TAGS = {
   industryPages: 'industry-pages',
   industryPage: (slug: string) => `industry-page:${slug}`,
   capabilities: 'capabilities',
+  machines: 'machines',
   brochures: 'brochures',
   blog: 'blog',
   post: (slug: string) => `post:${slug}`,

@@ -19,18 +19,23 @@ import {
   defaultHomeMachiningGroups,
   defaultHomeMachiningIntro,
   defaultHomeMachiningStats,
+  toHomeMachiningGroups,
   type HomeMachiningGroup,
   type HomeMachiningStat,
 } from './homeMachiningDefaults'
+import { getCapabilityProcesses } from './capabilities'
 import {
   defaultHomeProcessCta,
   defaultHomeProcessIntro,
   defaultHomeProcessSteps,
   defaultHomeProcessSummary,
 } from './homeProcessDefaults'
+import type { CardImageInset } from './cardImageInset'
 import { getMediaFile, getMediaImage, isMediaVideo, type MediaFile, type MediaImage } from './media'
 import { getPayloadClient } from './payload'
+import { productCardImages, type CardImage } from './productCardImages'
 import { industryRank } from './productTaxonomy'
+import { hasProductPage, pagesFirst } from './productReadiness'
 import { relationArray, relationId } from './relations'
 import { TAGS } from './tags'
 
@@ -56,11 +61,14 @@ export type HomeHeroLayoutBlock = Omit<
 }
 type HomeIndustriesSourceBlock = Extract<HomeLayoutSourceBlock, { blockType: 'homeIndustries' }>
 export type HomeIndustryProduct = {
+  /** Whether the card links to a product page; see productReadiness. */
+  hasPage: boolean
+  /** The second image, faded in on hover -- as on the products page. */
+  hoverImage?: CardImage | null
   id: number | string
   image: MediaImage | null
-  /** Product code, set in the corner of the card as it is on the detail page.
-   *  Optional: the placeholder products a sparse industry falls back to have none. */
-  sku?: string | null
+  /** The product's card padding from the admin; null takes the rail's default. */
+  imageInset?: CardImageInset | null
   slug: string
   summary: string
   title: string
@@ -239,8 +247,8 @@ export const defaultHomeMachiningBlock: HomeMachiningLayoutBlock = {
   eyebrow: defaultHomeMachiningIntro.eyebrow,
   groups: defaultHomeMachiningGroups.map((group) => ({
     ...group,
-    images: group.images.map((image) => ({ ...image })),
-    machines: [...group.machines],
+    machines: group.machines.map((machine) => ({ ...machine })),
+    slides: group.slides.map((slide) => ({ ...slide, image: { ...slide.image } })),
   })),
   heading: defaultHomeMachiningIntro.heading,
   stats: defaultHomeMachiningStats.map((stat) => ({ ...stat })),
@@ -280,8 +288,10 @@ export const defaultHomeLocationsBlock: HomeLocationsLayoutBlock = {
   },
 }
 
-export const DEFAULT_HERO_VIDEO_URL =
-  'https://res.cloudinary.com/xtitj4ui/video/upload/v1788770857/skywings_intro_3_zgnjp3.mp4'
+// Served from public/ rather than Cloudinary: at 33 MB per play it was the
+// biggest drain on the plan's monthly credits. Same bytes as the Cloudinary
+// original (`skywings_intro_3_zgnjp3`).
+export const DEFAULT_HERO_VIDEO_URL = '/videos/skywings-intro.mp4'
 
 export const defaultHeroVideo: MediaFile = {
   alt: 'Sky Wings manufacturing intro video',
@@ -341,10 +351,15 @@ export function isHomeBlock(block: LayoutBlock): block is HomeLayoutSourceBlock 
 }
 
 function toHomeProduct(product: Product): HomeIndustryProduct {
+  // The same card images the products page uses; see productCardImages.
+  const { hoverImage, image, imageInset } = productCardImages(product)
+
   return {
+    hasPage: hasProductPage(product),
+    hoverImage,
     id: product.id,
-    image: getMediaImage(product.thumbnailImage) ?? getMediaImage(product.featuredImage),
-    sku: product.sku ?? null,
+    image,
+    imageInset,
     slug: product.slug,
     summary: product.summary,
     title: product.title,
@@ -357,7 +372,12 @@ async function getFallbackProductsForIndustry(industry: Industry, excludedIds: S
     collection: 'products',
     depth: 1,
     draft: false,
-    limit: 12,
+    /*
+     * The whole industry, not the rail's twelve: finished products lead the
+     * rail, and the first twelve by name would leave out any that sort later
+     * -- the Folding Stand among them. The caller ranks, then cuts to twelve.
+     */
+    limit: 200,
     overrideAccess: false,
     select: productWithoutLayoutSelect,
     sort: 'title',
@@ -452,7 +472,11 @@ async function getHomeIndustryItems(): Promise<HomeIndustryItem[]> {
         curatedProducts.length < 3
           ? await getFallbackProductsForIndustry(industry, excludedIds)
           : []
-      const products = [...curatedProducts, ...fallbackProducts].slice(0, 12)
+      // Finished products lead, the editor's order kept within each group.
+      const products = pagesFirst(
+        [...curatedProducts, ...fallbackProducts],
+        (product) => product.hasPage,
+      ).slice(0, 12)
 
       return {
         ctaHref: `/products?industry=${industry.slug}`,
@@ -477,10 +501,7 @@ async function syncHomeIndustriesBlock(block: HomeIndustriesLayoutBlock) {
       'Browse sector-specific products, assemblies, and fabrication capabilities for the way your projects are bought, built, and delivered.',
     ),
     eyebrow: homeCopy(block.eyebrow, 'Industries we serve'),
-    heading: homeCopy(
-      block.heading,
-      'Metalwork built around your industry requirements.',
-    ),
+    heading: homeCopy(block.heading, 'Metalwork built around your industry requirements.'),
   }
 
   return items.length ? { ...syncedBlock, items } : syncedBlock
@@ -563,8 +584,8 @@ function syncHomeHeroBlock(block: HomeHeroSourceBlock): HomeHeroLayoutBlock {
     block.mobileCoverVideo,
   )
 
-  // The landing hero always plays a video, falling back to the hosted
-  // Cloudinary intro when no per-breakpoint video is set. CMS cover images are
+  // The landing hero always plays a video, falling back to the bundled intro
+  // when no per-breakpoint video is set. CMS cover images are
   // always kept as the poster painted while that video loads.
   return {
     ...block,
@@ -628,37 +649,25 @@ function paragraphsFrom(value: string | null | undefined, fallback: string[]): s
   return paragraphs.length ? paragraphs : fallback
 }
 
-function rowsFrom(
-  rows: { text: string }[] | null | undefined,
-  fallback: string[] = [],
-): string[] {
-  const values = (rows ?? []).map((row) => row.text?.trim()).filter((text): text is string =>
-    Boolean(text),
-  )
+function rowsFrom(rows: { text: string }[] | null | undefined, fallback: string[] = []): string[] {
+  const values = (rows ?? [])
+    .map((row) => row.text?.trim())
+    .filter((text): text is string => Boolean(text))
 
   return values.length ? values : fallback
 }
 
-function syncHomeMachiningBlock(block: HomeMachiningSourceBlock): HomeMachiningLayoutBlock {
-  const groups = (block.groups ?? []).map((group, index) => {
-    // Positional, as with the process steps: row three keeps row three's
-    // machines and photographs whatever its title becomes.
-    const fallback = defaultHomeMachiningGroups[index]
-    const images = (group.images ?? [])
-      .map((row) => getMediaImage(row.image))
-      .filter((image): image is MediaImage => Boolean(image))
-    const machines = (group.machines ?? [])
-      .map((row) => row.name?.trim())
-      .filter((name): name is string => Boolean(name))
-
-    return {
-      id: group.id || fallback?.id || `machining-${index}`,
-      images: images.length ? images : (fallback?.images.map((image) => ({ ...image })) ?? []),
-      machines: machines.length ? machines : [...(fallback?.machines ?? [])],
-      title: homeCopy(group.title, fallback?.title),
-    }
-  })
-
+/*
+ * The heading and figures come from the block; the rows come from the
+ * Capabilities and Machines collections, the same records /capabilities is
+ * built from. The block's own "Machine groups" were a second, hand-typed copy
+ * of the shop list that fell out of step with it -- they are hidden in the
+ * admin and no longer read.
+ */
+function syncHomeMachiningBlock(
+  block: HomeMachiningSourceBlock,
+  groups: HomeMachiningGroup[],
+): HomeMachiningLayoutBlock {
   // Both halves of a stat are required, so a row is only carried when it is
   // complete -- a half-filled row would set a figure with no label.
   const stats = (block.stats ?? [])
@@ -748,7 +757,7 @@ async function syncHomeBlock(block: HomeLayoutSourceBlock): Promise<HomeLayout[n
   }
 
   if (block.blockType === 'homeMachining') {
-    return syncHomeMachiningBlock(block)
+    return syncHomeMachiningBlock(block, toHomeMachiningGroups(await getCapabilityProcesses()))
   }
 
   if (block.blockType === 'homeEngineering') {
@@ -815,7 +824,8 @@ const getCachedHomeLayout = cachedQuery(
   fetchHomeLayout,
   [
     'home-layout',
-    'industry-related-products-v3',
+    // v5: rail products carry hasPage, and finished ones lead.
+    'industry-related-products-v5',
     'hero-cover-media-v5',
     'home-industries-v2',
     /*
@@ -826,8 +836,22 @@ const getCachedHomeLayout = cachedQuery(
      * is exactly what it looks like when an upload "does not show up".
      */
     'home-section-blocks-v1',
+    // Rail products now carry their hover image and card padding.
+    'home-product-card-images-v1',
+    // Machining rows come from the capability records, with their photographs.
+    'home-machining-capabilities-v1',
   ],
-  [TAGS.pages, TAGS.page('home'), TAGS.industries, TAGS.products, TAGS.media],
+  [
+    TAGS.pages,
+    TAGS.page('home'),
+    TAGS.industries,
+    TAGS.products,
+    TAGS.media,
+    // The machining rows are capability and machine records: an edit to
+    // either has to reach the home page as well as /capabilities.
+    TAGS.capabilities,
+    TAGS.machines,
+  ],
 )
 
 export async function getHomeLayout(): Promise<HomeLayout> {

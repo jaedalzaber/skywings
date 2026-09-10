@@ -11,24 +11,15 @@ export type HomeLocation = {
   phone: string
 }
 
-export type HomeLocationsImage = {
-  alt: string
-  url: string
-}
-
 /*
- * Falls back to this path until a photograph is uploaded in the admin
- * (Footer → Locations & legal → Locations image). Portrait aerial of the UAE.
+ * "We deliver all over / Middle-East, Europe & Africa": the lead is set light,
+ * the regions heavy, joined as a list. `reach` is no longer shown -- it stays
+ * so content saved against the earlier design still reads.
  */
-export const defaultLocationsImage: HomeLocationsImage = {
-  alt: 'Aerial view of the Sharjah and Dubai coastline',
-  url: '/images/home/locations-uae.jpg',
-}
-
 export const defaultLocationsTitle = {
-  lead: 'UAE manufacturing presence.',
-  reach: 'Regional and international reach.',
-  regions: ['Middle East', 'Europe', 'Africa'],
+  lead: 'We deliver all over',
+  reach: '',
+  regions: ['Middle-East', 'Europe', 'Africa'],
 }
 
 export const defaultLocations: HomeLocation[] = [

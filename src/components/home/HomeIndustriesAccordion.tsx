@@ -67,6 +67,8 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
             industry.products && industry.products.length
               ? industry.products
               : industryProducts.map((title, index) => ({
+                  // Stand-in names, not products: there is no page behind them.
+                  hasPage: false,
                   id: `${industry.title}-${index}`,
                   image: null,
                   slug: '',

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { ProductImage } from '@/components/atoms/ProductImage'
@@ -13,6 +13,8 @@ import { groupVariants, Reveal, REVEAL_VIEWPORT, revealVariants } from './Reveal
 export type GalleryProduct = {
   familyId: null | string
   featured: boolean
+  /** Whether the card links to a product page; see productReadiness. */
+  hasPage: boolean
   id: string
   image: MediaImage | null
   sku: null | string
@@ -70,11 +72,7 @@ export function ProductGallery(props: {
   return (
     <div className="industry-gallery-body">
       {filters.length > 0 ? (
-        <Reveal
-          className="industry-gallery-filters"
-          delay={0.1}
-          effect="fade"
-        >
+        <Reveal className="industry-gallery-filters" delay={0.1} effect="fade">
           <div aria-label="Filter products" role="group">
             <button aria-pressed={active === ALL} onClick={() => setActive(ALL)} type="button">
               All
@@ -111,7 +109,7 @@ export function ProductGallery(props: {
               key={product.id}
               variants={revealVariants(product.featured ? 'scale' : 'up', reduced, 0.9)}
             >
-              <Link className="industry-gallery-card-link" href={`/products/${product.slug}`}>
+              <CardLink hasPage={product.hasPage} slug={product.slug}>
                 <h3 className="industry-gallery-card-title">{product.title}</h3>
                 <span className="industry-gallery-card-media">
                   <ProductImage
@@ -126,7 +124,7 @@ export function ProductGallery(props: {
                 {product.sku ? (
                   <span className="industry-gallery-card-sku">{product.sku}</span>
                 ) : null}
-              </Link>
+              </CardLink>
             </motion.li>
           ))}
         </motion.ul>
@@ -141,6 +139,24 @@ export function ProductGallery(props: {
           </ButtonLink>
         </Reveal>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * The card's frame: a link to the product's page when it has one, otherwise
+ * the same frame with nothing to follow.
+ */
+function CardLink(props: { children: ReactNode; hasPage: boolean; slug: string }) {
+  const { children, hasPage, slug } = props
+
+  return hasPage ? (
+    <Link className="industry-gallery-card-link" href={`/products/${slug}`}>
+      {children}
+    </Link>
+  ) : (
+    <div className="industry-gallery-card-link" data-static="true">
+      {children}
     </div>
   )
 }

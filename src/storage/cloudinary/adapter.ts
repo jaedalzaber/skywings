@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+
 import type { Adapter, GeneratedAdapter } from '@payloadcms/plugin-cloud-storage/types'
 import { v2 as cloudinary } from 'cloudinary'
 
@@ -14,6 +17,23 @@ export type CloudinaryAdapterArgs = {
   apiKey: string
   apiSecret: string
   cloudName: string
+  /**
+   * Serve files the deployment already carries instead of fetching them from
+   * Cloudinary, whose plan meters delivery bandwidth. Uploads still go to
+   * Cloudinary; anything not found locally keeps being served from there.
+   */
+  localDelivery?: {
+    /**
+     * Per collection, filename -> URL under public/, handed out in place of
+     * the CDN URL.
+     */
+    publicFiles?: Partial<Record<string, Record<string, string>>>
+    /**
+     * Per collection, filenames the static handler may read from the upload
+     * folder (`<cwd>/<collection slug>/`) instead of proxying Cloudinary.
+     */
+    uploadDirFiles?: Partial<Record<string, string[]>>
+  }
   /** Per-resource-type upload ceiling. Defaults to Cloudinary's free plan. */
   maxBytes?: Partial<Record<CloudinaryResourceType, number>>
   /** Top-level Cloudinary folder every collection is nested under. */
@@ -67,6 +87,24 @@ function uploadBuffer(args: {
   })
 }
 
+const localContentTypes: Record<string, string> = {
+  glb: 'model/gltf-binary',
+  gltf: 'model/gltf+json',
+  pdf: 'application/pdf',
+}
+
+/**
+ * Reads `<cwd>/<collection>/<filename>`, or returns null if it isn't there --
+ * e.g. a deployment whose bundle left the folder out.
+ */
+async function readUploadDirFile(collectionSlug: string, filename: string) {
+  try {
+    return await readFile(path.join(process.cwd(), collectionSlug, path.basename(filename)))
+  } catch {
+    return null
+  }
+}
+
 export function cloudinaryAdapter(args: CloudinaryAdapterArgs): Adapter {
   const maxBytes = { ...freePlanMaxBytes, ...args.maxBytes }
 
@@ -99,6 +137,10 @@ export function cloudinaryAdapter(args: CloudinaryAdapterArgs): Adapter {
       name: 'cloudinary',
 
       generateURL: ({ data, filename, prefix: docPrefix }) => {
+        const publicFile =
+          !docPrefix && args.localDelivery?.publicFiles?.[collection.slug]?.[filename]
+        if (publicFile) return publicFile
+
         const { publicId, resourceType } = locate(filename, docPrefix)
         // `image`/`video` public IDs have no extension, so the delivery format
         // has to be restored here or Cloudinary serves its default.
@@ -151,6 +193,23 @@ export function cloudinaryAdapter(args: CloudinaryAdapterArgs): Adapter {
       },
 
       staticHandler: async (req, { headers, params: { filename, prefix: docPrefix } }) => {
+        if (!docPrefix && args.localDelivery?.uploadDirFiles?.[collection.slug]?.includes(filename)) {
+          const local = await readUploadDirFile(collection.slug, filename)
+
+          if (local) {
+            const responseHeaders = new Headers(headers)
+            responseHeaders.set(
+              'content-type',
+              localContentTypes[filename.split('.').pop()!.toLowerCase()] ??
+                'application/octet-stream',
+            )
+            responseHeaders.set('content-length', String(local.byteLength))
+            responseHeaders.set('Cache-Control', 'public, max-age=31536000, immutable')
+
+            return new Response(new Uint8Array(local), { headers: responseHeaders })
+          }
+        }
+
         const { publicId, resourceType } = locate(filename, docPrefix)
         const format = resourceType === 'raw' ? undefined : filename.split('.').pop()
         const url = cloudinary.url(publicId, {

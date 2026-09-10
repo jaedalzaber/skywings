@@ -87,7 +87,7 @@ export const defaultHeaderData: SiteHeaderData = {
     { label: 'Products', href: '/products' },
     { label: 'Configurators', href: '/#configurators' },
     { label: 'Capabilities', href: '/capabilities' },
-    { label: 'Resources', href: '/brochures' },
+    { label: 'Resources', href: '/resources' },
     { label: 'About', href: '/#about' },
   ],
   cta: {
@@ -124,9 +124,9 @@ export const defaultFooterData: SiteFooterData = {
       links: [
         { label: 'Products', href: '/products' },
         { label: 'Industries', href: '/industries' },
-        { label: 'Resources', href: '/brochures' },
-        { label: 'Guides', href: '/brochures' },
-        { label: 'Blogs', href: '/blog' },
+        { label: 'Resources', href: '/resources' },
+        { label: 'Guides', href: '/resources?category=guides' },
+        { label: 'Brochures', href: '/brochures' },
       ],
     },
     {
@@ -218,12 +218,23 @@ function sortIndustryChildren(children: HeaderNavigationChild[]): HeaderNavigati
   return [...children].sort((a, b) => industryRank(slugOf(a.href)) - industryRank(slugOf(b.href)))
 }
 
+/*
+ * Out of the bar for now, not deleted: the pages behind them are not ready.
+ * Matched by label, so the rows stay in the Header global as they are and come
+ * back by taking them off this list.
+ */
+const HIDDEN_NAV_LABELS = new Set(['configurator', 'configurators', 'about'])
+
+function isShownInBar(item: HeaderNavigationItem) {
+  return !HIDDEN_NAV_LABELS.has(item.label.trim().toLowerCase())
+}
+
 function normalizeHeaderNavigation(
   navigation: HeaderNavigationItem[],
   industryPages: IndustryNavigationItem[],
   productCategories: ProductNavigationItem[],
 ): HeaderNavigationItem[] {
-  return navigation.map((item) => {
+  return navigation.filter(isShownInBar).map((item) => {
     const label = item.label.trim().toLowerCase()
 
     // A hand-curated list in the CMS always wins over generated children --
@@ -247,6 +258,12 @@ function normalizeHeaderNavigation(
 
     if (label === 'products' && productCategories.length) {
       return { ...item, children: productCategories }
+    }
+
+    // Resources is the knowledge hub now; the brochures it used to open are
+    // linked from the hub itself.
+    if (label === 'resources' && !(item.children?.length ?? 0)) {
+      return { ...item, href: '/resources' }
     }
 
     return item
@@ -285,7 +302,8 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
 
 const getCachedSiteHeader = cachedQuery(
   fetchSiteHeader,
-  ['site-header'],
+  // v3: Resources opens the knowledge hub; Configurators and About are held out.
+  ['site-header', 'resources-hub-v3'],
   [TAGS.globals, TAGS.media, TAGS.industryPages, TAGS.products, TAGS.industries],
 )
 
@@ -295,7 +313,7 @@ export async function getSiteHeader(): Promise<SiteHeaderData> {
   } catch (error) {
     console.error('Unable to load Payload header global', error)
 
-    return defaultHeaderData
+    return { ...defaultHeaderData, navigation: defaultHeaderData.navigation.filter(isShownInBar) }
   }
 }
 

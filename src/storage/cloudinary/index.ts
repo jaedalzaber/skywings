@@ -59,6 +59,7 @@ export const cloudinaryStorage =
       apiKey: apiKey!,
       apiSecret: apiSecret!,
       cloudName: cloudName!,
+      localDelivery: options.localDelivery,
       maxBytes: options.maxBytes,
       rootFolder: options.rootFolder,
     })

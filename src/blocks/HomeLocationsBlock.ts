@@ -21,20 +21,27 @@ export const HomeLocationsBlock: Block = {
       name: 'lead',
       label: 'Headline',
       type: 'text',
-      defaultValue: 'UAE manufacturing presence.',
+      defaultValue: 'We deliver all over',
+      admin: { description: 'Set light, above the regions.' },
     },
     {
+      /*
+       * The earlier design's second line. Hidden rather than removed: dropping
+       * the field would drop its column, and the schema push is additive only.
+       */
       name: 'reach',
       label: 'Second line',
       type: 'text',
-      defaultValue: 'Regional and international reach.',
-      admin: { description: 'Set lighter under the headline.' },
+      admin: { hidden: true },
     },
     {
       name: 'regions',
       type: 'array',
-      admin: { description: 'Listed under the headline, separated by dots.' },
-      defaultValue: [{ text: 'Middle East' }, { text: 'Europe' }, { text: 'Africa' }],
+      admin: {
+        description:
+          'Set heavy under the headline and joined as a list: "Middle-East, Europe & Africa".',
+      },
+      defaultValue: [{ text: 'Middle-East' }, { text: 'Europe' }, { text: 'Africa' }],
       fields: [{ name: 'text', type: 'text', required: true }],
     },
     {
@@ -43,7 +50,8 @@ export const HomeLocationsBlock: Block = {
       type: 'upload',
       relationTo: 'media',
       admin: {
-        description: 'Falls back to the image set on the Footer (Locations image).',
+        description:
+          'A portrait aerial, about 4:7. "UAE" is set across its foot in white, so keep the lower part of the picture free of detail. Falls back to the image set on the Footer (Locations image).',
       },
     },
     {

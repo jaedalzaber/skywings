@@ -964,7 +964,7 @@ a.industry-card:hover .industry-card-media img {
     box-shadow 180ms ease;
 }
 
-.industry-gallery-card-link:hover {
+.industry-gallery-card-link:not([data-static]):hover {
   border-color: #b9c6ff;
   box-shadow: 0 0.75rem 2rem rgba(43, 76, 242, 0.12);
 }

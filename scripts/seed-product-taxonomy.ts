@@ -28,6 +28,7 @@ import { getPayload } from 'payload'
 import {
   INDUSTRY_FAMILY_FOCUS,
   NON_PRODUCT_INDUSTRIES,
+  PALLET_AND_NET_SKUS,
   PRODUCT_FAMILIES,
   REMOVED_FAMILIES,
   SUPERSEDED_FAMILIES,
@@ -37,10 +38,13 @@ import {
 /**
  * Products whose correct family changed with the new taxonomy, by SKU. Tanks
  * are process equipment rather than generic heavy fabrication, which is also
- * what gives Oil & Gas its first real entry.
+ * what gives Oil & Gas its first real entry. The pallets and net left the
+ * combined ULD family for their own; step 3 would otherwise send them on to
+ * ULD Containers with the rest of it.
  */
 const PRODUCT_REFILES: Readonly<Record<string, string>> = {
   'SW-HF-002': 'process-equipment-and-piping-supports',
+  ...Object.fromEntries(PALLET_AND_NET_SKUS.map((sku) => [sku, 'pallets-and-nets'])),
 }
 
 const payload = await getPayload({ config })

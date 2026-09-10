@@ -25,8 +25,7 @@ export const Products: CollectionConfig = {
   admin: {
     group: 'Manufacturing',
     useAsTitle: 'title',
-    // The thumbnail leads, so a row is recognisable before its code is read.
-    defaultColumns: ['cardPreview', 'title', 'sku', 'productFamily', 'isConfigurable', 'updatedAt'],
+    defaultColumns: ['title', 'sku', 'productFamily', 'isConfigurable', 'updatedAt'],
   },
   versions: {
     drafts: true,
@@ -37,19 +36,20 @@ export const Products: CollectionConfig = {
   ]),
   fields: [
     {
-      name: 'cardPreview',
-      label: ' ',
-      type: 'ui',
-      admin: {
-        components: {
-          Cell: '/components/admin/ProductThumbnailCell#ProductThumbnailCell',
-        },
-      },
-    },
-    {
       name: 'title',
       type: 'text',
       required: true,
+      admin: {
+        components: {
+          /*
+           * The card image in front of the name. On the title itself, not a
+           * column of its own: Payload links the first column to the
+           * document, and a thumbnail column ahead of the title took that
+           * link with it.
+           */
+          Cell: '/components/admin/ProductTitleCell#ProductTitleCell',
+        },
+      },
     },
     slugField(),
     {
@@ -171,14 +171,36 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'cardImagePadding',
-      label: 'Card image padding (%)',
+      label: 'Card image padding, all sides (%)',
       type: 'number',
       min: 0,
       max: 40,
       admin: {
         description:
-          'How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost.',
+          'How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost. 0 on every side fills the card edge to edge, cropping the image to fit.',
       },
+    },
+    {
+      type: 'collapsible',
+      label: 'Card image padding per side',
+      admin: {
+        initCollapsed: true,
+        description:
+          'Overrides the all-sides value for one edge. Set a side to 0 to make the product touch that edge -- for something that should stand on the bottom of the card, or run off one side.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: (['Top', 'Right', 'Bottom', 'Left'] as const).map((side) => ({
+            name: `cardImagePadding${side}`,
+            label: `${side} (%)`,
+            type: 'number' as const,
+            min: 0,
+            max: 40,
+            admin: { width: '25%' },
+          })),
+        },
+      ],
     },
     {
       name: 'gallery',

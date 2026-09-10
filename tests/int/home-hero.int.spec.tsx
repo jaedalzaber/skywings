@@ -118,7 +118,7 @@ describe('HomeHero', () => {
     )
   })
 
-  test('renders the hosted Cloudinary intro video as the default hero background', () => {
+  test('renders the bundled intro video as the default hero background', () => {
     const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
     const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
 

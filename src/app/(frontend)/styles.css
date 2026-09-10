@@ -422,9 +422,144 @@ html {
    * page and a long one lay out to the same width, and --scrollbar-width can be
    * measured before the content exists -- the inline script in layout.tsx runs
    * ahead of the body, when nothing is tall enough to have summoned a scrollbar
-   * yet. No effect where scrollbars are overlays.
+   * yet. No effect where scrollbars are overlays -- and none while the native
+   * page bar is hidden (below); kept for any page that brings one back.
    */
   scrollbar-gutter: stable;
+}
+
+/*
+ * Scrollbars: one look for every scroll area on the site -- the page, the mega
+ * menu, the catalogue sidebar, drawers. A slim rounded thumb on no track, no
+ * arrow buttons, thickening under the pointer.
+ *
+ * Drawn with ::-webkit-scrollbar (Chrome, Edge, Safari). The standard
+ * scrollbar-width / scrollbar-color are kept to browsers without it (Firefox,
+ * below): Chrome 121+ lets the standard properties override the pseudo-
+ * elements, so setting them anywhere brings the stock bar and its arrows back.
+ * A dark surface redefines the two thumb tokens.
+ */
+:root {
+  --scrollbar-thumb: rgba(23, 23, 23, 0.22);
+  --scrollbar-thumb-hover: rgba(23, 23, 23, 0.42);
+}
+
+::-webkit-scrollbar {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 0.1875rem solid transparent;
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  border-width: 0.125rem;
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+
+/*
+ * The page's own bar is not the native one. A native bar takes a gutter, and
+ * a gutter is one color -- a light strip beside every dark section. It is
+ * hidden here and PageScrollbar floats a thumb over the content's edge
+ * instead, on no track, so the section runs to the window edge beneath it.
+ *
+ * Hidden from body as well as html: body's overflow-x: clip is what reaches
+ * the viewport, and Chrome takes the viewport bar's style from whichever of
+ * the two supplied the overflow -- html-only rules are silently ignored.
+ * `scrollbar-width: none` covers Firefox, and outranks the `*` rule above.
+ */
+html,
+body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.page-scrollbar {
+  --page-thumb: rgba(23, 23, 23, 0.3);
+  --page-thumb-active: rgba(23, 23, 23, 0.5);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  width: 0.75rem;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  visibility: hidden;
+}
+
+/* Shown once measured, so a page with no script, or nothing to scroll, has none. */
+.page-scrollbar[data-ready] {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Over a dark section the thumb turns light. */
+.page-scrollbar[data-surface='dark'] {
+  --page-thumb: rgba(255, 255, 255, 0.32);
+  --page-thumb-active: rgba(255, 255, 255, 0.55);
+}
+
+.page-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  border: 0.1875rem solid transparent;
+  border-radius: 999px;
+  background: var(--page-thumb);
+  background-clip: padding-box;
+  touch-action: none;
+  transition:
+    background-color 200ms ease,
+    border-width 160ms ease;
+  will-change: transform;
+}
+
+.page-scrollbar:hover .page-scrollbar-thumb,
+.page-scrollbar[data-dragging] .page-scrollbar-thumb {
+  border-width: 0.125rem;
+  background-color: var(--page-thumb-active);
+}
+
+.page-scrollbar[data-dragging] {
+  cursor: grabbing;
+}
+
+/* Touch screens scroll by touch; there the thumb only shows where you are. */
+@media (hover: none) {
+  .page-scrollbar {
+    width: 0.5rem;
+    pointer-events: none;
+  }
+}
+
+@media print {
+  .page-scrollbar {
+    display: none;
+  }
 }
 
 html.lenis,
@@ -504,15 +639,14 @@ a {
   border: 0;
   border-bottom: 1px solid #e5e5e5;
   border-radius: 0;
-  /* Eases the tighten-on-scroll further down rather than snapping heights. */
-  transition:
-    min-height 200ms ease,
-    padding-block 200ms ease;
-}
-@media (prefers-reduced-motion: reduce) {
-  .topbar {
-    transition: none;
-  }
+  /*
+   * No height transition here: the ease lives on the condensed state below,
+   * so the bar eases when it tightens but snaps back open at the top of the
+   * page. Easing it open made the whole page slide down under the bar for
+   * 200ms while --header-height had already jumped, and Chrome's GPU raster
+   * left a stripe of stale pixels under the bar -- light panel content from
+   * further down the capabilities page -- that was never repainted.
+   */
 }
 
 /* The frosted surface is a layer behind the bar rather than a filter on the
@@ -546,7 +680,13 @@ html[data-nav-surface='dark'] {
   --nav-surface: #1c1c1c;
   --nav-backdrop: none;
   --nav-ink: #ffffff;
-  --nav-line: rgba(255, 255, 255, 0.14);
+  /*
+   * Opaque: what 14% white over the #1c1c1c bar comes to. The bar's dark fill
+   * (.topbar::before) stops above the border, so a translucent line was a 1px
+   * window -- anything light scrolling under the header showed through it as
+   * a bright rule the width of the page container.
+   */
+  --nav-line: #3c3c3c;
 }
 
 /*
@@ -557,7 +697,14 @@ html[data-nav-surface='dark'] .topbar {
   border-bottom-color: var(--nav-line);
 }
 
-html[data-nav-surface='dark'] .nav-links a,
+/*
+ * The bar's own links only -- `.nav-item > a`, not `.nav-links a`. The dropdown
+ * panels stay light whatever the bar is over, and the descendant form reached
+ * into them: at (0,2,2) it outranked `.nav-submenu a` and the mega menu's
+ * headings, so on any dark page the Industries items and every Products
+ * column heading went white on white.
+ */
+html[data-nav-surface='dark'] .nav-item > a,
 html[data-nav-surface='dark'] .nav-link-control,
 html[data-nav-surface='dark'] .brand-wordmark {
   color: var(--nav-ink);
@@ -903,33 +1050,15 @@ html[data-nav-stuck='true'] .brand-logo {
     rgb(255, 255, 255);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
   /* backdrop-filter: blur(24px) saturate(150%); */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(13, 61, 120, 0.32) transparent;
 }
 
 .nav-submenu--mega::before {
   display: none;
 }
 
-/* Slim, tinted scrollbar so a scrolled panel still reads as one glass sheet. */
-.nav-submenu--mega::-webkit-scrollbar {
-  width: 0.625rem;
-}
-
+/* The shared scrollbar, held clear of the panel's rounded corners. */
 .nav-submenu--mega::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.nav-submenu--mega::-webkit-scrollbar-thumb {
-  border: 0.1875rem solid transparent;
-  border-radius: 999px;
-  background: rgba(13, 61, 120, 0.32);
-  background-clip: content-box;
-}
-
-.nav-submenu--mega::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 61, 120, 0.55);
-  background-clip: content-box;
+  margin-block: 0.75rem;
 }
 
 .nav-item:hover .nav-submenu--mega,
@@ -965,7 +1094,7 @@ html[data-nav-stuck='true'] .brand-logo {
   font-size: 1.19125rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.0;
+  line-height: 1;
   /* text-transform: uppercase; */
 }
 
@@ -1123,7 +1252,6 @@ html[data-nav-stuck='true'] .brand-logo {
   flex: 1 1 auto;
   padding: 2.1rem 1.174rem 1.25rem;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .mobile-nav-primary-link {
@@ -1702,15 +1830,64 @@ html[data-nav-stuck='true'] .brand-logo {
 }
 
 .industries-showcase-product-frame {
+  /*
+   * The rail's default inset for a product render. A product overrides it,
+   * side by side, from the admin ('Card image padding') -- the same values the
+   * products page's cards use, written as --catalogue-card-pad-* by
+   * cardImageLayout.
+   */
+  --industries-product-pad: 5%;
+  position: relative;
   aspect-ratio: 297 / 150;
   overflow: hidden;
   background: #ececec;
 }
 
+/*
+ * Product renders, fitted whole: the frame is much wider than most products,
+ * so filling it cropped their ends off. The inset shrinks the box the image is
+ * contained in, as on the products page.
+ */
+.industries-showcase-product-fit {
+  position: absolute;
+  inset: var(--catalogue-card-pad-top, var(--industries-product-pad))
+    var(--catalogue-card-pad-right, var(--industries-product-pad))
+    var(--catalogue-card-pad-bottom, var(--industries-product-pad))
+    var(--catalogue-card-pad-left, var(--industries-product-pad));
+}
+
 .industries-showcase-product-image {
-  width: 100%;
-  height: 100%;
+  object-fit: contain;
+  /* Pulled toward any side set to 0 so the product actually meets that edge. */
+  object-position: var(--catalogue-card-align, center);
+}
+
+/* 0 on every side: the image fills the card edge to edge, cropped to fit. */
+.industries-showcase-product-frame[data-fill='true'] .industries-showcase-product-image {
   object-fit: cover;
+}
+
+/*
+ * The second view, as on the products page: it sits over the first at rest
+ * and fades across on hover, filling the frame -- it is a photograph, not an
+ * inset render.
+ */
+.industries-showcase-product-hover {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition:
+    opacity 260ms ease,
+    transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.industries-showcase-product-hover-image {
+  object-fit: cover;
+}
+
+.industries-showcase-product-link:is(:hover, :focus-visible) .industries-showcase-product-hover {
+  opacity: 1;
+  transform: scale(1.04);
 }
 
 .industries-showcase-product-card figcaption {
@@ -1739,7 +1916,6 @@ html[data-nav-stuck='true'] .brand-logo {
   line-height: 1.007;
   letter-spacing: 0.02em;
   text-decoration: none;
-  
 }
 
 .industries-showcase-card-media {
@@ -2165,8 +2341,19 @@ h3 {
   html[data-nav-stuck='true'] .topbar {
     min-height: var(--header-height);
     padding-block: 0.35rem;
+    /* Eases the tighten-on-scroll. Only this direction animates -- see the
+       note on the base topbar rule. */
+    transition:
+      min-height 200ms ease,
+      padding-block 200ms ease;
   }
-
+}
+@media (min-width: 64rem) and (prefers-reduced-motion: reduce) {
+  html[data-nav-stuck='true'] .topbar {
+    transition: none;
+  }
+}
+@media (min-width: 64rem) {
   .nav-links {
     display: flex;
     width: auto;
@@ -2942,30 +3129,341 @@ h3 {
 }
 
 /*
- * Locations. An editorial two-column spread: a tall portrait aerial that
- * enters with the section and then holds against the foot of the viewport
- * while the headline and the two facilities scroll up past it, each revealing
- * as it rises. White ground, black type, thin blue rules. The held image and
- * the scroll-linked reveals run from 64rem up without a reduced-motion
- * preference; below that, or with one, it is a plain stack.
+ * Resources, closing the page after the locations. The engineering section's
+ * language on white: a heading cell beside the way into the hub, and the
+ * articles in a row of cells beneath, each line shared between neighbors --
+ * drawn as 1px gaps over the line color, so the grid never doubles a rule.
+ * The top and bottom rules run edge to edge of the screen, as the process
+ * band's do; the vertical ones stop at the page. Mono labels, blue for what
+ * answers the pointer.
  */
-.locations {
-  --locations-pad: clamp(1.25rem, 3svh, 2rem);
-  /* The gap the held image keeps to the foot of the viewport. */
-  --locations-bottom-pad: 1.5rem;
-  --locations-gap: clamp(2rem, 5vw, 5rem);
-  --locations-media-col: minmax(0, 33%);
-  /* How far a facility is set in from the copy's left edge; the rule runs
-     back across it, so the two facilities step down and to the right. */
-  --locations-indent: 0px;
-  --locations-ink: #111111;
-  --locations-muted: #4a4a4a;
+.insights {
+  --insights-line: var(--line-strong);
+  --insights-muted: var(--muted);
+  --insights-accent: var(--blue);
+  --insights-pad: clamp(1.25rem, 2.6vw, 2.25rem);
+  --insights-mono: 'SF Mono', 'Consolas', monospace;
   position: relative;
   width: var(--bleed-width);
   margin: 0 var(--bleed-margin);
-  padding: clamp(2rem, 5svh, 3.25rem) 0 clamp(2.5rem, 6svh, 4rem);
+  /* The locations above close with their own bottom padding; the footer
+     below needs this one. */
+  padding-block: 0 clamp(3rem, 7vw, 6rem);
+  color: var(--ink);
+  background: #ffffff;
+}
+
+/* Full bleed, so its rules reach both edges of the screen. */
+.insights-inner {
+  border-block: 1px solid var(--insights-line);
+}
+
+/* The page's width, closed at the sides only: square corners, since the top
+   and bottom rules carry on past them. */
+.insights-frame {
+  width: min(100%, var(--page-content));
+  margin-inline: auto;
+  overflow: hidden;
+  border-inline: 1px solid var(--insights-line);
+}
+
+.insights-top,
+.insights-list {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--insights-line);
+}
+
+.insights-list {
+  border-top: 1px solid var(--insights-line);
+}
+
+.insights-head,
+.insights-action,
+.insights-card {
+  min-width: 0;
+  background: #ffffff;
+}
+
+.insights-head {
+  display: grid;
+  gap: clamp(1.5rem, 3.5vw, 3rem);
+  padding: var(--insights-pad);
+}
+
+.insights-eyebrow {
+  margin: 0;
+  color: var(--insights-accent);
+  font-family: var(--insights-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.insights-title {
+  margin: 0;
+  /* Each sentence on one line across the heading cell's two columns. */
+  font-size: clamp(1.875rem, 3.2vw, 2.875rem);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.insights-title span {
+  display: block;
+}
+
+/* The second line a step back, so the pair reads as statement and answer. */
+.insights-title span + span {
+  color: var(--insights-muted);
+}
+
+.insights-action {
+  display: flex;
+  align-items: center;
+  padding: var(--insights-pad);
+}
+
+.insights-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid #1c1c1c;
+  border-radius: 0.375rem;
+  color: #1c1c1c;
+  font-family: var(--insights-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.insights-all:is(:hover, :focus-visible) {
+  border-color: var(--insights-accent);
+  color: #ffffff;
+  background: var(--insights-accent);
+}
+
+.insights-all:focus-visible,
+.insights-card-link:focus-visible {
+  outline: 2px solid var(--insights-accent);
+  outline-offset: 3px;
+}
+
+.insights-arrow {
+  width: 1.625rem;
+  height: 0.625rem;
+  flex: none;
+  transition: transform 0.2s ease;
+}
+
+.insights-all:hover .insights-arrow,
+.insights-card:hover .insights-card-more .insights-arrow {
+  transform: translateX(4px);
+}
+
+/* ---- The articles ---- */
+
+.insights-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--insights-pad);
+}
+
+.insights-card-media {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  /* The grey SafeImg falls back to, so a missing picture reads as one on its way. */
+  background: #d9d9d9;
+}
+
+.insights-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.insights-card:hover .insights-card-media img {
+  transform: scale(1.04);
+}
+
+.insights-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding-top: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+.insights-card-meta {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  color: var(--insights-muted);
+  font-family: var(--insights-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.insights-card-meta p {
+  margin: 0;
+}
+
+.insights-card-tag {
+  padding: 0.375rem 0.625rem;
+  color: #ffffff;
+  background: #1c1c1c;
+  font-weight: 600;
+}
+
+.insights-card-title {
+  margin: 1rem 0 0;
+  font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.insights-card-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* Stretched over the whole cell: the card is one target. */
+.insights-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.insights-card:hover .insights-card-link {
+  color: var(--insights-accent);
+}
+
+.insights-card-excerpt {
+  display: -webkit-box;
+  margin: 0.75rem 0 0;
+  overflow: hidden;
+  color: var(--insights-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.insights-card-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1.5rem;
+  color: #1c1c1c;
+  font-family: var(--insights-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.insights-card:hover .insights-card-more {
+  color: var(--insights-accent);
+}
+
+/* Three across from tablets up; the heading takes two of them, the link one. */
+@media (min-width: 48rem) {
+  .insights-top,
+  .insights-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .insights-head {
+    grid-column: span 2;
+    min-height: clamp(14rem, 22vw, 18rem);
+    align-content: space-between;
+  }
+
+  .insights-action {
+    justify-content: center;
+  }
+
+  .insights-all {
+    white-space: nowrap;
+  }
+}
+
+/* A third of a tablet is narrow for the label: tighter, still one line. */
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .insights-all {
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insights-card-media img,
+  .insights-arrow,
+  .insights-all,
+  .insights-card-link,
+  .insights-card-more {
+    transition: none;
+  }
+
+  .insights-card:hover .insights-card-media img,
+  .insights-card:hover .insights-card-more .insights-arrow,
+  .insights-all:hover .insights-arrow {
+    transform: none;
+  }
+}
+
+/*
+ * Locations. The home page's close: a portrait aerial with "UAE" set across its
+ * foot, and beside it the reach over the two branches. The branches step down
+ * and to the right, each under a blue rule that runs back to the copy's left
+ * edge and stops where the branch name ends. White ground, near-black type.
+ * Nothing is held or scrubbed; the parts arrive once through the shared
+ * reveals. Phones get the same parts as a plain stack.
+ */
+.locations {
+  /* How far a branch is set in from the copy's edge. The rule runs back
+     across it, so it has to be a length, not a percentage of the name. */
+  --locations-indent: 0px;
+  --locations-ink: #1c1c1c;
+  --locations-muted: #3f3f3f;
+  position: relative;
+  width: var(--bleed-width);
+  margin: 0 var(--bleed-margin);
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
   color: var(--locations-ink);
   background: #ffffff;
+}
+
+/* On a dark page (Contact): the same section, light type on the dark ground. */
+.locations[data-tone='dark'] {
+  --locations-ink: #ffffff;
+  --locations-muted: rgba(255, 255, 255, 0.66);
+  background: #1c1c1c;
+}
+
+.locations[data-tone='dark'] .locations-phone:hover,
+.locations[data-tone='dark'] .locations-phone:focus-visible {
+  color: #7f9cff;
 }
 
 .locations-inner {
@@ -2976,97 +3474,86 @@ h3 {
 
 .locations-grid {
   display: grid;
-  gap: var(--locations-gap);
+  gap: clamp(2.25rem, 4vw, 3rem);
   grid-template-columns: minmax(0, 1fr);
 }
 
 .locations-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
   margin: 0;
 }
 
+/*
+ * The frame is what opens; the figure around it only watches for the
+ * viewport. Until a photograph is uploaded the frame's own ground stands in
+ * for it: a sky running down into a dark coast, deep enough for the mark.
+ */
 .locations-media-frame {
-  position: relative;
-  height: clamp(22rem, 70svh, 36rem);
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: 0.375rem;
-  background: #e3e6ea;
+  background: linear-gradient(180deg, #8fb3d6 0%, #4f7599 42%, #1f3447 100%);
 }
 
-/* Taller than the frame so the drift never exposes an edge. */
-.locations-media-image {
+.locations-media-frame img {
   position: absolute;
-  top: -5%;
-  right: 0;
-  left: 0;
-  height: 110%;
-}
-
-.locations-media-image img {
-  display: block;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
 }
 
-/* The country mark is set over the foot of the photograph, running off its
-   left edge, at a size that makes it part of the picture, not a caption. */
-.locations-media-mark {
+/* Across the foot of the picture, closer to its right edge than its left. */
+.locations-mark {
   position: absolute;
-  bottom: -0.06em;
-  left: -0.04em;
+  right: 6%;
+  bottom: 2.5%;
+  width: 73%;
   color: #ffffff;
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(5rem, 11vw, 11rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  line-height: 0;
   pointer-events: none;
-  user-select: none;
+}
+
+.locations-mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .locations-copy {
   display: grid;
   align-content: start;
-  gap: clamp(2.5rem, 6svh, 3.5rem);
+  gap: clamp(2.75rem, 7vw, 4.5rem);
 }
 
 .locations-title {
+  /* Wide enough for the regions to break before the last one, as designed. */
+  max-width: 14.5em;
   margin: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(1.9rem, 3.05vw, 3rem);
+  font-size: clamp(1.9rem, 3.7vw, 3.5rem);
   font-weight: 800;
-  line-height: 1.06;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
-
-.locations-title-line {
-  display: block;
-}
-
-.locations-title-line--light {
-  font-weight: 300;
-}
-
-/* Small caps line under the headline, in the accent. */
-.locations-reach {
-  margin: 1.25rem 0 0;
-  color: var(--blue);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.16em;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
 }
 
-.locations-reach-dot {
-  margin: 0 0.6em;
+.locations-title-lead,
+.locations-title-regions {
+  display: block;
+}
+
+.locations-title-lead,
+.locations-title-amp {
+  font-weight: 300;
 }
 
 .locations-list {
   display: grid;
-  gap: clamp(2.5rem, 6svh, 3.5rem);
+  gap: 2.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3076,9 +3563,9 @@ h3 {
   padding-left: var(--locations-indent);
 }
 
-/* Heading and rule share a box only as wide as the words, so the rule ends
-   where the name ends and -- through the negative margin -- starts back at
-   the copy column's left edge however far the facility is set in. */
+/* Name and rule share a box only as wide as the words, so the rule ends where
+   the name ends and -- through the negative margin -- starts back at the copy
+   column's left edge however far the branch is set in. */
 .locations-item-head {
   width: max-content;
   max-width: 100%;
@@ -3086,12 +3573,10 @@ h3 {
 
 .locations-name {
   display: grid;
-  align-content: start;
   margin: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
-  line-height: 1.1;
-  letter-spacing: 0.01em;
+  font-size: clamp(1.05rem, 1.55vw, 1.35rem);
+  line-height: 1.05;
   text-transform: uppercase;
 }
 
@@ -3105,150 +3590,75 @@ h3 {
 
 .locations-rule {
   display: block;
-  height: 1px;
-  margin: 0.75rem 0 0 calc(-1 * var(--locations-indent));
+  height: 2px;
+  margin: 0.4rem 0 0 calc(-1 * var(--locations-indent));
   background: var(--blue);
   transform-origin: left center;
 }
 
-.locations-detail {
-  display: grid;
-  gap: 0.75rem;
-  padding-top: 1.25rem;
-}
-
-.locations-address,
-.locations-phone {
-  margin: 0;
+.locations-address {
+  /* A measure that holds each address to two lines, balanced so they break
+     where the design does: "Plot No. D-81, Thoban / Industrial Area, ...". */
+  max-width: 31ch;
+  text-wrap: balance;
+  margin: 1.1rem 0 0;
   color: var(--locations-muted);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: clamp(0.875rem, 1.05vw, 1rem);
+  line-height: 1.45;
+}
+
+.locations-phone-line {
+  margin: 0.7rem 0 0;
+  font-size: clamp(0.875rem, 1.05vw, 1rem);
+  line-height: 1.45;
 }
 
 .locations-phone {
-  width: fit-content;
   color: var(--locations-ink);
-  font-weight: 600;
   text-decoration: none;
+  transition: color 180ms ease;
 }
 
 .locations-phone:hover,
 .locations-phone:focus-visible {
   color: var(--blue);
   text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
-/* Editorial spread. */
-@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+/* Two columns: the picture sets the height, the copy runs its full length --
+   reach at the top, the branches settled at the foot beside the mark. */
+@media (min-width: 64rem) {
   .locations-grid {
-    /*
-     * Taller than the image on purpose, and only just: that surplus is the
-     * whole scroll the image spends held at the foot of the viewport, so the
-     * story stays compact instead of running for screens of empty white.
-     */
-    min-height: 118svh;
-    grid-template-columns: var(--locations-media-col) minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: minmax(0, 31%) minmax(0, 1fr);
+    gap: clamp(2rem, 3.6vw, 3.25rem);
+    align-items: stretch;
   }
 
-  /*
-   * Bottom-anchored, not top: the image rises in with the section, locks with
-   * its lower edge --locations-bottom-pad above the foot of the viewport for
-   * the main phase, then lifts away with the section when the column ends.
-   * Its height is what is left of the viewport between the bar and that gap.
-   */
   .locations-media {
-    /*
-     * align-self: end is load-bearing, not decoration. A sticky box with a
-     * bottom offset is only ever pulled *up*, towards the foot of the
-     * viewport, when its resting place is below it -- so the figure has to
-     * rest at the foot of its column. Held there, it is clamped to the top of
-     * the column while the section is still rising (it enters with the
-     * section), locks once the column has cleared, and settles back at the
-     * column's foot to leave with the section.
-     */
-    align-self: end;
-    position: sticky;
-    bottom: var(--locations-bottom-pad);
+    aspect-ratio: 4 / 7;
   }
 
-  .locations-media-frame {
-    height: calc(
-      100svh - var(--header-height) - var(--locations-bottom-pad) - var(--locations-pad)
-    );
-  }
-
-  /*
-   * The gaps are sized against one budget: the copy has to be no taller than
-   * the held image plus its gap to the foot of the viewport, because that is
-   * exactly the room there is when the image locks. Filled to it, the three
-   * groups read as the static layout at that moment and the column runs out
-   * at nearly the same time as the picture -- spread further and Thoban would
-   * be below the fold, spread less and the section ends on empty white.
-   */
   .locations-copy {
-    gap: clamp(2rem, 12svh, 6.5rem);
-    padding-top: 0.35em;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: clamp(0.75rem, 1.6vw, 1.5rem);
   }
 
+  /* The stair: the second branch starts as the first one ends, further in. */
   .locations-list {
-    gap: clamp(2rem, 14svh, 7.5rem);
+    gap: 1rem;
   }
 
-  /* The facilities step down and to the right, the second further in. */
+  /* About a fifth and three fifths of the copy column: a steady share of the
+     viewport up to the page's max width, fixed beyond it. */
   .locations-item[data-location='1'] {
-    --locations-indent: clamp(1.5rem, 5vw, 4.5rem);
+    --locations-indent: min(13vw, 10rem);
   }
 
   .locations-item[data-location='2'] {
-    --locations-indent: clamp(4rem, 15vw, 12rem);
-  }
-
-  .locations-detail {
-    padding-top: 1.5rem;
-  }
-}
-
-/*
- * Short desktops -- a wide laptop at 620px or so -- have far less room beside
- * the image, and the same budget still applies. Everything comes down a step
- * so the whole composition still lands in one screen rather than leaving the
- * last phone number under the fold.
- */
-@media (min-width: 64rem) and (max-height: 46rem) and (prefers-reduced-motion: no-preference) {
-  .locations-title {
-    font-size: clamp(1.6rem, 2.4vw, 2.25rem);
-  }
-
-  .locations-reach {
-    margin-top: 0.85rem;
-  }
-
-  .locations-copy {
-    gap: clamp(1.5rem, 7svh, 3rem);
-  }
-
-  .locations-list {
-    gap: clamp(1.5rem, 8svh, 3.5rem);
-  }
-
-  .locations-name {
-    font-size: 1.25rem;
-  }
-
-  .locations-rule {
-    margin-top: 0.5rem;
-  }
-
-  .locations-detail {
-    gap: 0.5rem;
-    padding-top: 0.9rem;
-  }
-
-  .locations-address,
-  .locations-phone {
-    font-size: 0.875rem;
-    line-height: 1.45;
+    --locations-indent: min(36.5vw, 28rem);
   }
 }
 
@@ -4375,6 +4785,64 @@ footer.site-footer .figma-footer-copyright {
   }
 }
 
+/*
+ * A dark page carries the dark through to the end: the page marks itself
+ * `data-page-tone="dark"` and the shared footer follows, along with the
+ * body's own ground, which shows where .site-shell pads around <main>. The
+ * page mounts DarkFooterSurface too, so the header reads the footer as dark.
+ * The wordmark's blue gradient holds on either ground.
+ */
+body:has([data-page-tone='dark']) {
+  background: #1c1c1c;
+}
+
+body:has([data-page-tone='dark']) footer.site-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.86);
+  background: #161616;
+}
+
+body:has([data-page-tone='dark']) footer.site-footer :is(a, p, h2, dl, dd),
+body:has([data-page-tone='dark']) footer.site-footer .figma-footer-group a {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+body:has([data-page-tone='dark']) footer.site-footer a:is(:hover, :focus-visible) {
+  color: #ffffff;
+}
+
+/* The perspective grid is drawn at 13% blue for white; lifted to read on dark. */
+body:has([data-page-tone='dark']) .figma-footer-grid-art img {
+  filter: brightness(2.2);
+}
+
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form input[type='email'] {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form input[type='email']::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form button {
+  border-color: var(--blue);
+  color: #ffffff;
+  background: var(--blue);
+}
+
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form :is(input, button):focus-visible {
+  outline-color: #ffffff;
+}
+
+body:has([data-page-tone='dark']) .figma-footer-privacy {
+  color: rgba(255, 255, 255, 0.56) !important;
+}
+
+body:has([data-page-tone='dark']) .figma-footer-form-status.is-error {
+  color: #f97066;
+}
+
 /* ===== Home responsive composition ===== */
 
 /*
@@ -4936,6 +5404,7 @@ footer.site-footer .figma-footer-copyright {
 }
 
 [data-responsive-layout='industries'] .industries-showcase-product-image,
+[data-responsive-layout='industries'] .industries-showcase-product-hover-image,
 [data-responsive-layout='industries'] .industries-showcase-product-link {
   -webkit-user-drag: none;
 }
@@ -5066,7 +5535,6 @@ footer.site-footer .figma-footer-copyright {
    */
   transition: opacity var(--industries-cta-fade) ease;
 }
-
 
 /*
  * A collapsed row stays white on hover. It used to tint to --surface-soft as a
@@ -5746,14 +6214,16 @@ footer.site-footer .figma-footer-copyright {
     animation: none;
   }
 
-  [data-responsive-layout='industries'] .industries-showcase-product-image {
+  [data-responsive-layout='industries'] .industries-showcase-product-image,
+  .industries-showcase-product-hover {
     transition: none;
   }
 }
 @media (hover: hover) and (pointer: fine) {
-  /* 1.04 was close enough to nothing that the hover read as dead. */
+  /* 1.04 was close enough to nothing that the hover read as dead. A product
+     with no page yet is not a link, and does not react. */
   [data-responsive-layout='industries']
-    .industries-showcase-product-link:is(:hover, :focus-visible)
+    .industries-showcase-product-link:not([data-static]):is(:hover, :focus-visible)
     .industries-showcase-product-image {
     transform: scale(1.12);
   }
@@ -5998,6 +6468,61 @@ footer.site-footer .figma-footer-copyright {
   list-style: none;
 }
 
+/*
+ * One machine a line, as on the shop's asset list. A machine with a
+ * photograph is a button that brings it up in the carousel; the one on screen
+ * is marked with a short rule, the rest step back a shade.
+ */
+.machining-machine {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  width: 100%;
+  padding: 0.3rem 0;
+  border: 0;
+  color: rgba(23, 23, 23, 0.62);
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.machining-machine::before {
+  content: '';
+  flex: none;
+  width: 0.9em;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0.45);
+  transform-origin: left center;
+  transition: transform 0.2s ease;
+}
+
+button.machining-machine {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.machining-machine[data-active='true'] {
+  color: var(--machining-panel-ink);
+}
+
+.machining-machine[data-active='true']::before {
+  transform: scaleX(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.machining-machine:hover {
+    color: var(--machining-panel-ink);
+  }
+}
+
+button.machining-machine:focus-visible {
+  outline: 2px solid var(--machining-panel-ink);
+  outline-offset: 2px;
+}
+
 .machining-media {
   display: flex;
   flex: none;
@@ -6018,6 +6543,12 @@ footer.site-footer .figma-footer-copyright {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* A machine is shown whole, on the panel's own ground; the process fills. */
+.machining-media-frame[data-kind='machine'] .machining-media-image {
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  object-fit: contain;
 }
 
 /* Split control bar under the photograph, as wide as the image. */
@@ -6079,6 +6610,56 @@ footer.site-footer .figma-footer-copyright {
 }
 
 /*
+ * The rows name the processes and their machines; what each one is for and
+ * what comes off it is on /capabilities. Ruled off from the list rather than
+ * sitting inside it, since it is not one more row.
+ */
+.machining-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
+  padding-top: clamp(1.75rem, 4vw, 2.75rem);
+  border-top: 1px solid var(--machining-line);
+}
+
+.machining-cta-text {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--machining-muted);
+  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
+  line-height: 1.5;
+}
+
+/* Same outline-pill-to-solid-white pattern as .process-cta-link, so a CTA
+   reads the same way wherever a dark section hands the reader off the page. */
+.machining-cta-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0.6rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 0.25rem;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.machining-cta-link:hover,
+.machining-cta-link:focus-visible {
+  color: var(--machining-accent);
+  background: #ffffff;
+}
+
+/*
  * Phones and narrow tablets: the heading cell takes the full width, and the
  * photograph sits under the machine list rather than beside it. Stacked, the
  * panel is sized by its content -- a fixed height there would either crop the
@@ -6113,6 +6694,11 @@ footer.site-footer .figma-footer-copyright {
 
   .machining-media-frame {
     aspect-ratio: 4 / 3;
+  }
+
+  .machining-cta {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -6216,7 +6802,7 @@ footer.site-footer .figma-footer-copyright {
 
 .engineering-title {
   margin: 0;
-  font-size: clamp(2.25rem, 5.0vw, 4.0rem);
+  font-size: clamp(2.25rem, 5vw, 4rem);
   font-weight: 400;
   line-height: 1.02;
   letter-spacing: -0.02em;
@@ -6507,9 +7093,22 @@ footer.site-footer .figma-footer-copyright {
 .catalogue-tree-all,
 .catalogue-tree-parent {
   padding: 0.9rem 1.25rem;
-  border-bottom: 1px solid #ececec;
   font-size: 0.9375rem;
   font-weight: 600;
+}
+
+/*
+ * Each category carries the rule above it rather than the row below it. A
+ * bottom border stops at the parent row, so a category following an open one
+ * sat straight under the last child with nothing setting it off.
+ */
+.catalogue-tree-group {
+  border-top: 1px solid #ececec;
+}
+
+/* An open category keeps a line between its heading and its own list. */
+.catalogue-tree-parent[aria-expanded='true'] {
+  border-bottom: 1px solid #ececec;
 }
 
 .catalogue-tree-all:hover,
@@ -6600,6 +7199,8 @@ footer.site-footer .figma-footer-copyright {
 
 .catalogue-main {
   min-width: 0;
+  /* Where the pager scrolls back to: the search bar, clear of the header. */
+  scroll-margin-top: calc(var(--header-height) + 1rem);
 }
 
 .catalogue-bar {
@@ -6760,20 +7361,51 @@ footer.site-footer .figma-footer-copyright {
   font: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
+  /* Links now -- each page has its own address -- so no underline. */
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color 160ms ease,
     color 160ms ease;
 }
 
-.catalogue-pager-step:hover:not(:disabled),
+.catalogue-pager-step:hover:not([aria-disabled='true']),
 .catalogue-pager-page:hover:not([data-active]) {
   background: #e4e4e4;
 }
 
-.catalogue-pager-step:disabled {
+/* The end the visitor is already at: shown, but not a link to itself. */
+.catalogue-pager-step[aria-disabled='true'] {
   color: #b4b4b4;
   cursor: default;
+}
+
+.catalogue-pager-page:focus-visible,
+.catalogue-pager-step:focus-visible {
+  outline: 2px solid #1c1c1c;
+  outline-offset: 2px;
+}
+
+/* Where a run of pages is folded away on a long catalogue. */
+.catalogue-pager-gap {
+  display: grid;
+  width: 1.5rem;
+  place-items: center;
+  color: #8a8a8a;
+  font-size: 0.9375rem;
+}
+
+/*
+ * While the next page, search or category is fetched, the grid in view dims
+ * rather than blanking -- it is still there to read, and the change arrives
+ * in place of it.
+ */
+.catalogue-main .catalogue-grid {
+  transition: opacity 180ms ease;
+}
+
+.catalogue-main[data-pending='true'] .catalogue-grid {
+  opacity: 0.55;
 }
 
 .catalogue-pager-page[data-active] {
@@ -6782,10 +7414,13 @@ footer.site-footer .figma-footer-copyright {
 }
 
 .catalogue-grid {
+  /* One value for the space between rows and the space under the search bar,
+     so the first row sits as far from the bar as each row does from the next. */
+  --catalogue-grid-gap: clamp(1.25rem, 2.4vw, 2rem);
   display: grid;
-  gap: clamp(1.25rem, 2.4vw, 2rem);
+  gap: var(--catalogue-grid-gap);
   grid-template-columns: minmax(0, 1fr);
-  margin-top: 1rem;
+  margin-top: var(--catalogue-grid-gap);
 }
 
 /* Borderless: the canvas is the card. */
@@ -6793,12 +7428,22 @@ footer.site-footer .figma-footer-copyright {
   min-width: 0;
 }
 
-.catalogue-card-link {
+.catalogue-card-link,
+.catalogue-card-static {
   display: grid;
   gap: 0.85rem;
   color: inherit;
   text-decoration: none;
+}
+
+.catalogue-card-link {
   cursor: pointer;
+}
+
+/* A product with no page yet: every hover rule below is keyed to the link,
+   so this card simply sits still. */
+.catalogue-card-static {
+  cursor: default;
 }
 
 .catalogue-card-canvas {
@@ -6821,14 +7466,26 @@ footer.site-footer .figma-footer-copyright {
  */
 .catalogue-card-fit {
   position: absolute;
-  inset: var(--catalogue-card-pad);
+  /* Each side can be overridden from the CMS ('Card image padding per side');
+     unset sides take the card default. */
+  inset: var(--catalogue-card-pad-top, var(--catalogue-card-pad))
+    var(--catalogue-card-pad-right, var(--catalogue-card-pad))
+    var(--catalogue-card-pad-bottom, var(--catalogue-card-pad))
+    var(--catalogue-card-pad-left, var(--catalogue-card-pad));
 }
 
 .catalogue-card-fit img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* Pulled toward any side set to 0 so the product actually meets that edge. */
+  object-position: var(--catalogue-card-align, center);
   transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 0 on every side: the image fills the card edge to edge, cropped to fit. */
+.catalogue-card-canvas[data-fill='true'] .catalogue-card-fit img {
+  object-fit: cover;
 }
 
 /*
@@ -6970,7 +7627,36 @@ footer.site-footer .figma-footer-copyright {
   color: var(--blue);
 }
 
+/* The corrected spelling, offered as the thing to press rather than read. */
+.catalogue-empty-suggestion {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+/* When the search does find something, just not here, that is the answer. */
+.catalogue-empty-button--primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.catalogue-empty-button--primary:hover {
+  color: #ffffff;
+  filter: brightness(1.08);
+}
+
+/* Set apart from the two buttons: they recover the search, this one leaves
+   it for a conversation, and the extra space says it is a different kind of
+   next step. */
 .catalogue-empty-link {
+  margin-left: clamp(0.75rem, 2vw, 1.5rem);
   color: var(--blue);
   font-size: 0.875rem;
   font-weight: 600;
@@ -7154,23 +7840,4 @@ footer.site-footer .figma-footer-copyright {
   max-width: 46rem;
   font-size: 0.9rem;
   line-height: 1.55;
-}
-
-/*
- * The product code, set in the corner of a home card over the image, as the
- * detail page sets it under the title. Green because it is a reference rather
- * than a label -- something to quote back to us, not to read as part of the
- * name.
- */
-.industries-showcase-product-code {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.6rem;
-  z-index: 2;
-  color: #1f7a4d;
-  font-family: 'SF Mono', 'Consolas', monospace;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  pointer-events: none;
 }

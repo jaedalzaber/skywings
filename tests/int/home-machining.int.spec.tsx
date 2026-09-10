@@ -4,16 +4,68 @@ import { resolve } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 
 import { HomeMachiningSection } from '@/components/home/HomeMachiningSection'
+import { defaultCapabilityProcesses, type CapabilityProcess } from '@/data/capabilityDefaults'
 import {
   defaultHomeMachiningGroups,
   defaultHomeMachiningIntro,
   defaultHomeMachiningStats,
+  toHomeMachiningGroups,
+  type HomeMachiningGroup,
 } from '@/data/homeMachiningDefaults'
 
 const stylesheet = readFileSync(resolve(process.cwd(), 'src/app/(frontend)/styles.css'), 'utf8')
+const homeData = readFileSync(resolve(process.cwd(), 'src/data/home.ts'), 'utf8')
 
-function renderMachining() {
-  const { container } = render(<HomeMachiningSection />)
+const photo = (name: string) => ({ alt: `${name} photo`, url: `/media/${name}.png` })
+
+/*
+ * A process as the Capabilities and Machines collections deliver it: its own
+ * photograph, one machine with a photograph and one still without.
+ */
+const laser: CapabilityProcess = {
+  gallery: [],
+  id: '1',
+  image: photo('laser-process'),
+  machines: [
+    {
+      brand: 'Bodor',
+      capacity: null,
+      gallery: [],
+      id: '11',
+      image: photo('bodor'),
+      machineType: 'Laser machine',
+      model: 'C-Series',
+      summary: 'Cuts sheet.',
+    },
+    {
+      brand: null,
+      capacity: null,
+      gallery: [],
+      id: '12',
+      image: null,
+      machineType: 'Plasma table',
+      model: null,
+      summary: null,
+    },
+  ],
+  outputs: [{ image: null, label: 'Brackets' }],
+  slug: 'laser-cutting',
+  summary: 'Profiles cut from sheet.',
+  title: 'Laser Cutting',
+}
+
+const shearing: CapabilityProcess = {
+  ...laser,
+  id: '2',
+  image: photo('shear'),
+  machines: [],
+  slug: 'shearing',
+  summary: 'Straight cuts.',
+  title: 'Shearing',
+}
+
+function renderMachining(groups?: readonly HomeMachiningGroup[]) {
+  const { container } = render(<HomeMachiningSection groups={groups} />)
   const section = container.querySelector('#machining-capability') as HTMLElement
 
   return { container, queries: within(section), section }
@@ -28,7 +80,7 @@ const itemFor = (section: HTMLElement, title: string) =>
 describe('HomeMachiningSection', () => {
   afterEach(cleanup)
 
-  test('renders the dark section with a row per capability group', () => {
+  test('renders the dark section with a row per capability process', () => {
     const { queries, section } = renderMachining()
 
     expect(queries.getByRole('heading', { level: 2, name: /Machining\s+capability/ })).toBeTruthy()
@@ -42,6 +94,62 @@ describe('HomeMachiningSection', () => {
     for (const group of defaultHomeMachiningGroups) {
       expect(rowFor(section, group.title)).toBeTruthy()
     }
+  })
+
+  /*
+   * The rows are the capabilities page's processes, not a second hand-typed
+   * list: one conversion feeds the home panel from the same records, so a
+   * machine or photograph added in the admin shows in both places.
+   */
+  test('builds its rows from the capability records the capabilities page uses', () => {
+    const [group, shear] = toHomeMachiningGroups([laser, shearing])
+
+    expect(group.title).toBe('Laser Cutting')
+    expect(group.machines).toEqual([
+      { id: '11', label: 'Bodor · C-Series — Laser machine' },
+      { id: '12', label: 'Plasma table' },
+    ])
+    // The process at work, then each machine that has a photograph.
+    expect(group.slides.map((slide) => [slide.kind, slide.image.url, slide.machineId])).toEqual([
+      ['process', '/media/laser-process.png', null],
+      ['machine', '/media/bodor.png', '11'],
+    ])
+    // Only the title, machines and photographs -- no summary, no outputs.
+    expect(Object.keys(group).sort()).toEqual(['id', 'machines', 'slides', 'title'])
+    expect(shear.machines).toEqual([])
+
+    // A process with nothing to show yet is left off until it has something.
+    const empty = { ...shearing, image: null, slug: 'welding', title: 'Welding' }
+    expect(toHomeMachiningGroups([empty])).toEqual([])
+
+    // The defaults are the committed profile, run through the same conversion.
+    expect(defaultHomeMachiningGroups).toEqual(toHomeMachiningGroups(defaultCapabilityProcesses))
+    // And the live page reads the collections, refreshed when either changes.
+    expect(homeData).toMatch(
+      /syncHomeMachiningBlock\(block, toHomeMachiningGroups\(await getCapabilityProcesses\(\)\)\)/,
+    )
+    expect(homeData).toMatch(/TAGS\.capabilities,\s*TAGS\.machines,/)
+  })
+
+  /*
+   * The full shop -- every process, its real machines, and their photographs
+   * -- lives on /capabilities. This shelf hands the reader off to it rather
+   * than pretending six groups is the whole list.
+   */
+  test('hands off to /capabilities for the rest of the shop', () => {
+    const { section } = renderMachining()
+    const block = stylesheet.slice(stylesheet.indexOf('.machining {'))
+
+    const link = within(section).getByRole('link', { name: /View all capabilities/ })
+    expect(link.getAttribute('href')).toBe('/capabilities')
+    // Ruled off from the list, in the section's own dark-outline CTA pattern.
+    expect(block).toMatch(/\.machining-cta \{[^}]*border-top: 1px solid var\(--machining-line\);/s)
+    expect(block).toMatch(
+      /\.machining-cta-link \{[^}]*border: 1px solid rgba\(255, 255, 255, 0\.7\);[^}]*color: #ffffff;/s,
+    )
+    expect(block).toMatch(
+      /\.machining-cta-link:hover,\s*\.machining-cta-link:focus-visible \{[^}]*color: var\(--machining-accent\);[^}]*background: #ffffff;/s,
+    )
   })
 
   test('frames the heading in the left half, with no section number', () => {
@@ -73,13 +181,6 @@ describe('HomeMachiningSection', () => {
         value: stat.querySelector('.machining-stat-value')?.textContent,
       })),
     ).toEqual(defaultHomeMachiningStats.map(({ label, value }) => ({ label, value })))
-
-    // The machine count is not a claim the lists below contradict.
-    const machines = defaultHomeMachiningGroups.reduce(
-      (total, group) => total + group.machines.length,
-      0,
-    )
-    expect(machines).toBeGreaterThanOrEqual(30)
 
     /*
      * A description list, so the pairing survives without the styling: the
@@ -125,8 +226,10 @@ describe('HomeMachiningSection', () => {
 
     const panel = within(section).getByRole('region', { name: first.title })
     for (const machine of first.machines) {
-      expect(within(panel).getByText(machine)).toBeTruthy()
+      expect(within(panel).getByText(machine.label)).toBeTruthy()
     }
+    // Nothing from the capabilities page but the title, machines and pictures.
+    expect(panel.querySelector('.capabilities-outputs, .capabilities-process-summary')).toBeNull()
   })
 
   test('opening a group closes the one that was open, and a row toggles shut', () => {
@@ -143,34 +246,61 @@ describe('HomeMachiningSection', () => {
   })
 
   test('the arrows step through a group with more than one photograph', () => {
-    const { section } = renderMachining()
-    const group = defaultHomeMachiningGroups.find((item) => item.images.length > 1)
-    if (!group) throw new Error('expected a capability group with several photographs')
-
-    fireEvent.click(rowFor(section, group.title))
-    const panel = within(section).getByRole('region', { name: group.title })
+    const { section } = renderMachining(toHomeMachiningGroups([laser, shearing]))
+    const panel = within(section).getByRole('region', { name: 'Laser Cutting' })
     const image = () => panel.querySelector('.machining-media-image') as HTMLImageElement
+    const frame = () => panel.querySelector('.machining-media-frame') as HTMLElement
 
-    expect(image().getAttribute('src')).toBe(group.images[0].url)
-    fireEvent.click(within(panel).getByRole('button', { name: `Next ${group.title} photograph` }))
-    expect(image().getAttribute('src')).toBe(group.images[1].url)
+    expect(image().getAttribute('src')).toBe('/media/laser-process.png')
+    expect(frame().dataset.kind).toBe('process')
+    fireEvent.click(within(panel).getByRole('button', { name: 'Next Laser Cutting photograph' }))
+    expect(image().getAttribute('src')).toBe('/media/bodor.png')
+    // A machine is shown whole rather than cropped to the frame.
+    expect(frame().dataset.kind).toBe('machine')
 
     // Wraps rather than stopping at the end.
-    fireEvent.click(within(panel).getByRole('button', { name: `Next ${group.title} photograph` }))
-    expect(image().getAttribute('src')).toBe(group.images[0].url)
+    fireEvent.click(within(panel).getByRole('button', { name: 'Next Laser Cutting photograph' }))
+    expect(image().getAttribute('src')).toBe('/media/laser-process.png')
     fireEvent.click(
-      within(panel).getByRole('button', { name: `Previous ${group.title} photograph` }),
+      within(panel).getByRole('button', { name: 'Previous Laser Cutting photograph' }),
     )
-    expect(image().getAttribute('src')).toBe(group.images[group.images.length - 1].url)
+    expect(image().getAttribute('src')).toBe('/media/bodor.png')
+    expect(stylesheet).toMatch(
+      /\.machining-media-frame\[data-kind='machine'\] \.machining-media-image \{[^}]*object-fit: contain;/s,
+    )
+  })
+
+  /*
+   * The list and the carousel are one control: a machine with a photograph is
+   * a button that brings it up, and the one on screen is marked. A machine with
+   * no photograph yet is listed, but has nothing to bring up.
+   */
+  test('a machine in the list brings up its own photograph', () => {
+    const { section } = renderMachining(toHomeMachiningGroups([laser, shearing]))
+    const panel = within(section).getByRole('region', { name: 'Laser Cutting' })
+    const image = () => panel.querySelector('.machining-media-image') as HTMLImageElement
+    const bodor = within(panel).getByRole('button', { name: 'Bodor · C-Series — Laser machine' })
+
+    expect(bodor.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(bodor)
+    expect(image().getAttribute('src')).toBe('/media/bodor.png')
+    expect(bodor.getAttribute('aria-pressed')).toBe('true')
+    expect(bodor.getAttribute('aria-controls')).toBe(
+      panel.querySelector('.machining-media')?.getAttribute('id'),
+    )
+
+    expect(within(panel).queryByRole('button', { name: 'Plasma table' })).toBeNull()
+    expect(within(panel).getByText('Plasma table').tagName).toBe('SPAN')
   })
 
   test('a single-photograph group has no arrows', () => {
-    const { section } = renderMachining()
-    const group = defaultHomeMachiningGroups.find((item) => item.images.length === 1)
-    if (!group) throw new Error('expected a capability group with one photograph')
+    const { section } = renderMachining(toHomeMachiningGroups([laser, shearing]))
 
-    fireEvent.click(rowFor(section, group.title))
-    const panel = within(section).getByRole('region', { name: group.title })
+    fireEvent.click(rowFor(section, 'Shearing'))
+    const panel = within(section).getByRole('region', { name: 'Shearing' })
+    expect(panel.querySelector('.machining-media-image')?.getAttribute('src')).toBe(
+      '/media/shear.png',
+    )
     expect(panel.querySelector('.machining-media-nav')).toBeNull()
   })
 

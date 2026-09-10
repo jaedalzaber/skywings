@@ -4,6 +4,8 @@ import { ProductImage } from '@/components/atoms/ProductImage'
 
 export type ProductLite = {
   familySlug: string | null
+  /** Whether the card links to a product page; see productReadiness. */
+  hasPage: boolean
   id: number
   image: { alt: string; url: string } | null
   industrySlugs: string[]
@@ -17,21 +19,32 @@ export type ProductLite = {
 export function ProductShopCard(props: { product: ProductLite }) {
   const { product } = props
 
+  const body = (
+    <>
+      <span className="pcat-card-number">{String(product.number).padStart(2, '0')}</span>
+      <h3 className="pcat-card-title">{product.title}</h3>
+      <div className="pcat-card-media">
+        <ProductImage
+          alt={product.image?.alt ?? `${product.title} product image`}
+          sizes="(min-width: 64rem) 12rem, (min-width: 40rem) 30vw, 45vw"
+          url={product.image?.url ?? null}
+        />
+      </div>
+      {product.summary ? <p className="pcat-card-desc">{product.summary}</p> : null}
+      {product.sku ? <span className="pcat-card-sku">{product.sku}</span> : null}
+    </>
+  )
+
+  // A product with no page yet keeps its card, with nothing to follow.
   return (
-    <article className="pcat-card">
-      <Link className="pcat-card-link" href={`/products/${product.slug}`}>
-        <span className="pcat-card-number">{String(product.number).padStart(2, '0')}</span>
-        <h3 className="pcat-card-title">{product.title}</h3>
-        <div className="pcat-card-media">
-          <ProductImage
-            alt={product.image?.alt ?? `${product.title} product image`}
-            sizes="(min-width: 64rem) 12rem, (min-width: 40rem) 30vw, 45vw"
-            url={product.image?.url ?? null}
-          />
-        </div>
-        {product.summary ? <p className="pcat-card-desc">{product.summary}</p> : null}
-        {product.sku ? <span className="pcat-card-sku">{product.sku}</span> : null}
-      </Link>
+    <article className="pcat-card" data-static={product.hasPage ? undefined : 'true'}>
+      {product.hasPage ? (
+        <Link className="pcat-card-link" href={`/products/${product.slug}`}>
+          {body}
+        </Link>
+      ) : (
+        <div className="pcat-card-link">{body}</div>
+      )}
     </article>
   )
 }

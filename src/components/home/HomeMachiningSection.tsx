@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Fragment, useState } from 'react'
 
 import { SafeImg } from '@/components/atoms/SafeImage'
@@ -23,7 +24,7 @@ type Props = {
    * empty in the admin still reads as authored here.
    */
   block?: HomeMachiningLayoutBlock
-  /** Falls back to the committed capability list. */
+  /** Falls back to the committed profile's processes. */
   groups?: readonly HomeMachiningGroup[]
   /** Set beside the heading; falls back to the committed figures. */
   stats?: readonly HomeMachiningStat[]
@@ -33,10 +34,14 @@ type Props = {
  * Machining capability.
  *
  * A dark full-bleed section: the heading sits in its own framed cell, and the
- * cells below are an accordion of machine groups. One group is open at a
- * time -- its row becomes a brand-blue bar with a close control, and the panel
- * under it sets the machine list against a photograph of the cell, stepped
- * through with the arrows.
+ * cells below are an accordion of the capability processes -- the same records
+ * /capabilities is built from. One is open at a time: its row becomes a
+ * brand-blue bar with a close control, and the panel under it sets the
+ * machines in a mono list beside the photographs, stepped through with the
+ * arrows. A machine with a photograph is a button that brings it up.
+ *
+ * Only the title, the machines and the pictures: the summaries and the typical
+ * outputs are what the capabilities page is for, and the link below goes there.
  *
  * Everything here is CSS and one piece of state; there is no scroll
  * choreography, so the section behaves the same at every viewport and under a
@@ -65,10 +70,15 @@ export function HomeMachiningSection({ block, groups, stats }: Props) {
 
   function step(group: HomeMachiningGroup, delta: number) {
     setSlides((current) => {
-      const count = group.images.length || 1
+      const count = group.slides.length || 1
       const next = ((current[group.id] ?? 0) + delta + count) % count
       return { ...current, [group.id]: next }
     })
+  }
+
+  function show(group: HomeMachiningGroup, slideIndex: number) {
+    if (slideIndex < 0) return
+    setSlides((current) => ({ ...current, [group.id]: slideIndex }))
   }
 
   return (
@@ -122,11 +132,17 @@ export function HomeMachiningSection({ block, groups, stats }: Props) {
         <RevealGroup className="machining-list" stagger={0.06}>
           {capabilityGroups.map((group) => {
             const open = group.id === openId
-            const index = Math.min(slides[group.id] ?? 0, Math.max(group.images.length - 1, 0))
-            const image = group.images[index]
+            // Clamped: the admin can remove photographs while an index points past them.
+            const index = Math.min(slides[group.id] ?? 0, Math.max(group.slides.length - 1, 0))
+            const slide = group.slides[index]
+            const carouselId = `machining-carousel-${group.id}`
 
             return (
-              <RevealItem className="machining-item" data-open={open ? 'true' : 'false'} key={group.id}>
+              <RevealItem
+                className="machining-item"
+                data-open={open ? 'true' : 'false'}
+                key={group.id}
+              >
                 <h3 className="machining-row-heading">
                   <button
                     aria-controls={`machining-panel-${group.id}`}
@@ -159,23 +175,52 @@ export function HomeMachiningSection({ block, groups, stats }: Props) {
                 >
                   <div className="machining-panel-inner">
                     <ul className="machining-machines">
-                      {group.machines.map((machine, machineIndex) => (
-                        <li key={`${machine}-${machineIndex}`}>{machine}</li>
-                      ))}
+                      {group.machines.map((machine) => {
+                        const machineSlide = group.slides.findIndex(
+                          (item) => item.machineId === machine.id,
+                        )
+                        const active = slide?.machineId === machine.id
+
+                        return (
+                          <li key={machine.id}>
+                            {machineSlide >= 0 ? (
+                              <button
+                                aria-controls={carouselId}
+                                aria-pressed={active}
+                                className="machining-machine"
+                                data-active={active ? 'true' : 'false'}
+                                onClick={() => show(group, machineSlide)}
+                                type="button"
+                              >
+                                {machine.label}
+                              </button>
+                            ) : (
+                              // No photograph yet, so nothing to bring up.
+                              <span className="machining-machine">{machine.label}</span>
+                            )}
+                          </li>
+                        )
+                      })}
                     </ul>
 
-                    <figure className="machining-media">
-                      <div className="machining-media-frame">
-                        {image ? (
+                    <figure
+                      aria-label={`${group.title} photographs`}
+                      aria-roledescription="carousel"
+                      className="machining-media"
+                      id={carouselId}
+                    >
+                      <div className="machining-media-frame" data-kind={slide?.kind}>
+                        {slide ? (
                           <SafeImg
-                            alt={image.alt}
+                            alt={slide.image.alt}
                             className="machining-media-image"
+                            key={slide.id}
                             loading="lazy"
-                            src={image.url}
+                            src={slide.image.url}
                           />
                         ) : null}
                       </div>
-                      {group.images.length > 1 ? (
+                      {group.slides.length > 1 ? (
                         <figcaption className="machining-media-nav">
                           <button
                             className="machining-media-arrow"
@@ -206,6 +251,20 @@ export function HomeMachiningSection({ block, groups, stats }: Props) {
             )
           })}
         </RevealGroup>
+
+        {/*
+         * Every process, its real machines, and their photographs live on
+         * /capabilities -- this shelf is a sample of it, not the whole shop.
+         */}
+        <RevealItem as="div" className="machining-cta">
+          <p className="machining-cta-text">
+            See every process, the machines that run it, and what comes off them.
+          </p>
+          <Link className="machining-cta-link" href="/capabilities">
+            View all capabilities
+            <span aria-hidden="true">&#8594;</span>
+          </Link>
+        </RevealItem>
       </div>
     </section>
   )

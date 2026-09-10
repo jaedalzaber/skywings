@@ -3,6 +3,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
+import { cardImageLayout } from '@/data/cardImageInset'
 import type { HomeIndustryProduct } from '@/data/home'
 
 const fallbackImage = '/images/industries/product-placeholder.png'
@@ -24,35 +25,77 @@ function ProductCards(props: {
 }) {
   const { ctaHref, duplicate = false, products } = props
 
-  return products.map((product) => (
-    <figure className="industries-showcase-product-card" key={`${product.id}-${duplicate}`}>
-      <a
-        className="industries-showcase-product-link"
-        draggable={false}
-        href={product.slug ? `/products/${product.slug}` : ctaHref}
-        tabIndex={duplicate ? -1 : undefined}
-      >
-        <div className="industries-showcase-product-frame">
-          <Image
-            alt={duplicate ? '' : product.image?.alt || product.title}
-            className="industries-showcase-product-image"
-            draggable={false}
-            fill
-            loading="lazy"
-            sizes="(max-width: 767px) 42vw, (max-width: 1439px) 18vw, 16vw"
-            src={product.image?.url || fallbackImage}
-          />
-          {/* The product code, in the corner of the frame as on the detail
-              page. Hidden from the duplicate track, which exists only to
-              make the marquee loop and is already aria-hidden. */}
-          {product.sku ? (
-            <span className="industries-showcase-product-code">{product.sku}</span>
+  return products.map((product) => {
+    /*
+     * The products page's card system, applied to the rail: the product's own
+     * padding from the admin ('Card image padding'), or the rail's default,
+     * and the same second image on hover. cardImageLayout writes the same
+     * per-side properties the catalogue card reads.
+     */
+    const layout = cardImageLayout(product.imageInset ?? null)
+
+    /*
+     * Only a product with a page to open is a link. The rest keep their place
+     * in the rail as a picture and a name, with no hover view to suggest a
+     * click would lead anywhere.
+     */
+    const body = (
+      <>
+        <div
+          className="industries-showcase-product-frame"
+          data-fill={layout.fill ? 'true' : undefined}
+          style={layout.style as CSSProperties | undefined}
+        >
+          {/* Padded and fitted whole, unless the product is set to fill. */}
+          <span className="industries-showcase-product-fit">
+            <Image
+              alt={duplicate ? '' : product.image?.alt || product.title}
+              className="industries-showcase-product-image"
+              draggable={false}
+              fill
+              loading="lazy"
+              sizes="(max-width: 767px) 42vw, (max-width: 1439px) 18vw, 16vw"
+              src={product.image?.url || fallbackImage}
+            />
+          </span>
+          {/* Another angle on a product the card already names: decorative. */}
+          {product.hasPage && product.hoverImage ? (
+            <span aria-hidden="true" className="industries-showcase-product-hover">
+              <Image
+                alt=""
+                className="industries-showcase-product-hover-image"
+                draggable={false}
+                fill
+                loading="lazy"
+                sizes="(max-width: 767px) 42vw, (max-width: 1439px) 18vw, 16vw"
+                src={product.hoverImage.url}
+              />
+            </span>
           ) : null}
         </div>
         <figcaption>{product.title}</figcaption>
-      </a>
-    </figure>
-  ))
+      </>
+    )
+
+    return (
+      <figure className="industries-showcase-product-card" key={`${product.id}-${duplicate}`}>
+        {product.hasPage ? (
+          <a
+            className="industries-showcase-product-link"
+            draggable={false}
+            href={product.slug ? `/products/${product.slug}` : ctaHref}
+            tabIndex={duplicate ? -1 : undefined}
+          >
+            {body}
+          </a>
+        ) : (
+          <div className="industries-showcase-product-link" data-static="true">
+            {body}
+          </div>
+        )}
+      </figure>
+    )
+  })
 }
 
 export function IndustryProductRail(props: {

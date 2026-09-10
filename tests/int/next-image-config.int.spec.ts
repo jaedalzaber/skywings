@@ -9,6 +9,7 @@ describe('Next image configuration', () => {
     expect(config).toMatch(/unoptimized:\s*true/)
     expect(config).toMatch(/pathname:\s*['"]\/api\/media\/file\/\*\*['"]/)
     expect(config).toMatch(/pathname:\s*['"]\/images\/\*\*['"]/)
+    expect(config).toMatch(/pathname:\s*['"]\/media\/\*\*['"]/)
   })
 
   test('allows Cloudinary-hosted media, which bypasses the Payload file route', () => {

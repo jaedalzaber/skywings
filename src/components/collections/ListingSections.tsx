@@ -10,6 +10,7 @@ import {
 } from '@/data/catalog'
 import { getIndustryPageSlugs } from '@/data/industryPages'
 import { getMediaImage } from '@/data/media'
+import { hasProductPage } from '@/data/productReadiness'
 import { relationArray, relationSlug } from '@/data/relations'
 
 import { BlogCard, BrochureCard, CapabilityCard, IndustryCard } from './Cards'
@@ -101,6 +102,7 @@ export async function ProductListingSection(
 
     return {
       familySlug: relationSlug(product.productFamily),
+      hasPage: hasProductPage(product),
       id: product.id,
       image: image ? { alt: image.alt, url: image.url } : null,
       industrySlugs: relationArray(product.industries)

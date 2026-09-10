@@ -3,12 +3,14 @@ import type {
   Brochure,
   Capability,
   Industry,
+  Machine,
   Product,
   ProductFamily,
 } from '@/payload-types'
 
 import { cachedQuery } from './cache'
-import { getMediaImage } from './media'
+import type { CardImageInset } from './cardImageInset'
+import { productCardImages } from './productCardImages'
 import { getPayloadClient } from './payload'
 import {
   relationArray,
@@ -18,7 +20,9 @@ import {
   relationTitle,
 } from './relations'
 import { industryRank } from './productTaxonomy'
+import { compareTitles, hasProductPage, pagesFirst } from './productReadiness'
 import { TAGS } from './tags'
+import type { SearchFields } from '@/lib/search/productSearch'
 
 export type ProductFilters = {
   family?: string
@@ -31,6 +35,10 @@ const productWithoutLayoutSelect = {
   layout: false,
 } as const
 
+/*
+ * Description and gallery stay in, though no card shows them: together they
+ * decide whether a card links to a page at all (see productReadiness).
+ */
 const productListSelect = {
   accessories: false,
   applications: false,
@@ -40,10 +48,8 @@ const productListSelect = {
   capabilities: false,
   categoryLabel: false,
   configurationOptions: false,
-  description: false,
   dimensions: false,
   finishes: false,
-  gallery: false,
   howItWorks: false,
   industryLabel: false,
   keySpecs: false,
@@ -109,15 +115,16 @@ function hasCardImage(product: Product) {
   return hasImage(product.thumbnailImage) || hasImage(product.featuredImage)
 }
 
+/** Finished products first, then those with their own card image, then by name. */
 function sortProductsForListing(products: Product[]) {
   return [...products].sort((a, b) => {
+    const pageRank = Number(hasProductPage(b)) - Number(hasProductPage(a))
+    if (pageRank !== 0) return pageRank
+
     const imageRank = Number(hasCardThumbnail(b)) - Number(hasCardThumbnail(a))
+    if (imageRank !== 0) return imageRank
 
-    if (imageRank !== 0) {
-      return imageRank
-    }
-
-    return a.title.localeCompare(b.title)
+    return compareTitles(a.title, b.title)
   })
 }
 
@@ -155,6 +162,29 @@ export const getCapabilities = cachedQuery(
   },
   ['capabilities'],
   [TAGS.capabilities, TAGS.media],
+)
+
+/*
+ * The shop floor, for the capabilities page. Depth 1 resolves each machine's
+ * photograph; the capability relationship comes back populated too, but only
+ * its id is read -- the page groups machines under the process they belong to.
+ */
+export const getMachines = cachedQuery(
+  async function fetchMachines(): Promise<Machine[]> {
+    const payload = await getPayloadClient()
+    const { docs } = await payload.find({
+      collection: 'machines',
+      depth: 1,
+      draft: false,
+      limit: 200,
+      overrideAccess: false,
+      sort: 'sortOrder',
+    })
+
+    return docs
+  },
+  ['machines'],
+  [TAGS.machines, TAGS.capabilities, TAGS.media],
 )
 
 export const getIndustries = cachedQuery(
@@ -256,7 +286,8 @@ export const getProducts = cachedQuery(
       ),
     )
   },
-  ['products'],
+  // v2: the read carries gallery and description, which decide hasProductPage.
+  ['products', 'readiness-v2'],
   [TAGS.products, TAGS.industries, TAGS.media],
 )
 
@@ -266,6 +297,11 @@ export type CatalogProduct = {
   category: string | null
   createdAt: string
   familySlug: string | null
+  /**
+   * Whether the card links to a product page. Without one it still takes its
+   * place on the shelf, as a picture and a name, but leads nowhere.
+   */
+  hasPage: boolean
   id: number
   /**
    * The second image, shown while the pointer is over the card. An editor's
@@ -276,20 +312,20 @@ export type CatalogProduct = {
   hoverImage: { alt: string; url: string } | null
   image: { alt: string; url: string } | null
   /**
-   * How far the product sits in from the edge of its card, as a percentage.
+   * How far the product sits in from each edge of its card, as a percentage.
    * Null takes the site default: these are renders on no background, so they
    * need room to read as objects rather than as a texture, and how much room
    * depends on the product.
    */
-  imagePadding: number | null
+  imageInset: CardImageInset | null
   industrySlugs: string[]
   /**
-   * Everything the search field matches on, folded down once here rather than
-   * on each keystroke in the browser: name, code, summary, family, industry,
-   * capability and application. Doing it server-side is what lets the field
-   * stay instant while still searching far more than the visible name.
+   * What the search field matches on, kept apart by where it came from --
+   * name, model number, family, context, summary -- so the browser can rank a
+   * match on the model number above a passing mention in a summary. Gathered
+   * here once rather than on each keystroke.
    */
-  search: string
+  searchFields: SearchFields
   slug: string
   title: string
 }
@@ -312,7 +348,8 @@ export type CatalogView = {
 /*
  * Wider than the listing select: the catalogue searches across capabilities
  * and applications, so those relationships have to come back with the cards.
- * Everything a detail page needs and a card does not is still excluded.
+ * Everything a detail page needs and a card does not is still excluded --
+ * bar the description, which decides whether the card links to that page.
  */
 const catalogSelect = {
   accessories: false,
@@ -320,7 +357,6 @@ const catalogSelect = {
   brochure: false,
   brochures: false,
   configurationOptions: false,
-  description: false,
   dimensions: false,
   finishes: false,
   howItWorks: false,
@@ -337,23 +373,20 @@ const catalogSelect = {
   technicalDrawing: false,
 } as const
 
-function searchTextFor(product: Product): string {
+function searchFieldsFor(product: Product): SearchFields {
   const related = [product.industries, product.capabilities, product.applications].flatMap(
     (value) => relationArray(value).map((item) => relationTitle(item, '')),
   )
 
-  return [
-    product.title,
-    product.sku,
-    product.summary,
-    product.categoryLabel,
-    product.industryLabel,
-    relationTitle(product.productFamily, ''),
-    ...related,
-  ]
-    .filter((value): value is string => typeof value === 'string' && value.length > 0)
-    .join(' ')
-    .toLowerCase()
+  return {
+    code: product.sku ?? null,
+    context: [product.categoryLabel, product.industryLabel, ...related]
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+      .join(' '),
+    family: relationTitle(product.productFamily, ''),
+    summary: product.summary ?? '',
+    title: product.title,
+  }
 }
 
 /**
@@ -392,25 +425,22 @@ export const getCatalogView = cachedQuery(
     const products: CatalogProduct[] = sortProductsForListing(
       docs.filter((product) => hasCardImage(product)),
     ).map((product) => {
-      const image = getMediaImage(product.thumbnailImage) ?? getMediaImage(product.featuredImage)
-      const chosenHover = getMediaImage(product.cardHoverImage)
-      const galleryHover = (product.gallery ?? [])
-        .map((entry) => getMediaImage(entry.image))
-        .find((candidate) => candidate && candidate.url !== image?.url)
-      const hover = chosenHover ?? galleryHover ?? null
+      // Shared with the home page's product rail; see productCardImages.
+      const { hoverImage, image, imageInset } = productCardImages(product)
 
       return {
         category: relationTitle(product.productFamily, '') || null,
         createdAt: product.createdAt,
         familySlug: relationSlug(product.productFamily),
-        hoverImage: hover ? { alt: hover.alt, url: hover.url } : null,
-        imagePadding: product.cardImagePadding ?? null,
+        hasPage: hasProductPage(product),
+        hoverImage,
+        imageInset,
         id: product.id,
         image: image ? { alt: image.alt, url: image.url } : null,
         industrySlugs: relationArray(product.industries)
           .map((item) => relationSlug(item))
           .filter((slug): slug is string => Boolean(slug)),
-        search: searchTextFor(product),
+        searchFields: searchFieldsFor(product),
         slug: product.slug,
         title: product.title,
       }
@@ -449,7 +479,8 @@ export const getCatalogView = cachedQuery(
 
     return { categories, products }
   },
-  ['catalog-view'],
+  // v3: cards carry hasPage, and finished products lead.
+  ['catalog-view', 'card-has-page-v3'],
   [TAGS.products, TAGS.industries, TAGS.media],
 )
 
@@ -496,7 +527,7 @@ export async function getRelatedProductsFor(product: Product, limit = 5): Promis
   )
 
   if (curated.length) {
-    return curated.slice(0, limit)
+    return pagesFirst(curated, hasProductPage).slice(0, limit)
   }
 
   const payload = await getPayloadClient()
@@ -595,8 +626,12 @@ export function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   )(slug)
 }
 
-export const getAllProductSlugs = cachedQuery(
-  async function fetchAllProductSlugs(): Promise<string[]> {
+/**
+ * The products that have a page to prerender. The rest have nothing to show
+ * there yet -- their address sends a visitor on to the catalogue instead.
+ */
+export const getProductPageSlugs = cachedQuery(
+  async function fetchProductPageSlugs(): Promise<string[]> {
     const payload = await getPayloadClient()
     const { docs } = await payload.find({
       collection: 'products',
@@ -605,11 +640,14 @@ export const getAllProductSlugs = cachedQuery(
       limit: 1000,
       overrideAccess: false,
       pagination: false,
-      select: { slug: true },
+      select: { description: true, gallery: true, slug: true },
     })
-    return docs.map((doc) => doc.slug).filter((slug): slug is string => Boolean(slug))
+    return docs
+      .filter((doc) => hasProductPage(doc))
+      .map((doc) => doc.slug)
+      .filter((slug): slug is string => Boolean(slug))
   },
-  ['all-product-slugs'],
+  ['product-page-slugs'],
   [TAGS.products],
 )
 

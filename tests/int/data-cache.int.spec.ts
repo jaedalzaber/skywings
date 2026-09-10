@@ -13,6 +13,7 @@ vi.mock('next/cache', () => ({
 
 import { cachedQuery } from '@/data/cache'
 import { TAGS } from '@/data/tags'
+import { mediaDeliveryCacheKey } from '@/storage/localDelivery'
 
 describe('TAGS', () => {
   test('static tags are stable strings', () => {
@@ -38,8 +39,12 @@ describe('cachedQuery', () => {
   test('forwards the loader, keyParts, and tags to unstable_cache', () => {
     const loader = async (n: number) => n * 2
     cachedQuery(loader, ['double'], [TAGS.products, TAGS.media])
-    expect(unstableCache).toHaveBeenCalledWith(loader, ['double'], {
+    expect(unstableCache).toHaveBeenCalledWith(loader, ['double', mediaDeliveryCacheKey], {
       tags: [TAGS.products, TAGS.media],
     })
+  })
+
+  test('keys every entry by how media is delivered, so cached URLs follow a switch', () => {
+    expect(mediaDeliveryCacheKey).toMatch(/^media-(local-[0-9a-f]{10}|cdn)$/)
   })
 })

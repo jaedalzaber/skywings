@@ -1,9 +1,11 @@
 import Link from 'next/link'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 import { ProductImage } from '@/components/atoms/ProductImage'
 import { RevealItem } from '@/components/motion/Reveal'
-import type { CatalogProduct } from '@/data/catalog'
+import { cardImageLayout } from '@/data/cardImageInset'
+// The card as the grid receives it -- the search fields stay on the server.
+import type { CatalogCard } from '@/data/catalogQuery'
 
 /**
  * A catalogue card: a large light canvas for the product, its name, and the
@@ -14,59 +16,74 @@ import type { CatalogProduct } from '@/data/catalog'
  * suggests. Hover itself lives in the stylesheet rather than here: it has no
  * state to co-ordinate, and CSS keeps working on a card the script has not
  * reached yet.
+ *
+ * A product whose page is not written yet gets the same card with no link in
+ * it: no hover, no second view, no "View product" -- nothing that promises a
+ * page the click could not deliver.
  */
-export function ProductCatalogCard(props: { product: CatalogProduct }) {
+export function ProductCatalogCard(props: { product: CatalogCard }) {
   const { product } = props
+  /*
+   * The product's own inset when an editor has set one; the site default
+   * otherwise. These are renders on no background, so they need room to read
+   * as objects rather than as a texture -- and how much room depends on
+   * whether the product is wide or small.
+   */
+  const layout = cardImageLayout(product.imageInset)
 
-  return (
-    <RevealItem as="article" className="catalogue-card">
-      <Link className="catalogue-card-link" href={`/products/${product.slug}`}>
-        <span
-          className="catalogue-card-canvas"
-          /*
-           * The product's own inset when an editor has set one; the site
-           * default otherwise. These are renders on no background, so they
-           * need room to read as objects rather than as a texture -- and how
-           * much room depends on whether the product is wide or small.
-           */
-          style={
-            product.imagePadding === null
-              ? undefined
-              : ({ '--catalogue-card-pad': `${product.imagePadding}%` } as CSSProperties)
-          }
-        >
-          {/* Padded and fitted whole; the hover view below fills instead. */}
-          <span className="catalogue-card-fit">
+  const content: ReactNode = (
+    <>
+      <span
+        className="catalogue-card-canvas"
+        data-fill={layout.fill ? 'true' : undefined}
+        style={layout.style as CSSProperties | undefined}
+      >
+        {/* Padded and fitted whole, unless the product is set to fill; the
+            hover view below always fills. */}
+        <span className="catalogue-card-fit">
+          <ProductImage
+            alt={product.image?.alt ?? `${product.title} product image`}
+            sizes="(min-width: 64rem) 22rem, (min-width: 48rem) 40vw, 90vw"
+            url={product.image?.url ?? null}
+          />
+        </span>
+        {/*
+         * The second view, stacked over the first and revealed on hover.
+         * Decorative: it is another angle on a product the card has already
+         * named, so announcing it twice would only add noise.
+         */}
+        {product.hasPage && product.hoverImage ? (
+          <span aria-hidden="true" className="catalogue-card-hover">
             <ProductImage
-              alt={product.image?.alt ?? `${product.title} product image`}
+              alt=""
               sizes="(min-width: 64rem) 22rem, (min-width: 48rem) 40vw, 90vw"
-              url={product.image?.url ?? null}
+              url={product.hoverImage.url}
             />
           </span>
-          {/*
-           * The second view, stacked over the first and revealed on hover.
-           * Decorative: it is another angle on a product the card has already
-           * named, so announcing it twice would only add noise.
-           */}
-          {product.hoverImage ? (
-            <span aria-hidden="true" className="catalogue-card-hover">
-              <ProductImage
-                alt=""
-                sizes="(min-width: 64rem) 22rem, (min-width: 48rem) 40vw, 90vw"
-                url={product.hoverImage.url}
-              />
-            </span>
-          ) : null}
-        </span>
-        <span className="catalogue-card-body">
-          {/* The name alone. The family is how the grid is already grouped, so
-              repeating it on every card only competes with the photograph. */}
-          <span className="catalogue-card-title">{product.title}</span>
+        ) : null}
+      </span>
+      <span className="catalogue-card-body">
+        {/* The name alone. The family is how the grid is already grouped, so
+            repeating it on every card only competes with the photograph. */}
+        <span className="catalogue-card-title">{product.title}</span>
+        {product.hasPage ? (
           <span aria-hidden="true" className="catalogue-card-action">
             View product <span className="catalogue-card-arrow">&#8594;</span>
           </span>
-        </span>
-      </Link>
+        ) : null}
+      </span>
+    </>
+  )
+
+  return (
+    <RevealItem as="article" className="catalogue-card">
+      {product.hasPage ? (
+        <Link className="catalogue-card-link" href={`/products/${product.slug}`}>
+          {content}
+        </Link>
+      ) : (
+        <div className="catalogue-card-static">{content}</div>
+      )}
     </RevealItem>
   )
 }

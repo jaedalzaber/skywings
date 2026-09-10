@@ -1,29 +1,17 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
+import { Fragment } from 'react'
 
 import { SafeImg } from '@/components/atoms/SafeImage'
+import { RevealGroup, RevealItem, RevealWords } from '@/components/motion/Reveal'
 import type { MediaImage } from '@/data/media'
 import type { FooterAddress } from '@/data/site'
 import {
   defaultLocations,
-  defaultLocationsImage,
   defaultLocationsTitle,
   splitAddress,
   telHref,
 } from '@/data/homeLocationsDefaults'
 // Type-only, so the Payload client stays out of the browser bundle.
 import type { HomeLocationsLayoutBlock } from '@/data/home'
-
-import { onFirstMediaMatch, watchHeaderCondense } from './scrollTriggerRefresh'
-
-/**
- * The editorial composition -- image held in place while the copy scrolls
- * past it, with scroll-linked reveals -- runs only where it can be read as
- * one: a wide viewport and no reduced-motion preference. Everywhere else the
- * same markup is a plain stack with everything already in place.
- */
-export const LOCATIONS_SCENE_MEDIA = '(min-width: 64rem) and (prefers-reduced-motion: no-preference)'
 
 type Props = {
   /** Footer address rows, matched to the location defaults by position. */
@@ -34,23 +22,34 @@ type Props = {
    * been filled from the committed defaults by the data layer.
    */
   block?: HomeLocationsLayoutBlock
-  /** Uploaded in the admin (Footer → Locations image); falls back to the committed photo. */
+  /** Uploaded in the admin (Footer → Locations image). */
   image?: MediaImage | null
+  /** White on the home page; dark where the whole page is, as on Contact. */
+  tone?: 'dark' | 'light'
 }
 
-export function HomeLocationsSection({ addresses, block, image }: Props) {
-  const sectionRef = useRef<HTMLElement | null>(null)
-  const mediaRef = useRef<HTMLDivElement | null>(null)
-  const imageRef = useRef<HTMLDivElement | null>(null)
-  const copyRef = useRef<HTMLDivElement | null>(null)
-
-  // Block, then the Footer, then the committed photograph.
-  const picture = block?.image?.url ? block.image : image?.url ? image : defaultLocationsImage
+/**
+ * Where Sky Wings ships from and to, closing the home page.
+ *
+ * A portrait aerial of the UAE with the country set large across its foot, and
+ * beside it the reach -- "We deliver all over Middle-East, Europe & Africa" --
+ * over the two branches. The branches step down and to the right, each under a
+ * blue rule that runs back to the edge of the copy, so the pair read as two
+ * stops on one line out from the picture.
+ *
+ * Nothing here is held or scrubbed: the parts arrive once as they come into
+ * view, through the same reveal primitives as every other home section, and a
+ * reduced-motion preference leaves them in place.
+ */
+export function HomeLocationsSection({ addresses, block, image, tone = 'light' }: Props) {
+  // The block's photograph, then the Footer's. With neither, the frame's own
+  // sky-toned ground carries the country mark until one is uploaded.
+  const picture = block?.image?.url ? block.image : image?.url ? image : null
   const title = block?.title ?? defaultLocationsTitle
   /*
    * Facilities are edited on the Footer, so the block's rows are an override
    * for this page alone: filled in they win, empty the Footer rows are matched
-   * to the defaults by position, as before.
+   * to the defaults by position.
    */
   const locations = block?.locations?.length
     ? block.locations
@@ -64,232 +63,125 @@ export function HomeLocationsSection({ addresses, block, image }: Props) {
         }
       })
 
-  useEffect(() => {
-    const section = sectionRef.current
-    const media = mediaRef.current
-    const copy = copyRef.current
-    if (!section || !media || !copy) return
-
-    let active = true
-    let cleanup: (() => void) | undefined
-
-    async function setup() {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
-      ])
-      if (!active || !section || !media || !copy) return
-
-      gsap.registerPlugin(ScrollTrigger)
-      const stopWatching = watchHeaderCondense(ScrollTrigger)
-      const match = gsap.matchMedia()
-
-      match.add(LOCATIONS_SCENE_MEDIA, () => {
-        const picture = imageRef.current
-        const titleLines = Array.from(copy.querySelectorAll<HTMLElement>('.locations-title-line'))
-        const reach = copy.querySelector<HTMLElement>('.locations-reach')
-        const items = Array.from(copy.querySelectorAll<HTMLElement>('.locations-item'))
-        const context = gsap.context(() => {
-          /*
-           * No pin anywhere: the image is CSS-sticky and every movement is a
-           * scrubbed tween on plain page scroll, so the wheel is never taken,
-           * the section after it rises in on its own, and scrolling back up
-           * runs everything in reverse.
-           *
-           * Every reveal is deliberately short -- a third of a viewport of
-           * travel, opacity and a small lift, nothing more. The composition
-           * has to be readable within a compact scroll, not spread over
-           * screens of white, so the reveals sit close behind each other:
-           * headline as the section arrives, then each facility as it rises.
-           */
-          const entrance = gsap.timeline({
-            defaults: { ease: 'power2.out' },
-            scrollTrigger: {
-              end: 'top 48%',
-              invalidateOnRefresh: true,
-              scrub: 0.6,
-              start: 'top 88%',
-              trigger: section,
-            },
-          })
-          entrance.fromTo(
-            media,
-            { opacity: 0, y: 32 },
-            { duration: 0.55, immediateRender: true, opacity: 1, y: 0 },
-            0,
-          )
-          titleLines.forEach((line, index) => {
-            entrance.fromTo(
-              line,
-              { opacity: 0, y: 26 },
-              { duration: 0.5, immediateRender: true, opacity: 1, y: 0 },
-              0.1 + index * 0.1,
-            )
-          })
-          if (reach) {
-            entrance.fromTo(
-              reach,
-              { opacity: 0, y: 16 },
-              { duration: 0.4, immediateRender: true, opacity: 1, y: 0 },
-              0.35,
-            )
-          }
-
-          // The photograph drifts a little against the frame across the whole
-          // section, so the held image is never quite static.
-          if (picture) {
-            gsap.fromTo(
-              picture,
-              { yPercent: -4 },
-              {
-                ease: 'none',
-                immediateRender: true,
-                scrollTrigger: {
-                  end: 'bottom top',
-                  invalidateOnRefresh: true,
-                  scrub: true,
-                  start: 'top bottom',
-                  trigger: section,
-                },
-                yPercent: 4,
-              },
-            )
-          }
-
-          // Each facility as it rises: the rule draws out from the copy's
-          // edge and the name and address lift in just behind it.
-          items.forEach((item) => {
-            const rule = item.querySelector<HTMLElement>('.locations-rule')
-            const words = item.querySelectorAll<HTMLElement>('.locations-name, .locations-detail')
-            const reveal = gsap.timeline({
-              defaults: { ease: 'power2.out' },
-              scrollTrigger: {
-                /*
-                 * Short on purpose, and finished high: a facility has to be
-                 * fully formed by the time the image locks and the layout
-                 * settles, and at that moment the second one is still three
-                 * quarters of the way down the screen.
-                 */
-                end: 'top 74%',
-                invalidateOnRefresh: true,
-                scrub: 0.6,
-                start: 'top 92%',
-                trigger: item,
-              },
-            })
-            if (rule) {
-              reveal.fromTo(
-                rule,
-                { scaleX: 0 },
-                { duration: 0.55, immediateRender: true, scaleX: 1 },
-                0,
-              )
-            }
-            reveal.fromTo(
-              words,
-              { opacity: 0, y: 24 },
-              { duration: 0.5, immediateRender: true, opacity: 1, stagger: 0.05, y: 0 },
-              0.1,
-            )
-          })
-        }, section)
-
-        return () => {
-          // Reverts every tween and its inline styles, and kills the triggers.
-          context.revert()
-        }
-      })
-
-      cleanup = () => {
-        stopWatching()
-        match.revert()
-      }
-      ScrollTrigger.refresh()
-    }
-
-    // GSAP is only fetched once the composition can play.
-    const cancelStart = onFirstMediaMatch(LOCATIONS_SCENE_MEDIA, () => void setup())
-
-    return () => {
-      cancelStart()
-      active = false
-      cleanup?.()
-    }
-  }, [])
-
   return (
     <section
       aria-labelledby="locations-title"
       className="locations"
-      data-nav-surface="white"
+      data-nav-surface={tone === 'dark' ? 'dark' : 'white'}
       data-responsive-layout="locations"
-      data-scroll-scene="locations"
+      data-tone={tone === 'dark' ? 'dark' : undefined}
       id="locations"
-      ref={sectionRef}
     >
       <div className="locations-inner">
         <div className="locations-grid">
-          <figure className="locations-media">
-            <div className="locations-media-frame" ref={mediaRef}>
-              <div className="locations-media-image" ref={imageRef}>
-                <SafeImg alt={picture.alt} src={picture.url} />
-              </div>
-              {/* Oversized country mark, set over the foot of the photograph. */}
-              <span aria-hidden="true" className="locations-media-mark">
-                UAE
-              </span>
-            </div>
-          </figure>
+          {/*
+           * The figure watches for the viewport; the frame inside it opens like
+           * a shutter. A clipped element cannot watch for itself -- fully
+           * clipped, it never counts as in view, so it would never open.
+           */}
+          <RevealGroup as="figure" className="locations-media" delay={0} stagger={0.4}>
+            <RevealItem className="locations-media-frame" motion="shutter">
+              {picture ? <SafeImg alt={picture.alt} src={picture.url} /> : null}
+            </RevealItem>
+            {/* The country, set as part of the picture rather than a caption. */}
+            <RevealItem as="span" aria-hidden="true" className="locations-mark">
+              <UaeMark />
+            </RevealItem>
+          </RevealGroup>
 
-          <div className="locations-copy" ref={copyRef}>
-            <header className="locations-head">
-              <h2 className="locations-title" id="locations-title">
-                <span className="locations-title-line">{title.lead}</span>
-                <span className="locations-title-line locations-title-line--light">
-                  {title.reach}
-                </span>
-              </h2>
-              <p className="locations-reach">
-                {title.regions.map((region, index) => (
-                  <span key={region}>
-                    {index > 0 ? <span className="locations-reach-dot">·</span> : null}
-                    {region}
-                  </span>
-                ))}
-              </p>
-            </header>
+          <div className="locations-copy">
+            <RevealGroup as="h2" className="locations-title" id="locations-title" stagger={0.05}>
+              <span className="locations-title-lead">
+                <RevealWords text={title.lead} />
+              </span>{' '}
+              <span className="locations-title-regions">
+                <RegionWords regions={title.regions} />
+              </span>
+            </RevealGroup>
 
             <ol className="locations-list">
               {locations.map((location, index) => (
-                <li className="locations-item" data-location={index + 1} key={location.name}>
+                <RevealGroup
+                  as="li"
+                  className="locations-item"
+                  data-location={index + 1}
+                  // Each branch a beat behind the one before, down the stair.
+                  delay={0.1 + index * 0.18}
+                  key={location.name}
+                  stagger={0.09}
+                >
                   {/* Name and rule share a box the width of the words, so the
                       rule ends with the name and runs back to the copy edge. */}
                   <div className="locations-item-head">
-                    <h3 className="locations-name">
-                      <strong>{location.name}</strong>
-                      <span>{location.kind}</span>
-                    </h3>
-                    <span aria-hidden="true" className="locations-rule" />
+                    <RevealItem as="h3" className="locations-name">
+                      <strong>{location.name}</strong> <span>{location.kind}</span>
+                    </RevealItem>
+                    <RevealItem
+                      as="span"
+                      aria-hidden="true"
+                      className="locations-rule"
+                      motion="line"
+                    />
                   </div>
-                  <div className="locations-detail">
-                    <p className="locations-address">
-                      {location.addressLines.map((line, lineIndex) => (
-                        <span key={`${line}-${lineIndex}`}>
-                          {lineIndex > 0 ? <br /> : null}
-                          {line}
-                        </span>
-                      ))}
-                    </p>
+                  {/* One line of copy, left to wrap at the measure the design
+                      sets rather than broken at every comma. */}
+                  <RevealItem as="p" className="locations-address">
+                    {location.addressLines.join(' ')}
+                  </RevealItem>
+                  <RevealItem as="p" className="locations-phone-line">
                     <a className="locations-phone" href={telHref(location.phone)}>
                       {location.phone}
                     </a>
-                  </div>
-                </li>
+                  </RevealItem>
+                </RevealGroup>
               ))}
             </ol>
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * The regions as the headline's heavy line: "Middle-East, Europe & Africa".
+ * The commas stay with the words; the ampersand is set light, as in the lead,
+ * so the line reads as one list rather than three shouted names.
+ */
+function RegionWords({ regions }: { regions: string[] }) {
+  return regions.map((region, index) => {
+    const last = index === regions.length - 1
+    const joiner = index === 0 ? null : last ? ' & ' : ', '
+
+    return (
+      <Fragment key={`${region}-${index}`}>
+        {joiner === ' & ' ? (
+          <>
+            {' '}
+            <RevealItem as="span" className="reveal-word locations-title-amp" motion="word">
+              &amp;
+            </RevealItem>{' '}
+          </>
+        ) : joiner ? (
+          ' '
+        ) : null}
+        <RevealItem as="span" className="reveal-word" motion="word">
+          {region}
+          {!last && index < regions.length - 2 ? ',' : null}
+        </RevealItem>
+      </Fragment>
+    )
+  })
+}
+
+/** The "UAE" wordmark from the design, drawn rather than typeset. */
+function UaeMark() {
+  return (
+    <svg fill="none" viewBox="0 0 249 97" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M24.6064 56.8848C24.6064 69.0555 29.1042 75.2734 41.1426 75.2734C53.1807 75.2733 57.6787 69.0553 57.6787 56.8848V0H82.2842V55.4297C82.2841 82.8136 69.717 96.4393 41.1426 96.4395C12.5679 96.4395 3.03511e-05 82.8137 0 55.4297V0H24.6064V56.8848ZM171.702 92.5537V0.00683594H246.975V19.7188H196.308V36.2549H242.609V55.3047H196.308V73.2959H248.298V94.4619H171.702V94.4551H146.749L140.929 77.5225H107.988L102.035 94.4551H76.7676L112.089 0H137.092L171.702 92.5537ZM113.677 59.2656H135.107L124.656 26.1934H124.392L113.677 59.2656Z"
+        fill="currentColor"
+      />
+    </svg>
   )
 }

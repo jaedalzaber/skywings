@@ -1,23 +1,28 @@
+import { defaultCapabilitiesCopy } from './capabilityDefaults'
 import type { PageLayout } from './pages'
 
+/*
+ * The capabilities page is no longer built from these blocks -- it renders
+ * ProcessCapabilities -- but it still reads its copy from them, so the
+ * wording stays editable in the admin: the hero block is the page head, the
+ * capability-listing block the closing band. See capabilitiesCopyFromLayout.
+ */
 export const capabilitiesLayout: PageLayout = [
   {
     blockType: 'pageHero',
-    eyebrow: 'Capabilities',
-    heading: 'Manufacturing capability under one accountable team.',
-    description:
-      'See how Sky Wings combines machining, sheet metal, pipe bending, fabrication, welding, finishing, and assembly to deliver custom metalwork at project scale.',
-    primaryLabel: 'Request a quote',
-    primaryHref: '/contact',
-    secondaryLabel: 'View products',
-    secondaryHref: '/products',
+    eyebrow: defaultCapabilitiesCopy.eyebrow,
+    heading: defaultCapabilitiesCopy.heading,
+    description: defaultCapabilitiesCopy.description,
+    primaryLabel: defaultCapabilitiesCopy.primaryLabel,
+    primaryHref: defaultCapabilitiesCopy.primaryHref,
+    secondaryLabel: defaultCapabilitiesCopy.secondaryLabel,
+    secondaryHref: defaultCapabilitiesCopy.secondaryHref,
   },
   {
     blockType: 'capabilityListing',
-    eyebrow: 'Process map',
-    heading: 'From CNC machining to finished assemblies.',
-    description:
-      'Choose the process you need, compare typical outputs, and start a quote with the right technical context.',
+    eyebrow: 'Integrated',
+    heading: defaultCapabilitiesCopy.closingHeading,
+    description: defaultCapabilitiesCopy.closingStatement,
   },
 ]
 
@@ -75,10 +80,10 @@ export const brochuresLayout: PageLayout = [
 export const contactLayout: PageLayout = [
   {
     blockType: 'contactRFQ',
-    eyebrow: 'Direct message',
-    heading: 'Get In Touch',
+    eyebrow: 'Request a quote',
+    heading: 'Tell us what you need to manufacture.',
     description:
-      "Send a direct message to our CEO — a pioneer in Bangladesh's garments industry. Start a conversation and experience how effortless sourcing can be.",
+      'Share drawings, sizes or just the idea. We will come back to you with options and a quote.',
   },
 ]
 

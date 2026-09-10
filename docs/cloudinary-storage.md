@@ -69,6 +69,40 @@ cloudinaryStorage({
 })
 ```
 
+## Local delivery (saving credits)
+
+The free plan also meters **delivery bandwidth** against a monthly credit quota,
+and in September 2026 the account got close to it. Since then, files the
+deployment already carries are served from it by default. Uploads still go to
+Cloudinary.
+
+- **Media** is copied into `public/media/` and handed out as `/media/<file>`.
+  If a file is identical to one already in `public/` (like `public/images/` or
+  the hero video in `public/videos/`), the URL points at that copy instead.
+- **Brochures and 3D assets** are read from the committed `brochures/` and
+  `three-d-assets/` folders by the file route, so `isPublic` is still enforced.
+  `outputFileTracingIncludes` in `next.config.ts` bundles those folders for it.
+- The default hero video is `public/videos/skywings-intro.mp4`. It has the same
+  bytes as the Cloudinary original.
+
+What counts as local is recorded in `src/storage/local-delivery-manifest.json`,
+which is written by:
+
+```bash
+pnpm run mirror:media:dry-run
+pnpm run mirror:media
+```
+
+The script checks each local file against the Cloudinary object's byte size and
+downloads only what is missing or stale. **Re-run it and commit after uploading
+or replacing files.** Until then, those files are served from Cloudinary as
+before, so nothing breaks in the meantime.
+
+Every `cachedQuery` key includes a fingerprint of the manifest, so cached pages
+pick up new URLs without a manual cache purge.
+
+To serve everything from Cloudinary again, set `MEDIA_DELIVERY=cloudinary`.
+
 ## Uploading local files
 
 ```bash

@@ -1,13 +1,20 @@
+.product-title-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /*
  * A fixed square so every row is the same height whatever shape the product
- * is, and the image is fitted whole inside it -- these are renders of long
- * carts and small couplings alike, and cropping either tells the editor less
- * than seeing the outline does.
+ * is, and the image fitted whole inside it -- these are renders of long carts
+ * and small couplings alike, and cropping either tells the editor less than
+ * seeing the outline does.
  */
-.product-thumb {
+.product-title-cell__thumb {
   display: grid;
   width: 2.5rem;
   height: 2.5rem;
+  flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
   border-radius: 3px;

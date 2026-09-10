@@ -14,11 +14,20 @@ function stubMatchMedia(matches: boolean) {
     removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
   }
   const original = window.matchMedia
-  Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => list, writable: true })
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: () => list,
+    writable: true,
+  })
   return {
     flip: (next: boolean) => listeners.forEach((listener) => listener({ matches: next })),
     listeners,
-    restore: () => Object.defineProperty(window, 'matchMedia', { configurable: true, value: original, writable: true }),
+    restore: () =>
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        value: original,
+        writable: true,
+      }),
   }
 }
 
@@ -63,9 +72,8 @@ describe('onFirstMediaMatch', () => {
     media.restore()
   })
 
-  test('both home scroll scenes fetch GSAP through the gate', () => {
+  test('the home scroll scene fetches GSAP through the gate', () => {
     for (const [file, media] of [
-      ['src/components/home/HomeLocationsSection.tsx', 'LOCATIONS_SCENE_MEDIA'],
       ['src/components/home/HomeProcessSection.tsx', 'PROCESS_ACCORDION_MEDIA'],
     ]) {
       const source = readFileSync(file, 'utf8')

@@ -1,3 +1,5 @@
+import { Fragment } from 'react'
+
 import { ButtonLink } from '@/components/atoms/ButtonLink'
 import { SafePicture, SafeVideo } from '@/components/atoms/SafeImage'
 import { Reveal, RevealGroup, RevealItem, RevealWords } from '@/components/motion/Reveal'
@@ -12,13 +14,14 @@ import {
   type HomeProcessLayoutBlock,
   type HomeServicesLayoutBlock,
 } from '@/data/home'
+import type { ArticleCard } from '@/data/articles'
 import type { MediaImage } from '@/data/media'
 import type { FooterAddress } from '@/data/site'
-
 
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
 import { HeroYouTubeBackground } from './HeroYouTubeBackground'
 import { HomeEngineeringSection } from './HomeEngineeringSection'
+import { HomeInsightsSection } from './HomeInsightsSection'
 import { HomeLocationsSection } from './HomeLocationsSection'
 import { HomeMachiningSection } from './HomeMachiningSection'
 import { HomeProcessSection } from './HomeProcessSection'
@@ -91,7 +94,12 @@ type HomeSectionBlocks = {
   services?: HomeServicesLayoutBlock
 }
 
-export function HomeBlockRenderer(props: { blocks: HomeLayout; locations?: HomeLocationsProps }) {
+export function HomeBlockRenderer(props: {
+  blocks: HomeLayout
+  /** Articles for the resources section, picked by the page. None: no section. */
+  insights?: readonly ArticleCard[]
+  locations?: HomeLocationsProps
+}) {
   const sections: HomeSectionBlocks = {
     engineering: props.blocks.find(
       (block): block is HomeEngineeringLayoutBlock => block.blockType === 'homeEngineering',
@@ -117,7 +125,14 @@ export function HomeBlockRenderer(props: { blocks: HomeLayout; locations?: HomeL
   return (
     <>
       {props.blocks.map((block, index) =>
-        renderHomeBlock(block, index, sections, heroRendersHomeSections, props.locations),
+        renderHomeBlock(
+          block,
+          index,
+          sections,
+          heroRendersHomeSections,
+          props.locations,
+          props.insights ?? [],
+        ),
       )}
     </>
   )
@@ -129,12 +144,21 @@ function renderHomeBlock(
   sections: HomeSectionBlocks,
   heroRendersHomeSections: boolean,
   locations: HomeLocationsProps | undefined,
+  insights: readonly ArticleCard[],
 ) {
   const key = `${block.blockType}-${block.id ?? index}`
 
   switch (block.blockType) {
     case 'homeHero':
-      return <HomeHero key={key} block={block} locations={locations} sections={sections} />
+      return (
+        <HomeHero
+          key={key}
+          block={block}
+          insights={insights}
+          locations={locations}
+          sections={sections}
+        />
+      )
     case 'homeServices':
       if (heroRendersHomeSections && sections.services === block) {
         return null
@@ -159,12 +183,14 @@ function renderHomeBlock(
     case 'homeLocations':
       if (heroRendersHomeSections && sections.locationsBlock === block) return null
       return (
-        <HomeLocationsSection
-          key={key}
-          addresses={locations?.addresses}
-          block={block}
-          image={locations?.image}
-        />
+        <Fragment key={key}>
+          <HomeLocationsSection
+            addresses={locations?.addresses}
+            block={block}
+            image={locations?.image}
+          />
+          <HomeInsightsSection articles={insights} />
+        </Fragment>
       )
     default:
       return null
@@ -173,6 +199,7 @@ function renderHomeBlock(
 
 function HomeHero(props: {
   block: HomeHeroLayoutBlock
+  insights: readonly ArticleCard[]
   locations?: HomeLocationsProps
   sections: HomeSectionBlocks
 }) {
@@ -319,6 +346,8 @@ function HomeHero(props: {
       <HomeMachiningSection block={machiningBlock} />
       <HomeEngineeringSection block={engineeringBlock} />
       {processBlock ? <HomeProcessSection block={processBlock} /> : null}
+      {/* Where the shop is, straight after how it works; then what it has
+          learned, written down, to close the page. */}
       {processBlock ? (
         <HomeLocationsSection
           addresses={props.locations?.addresses}
@@ -326,6 +355,7 @@ function HomeHero(props: {
           image={props.locations?.image}
         />
       ) : null}
+      {processBlock ? <HomeInsightsSection articles={props.insights} /> : null}
     </>
   )
 }
