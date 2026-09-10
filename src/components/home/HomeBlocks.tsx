@@ -1,29 +1,38 @@
 import { ButtonLink } from '@/components/atoms/ButtonLink'
-import { Eyebrow } from '@/components/atoms/Eyebrow'
 import { SafePicture, SafeVideo } from '@/components/atoms/SafeImage'
+import { Reveal, RevealGroup, RevealItem, RevealWords } from '@/components/motion/Reveal'
 import {
   defaultHomeServicesBlock,
   type HomeHeroLayoutBlock,
   type HomeIndustriesLayoutBlock,
   type HomeLayout,
+  type HomeEngineeringLayoutBlock,
+  type HomeLocationsLayoutBlock,
+  type HomeMachiningLayoutBlock,
   type HomeProcessLayoutBlock,
   type HomeServicesLayoutBlock,
 } from '@/data/home'
+import type { MediaImage } from '@/data/media'
+import type { FooterAddress } from '@/data/site'
+
 
 import { HomeIndustriesAccordion } from './HomeIndustriesAccordion'
-import { HomeGlobeSection } from './HomeGlobeSection'
-import { HeroContrastController } from './HeroContrastController'
 import { HeroYouTubeBackground } from './HeroYouTubeBackground'
+import { HomeEngineeringSection } from './HomeEngineeringSection'
+import { HomeLocationsSection } from './HomeLocationsSection'
+import { HomeMachiningSection } from './HomeMachiningSection'
 import { HomeProcessSection } from './HomeProcessSection'
-import { HomeServicesScroller } from './HomeServicesScroller'
+import { HomeServicesGrid } from './HomeServicesGrid'
 
 function optionalText(value: string | null | undefined, fallback = '') {
   return value || fallback
 }
 
+/* Aviation leads here as it does in every other listing -- see
+   INDUSTRY_PRIORITY in productTaxonomy.ts. */
 const heroServices = [
-  'Construction & Infrastructure',
   'Aviation Ground Support Equipment',
+  'Construction & Infrastructure',
   'Heavy Equipment & Machinery',
   'Industrial Manufacturing',
   'Custom Metal Fabrication',
@@ -57,29 +66,58 @@ function HeroCoverVideo(props: {
   )
 }
 
-export function HomeBlockRenderer(props: { blocks: HomeLayout }) {
-  const industriesBlock = props.blocks.find(
-    (block): block is HomeIndustriesLayoutBlock => block.blockType === 'homeIndustries',
-  )
-  const processBlock = props.blocks.find(
-    (block): block is HomeProcessLayoutBlock => block.blockType === 'homeProcess',
-  )
-  const servicesBlock = props.blocks.find(
-    (block): block is HomeServicesLayoutBlock => block.blockType === 'homeServices',
-  )
+/**
+ * Facility addresses and the locations photograph are edited on the Footer
+ * global, not the home page, so the page passes them in beside the layout.
+ * Optional: the section falls back to committed defaults without them.
+ */
+export type HomeLocationsProps = {
+  addresses?: FooterAddress[] | null
+  image?: MediaImage | null
+}
+
+/*
+ * The hero renders the whole landing page in one pass, so it needs every
+ * section's block in hand. Collected once here and passed down together
+ * rather than as a growing list of arguments; each is optional, and a section
+ * without a block falls back to its committed defaults.
+ */
+type HomeSectionBlocks = {
+  engineering?: HomeEngineeringLayoutBlock
+  industries?: HomeIndustriesLayoutBlock
+  locationsBlock?: HomeLocationsLayoutBlock
+  machining?: HomeMachiningLayoutBlock
+  process?: HomeProcessLayoutBlock
+  services?: HomeServicesLayoutBlock
+}
+
+export function HomeBlockRenderer(props: { blocks: HomeLayout; locations?: HomeLocationsProps }) {
+  const sections: HomeSectionBlocks = {
+    engineering: props.blocks.find(
+      (block): block is HomeEngineeringLayoutBlock => block.blockType === 'homeEngineering',
+    ),
+    industries: props.blocks.find(
+      (block): block is HomeIndustriesLayoutBlock => block.blockType === 'homeIndustries',
+    ),
+    locationsBlock: props.blocks.find(
+      (block): block is HomeLocationsLayoutBlock => block.blockType === 'homeLocations',
+    ),
+    machining: props.blocks.find(
+      (block): block is HomeMachiningLayoutBlock => block.blockType === 'homeMachining',
+    ),
+    process: props.blocks.find(
+      (block): block is HomeProcessLayoutBlock => block.blockType === 'homeProcess',
+    ),
+    services: props.blocks.find(
+      (block): block is HomeServicesLayoutBlock => block.blockType === 'homeServices',
+    ),
+  }
   const heroRendersHomeSections = props.blocks.some((block) => block.blockType === 'homeHero')
 
   return (
     <>
       {props.blocks.map((block, index) =>
-        renderHomeBlock(
-          block,
-          index,
-          industriesBlock,
-          processBlock,
-          servicesBlock,
-          heroRendersHomeSections,
-        ),
+        renderHomeBlock(block, index, sections, heroRendersHomeSections, props.locations),
       )}
     </>
   )
@@ -88,39 +126,46 @@ export function HomeBlockRenderer(props: { blocks: HomeLayout }) {
 function renderHomeBlock(
   block: HomeLayout[number],
   index: number,
-  industriesBlock: HomeIndustriesLayoutBlock | undefined,
-  processBlock: HomeProcessLayoutBlock | undefined,
-  servicesBlock: HomeServicesLayoutBlock | undefined,
+  sections: HomeSectionBlocks,
   heroRendersHomeSections: boolean,
+  locations: HomeLocationsProps | undefined,
 ) {
   const key = `${block.blockType}-${block.id ?? index}`
 
   switch (block.blockType) {
     case 'homeHero':
-      return (
-        <HomeHero
-          key={key}
-          block={block}
-          industriesBlock={industriesBlock}
-          processBlock={processBlock}
-          servicesBlock={servicesBlock}
-        />
-      )
+      return <HomeHero key={key} block={block} locations={locations} sections={sections} />
     case 'homeServices':
-      if (heroRendersHomeSections && servicesBlock === block) {
+      if (heroRendersHomeSections && sections.services === block) {
         return null
       }
 
-      return <HomeServicesScroller key={key} block={block} />
+      return <HomeServicesGrid key={key} block={block} />
     case 'homeIndustries':
-      if (heroRendersHomeSections && industriesBlock === block) {
+      if (heroRendersHomeSections && sections.industries === block) {
         return null
       }
 
       return <HomeIndustries key={key} block={block} />
+    case 'homeMachining':
+      if (heroRendersHomeSections && sections.machining === block) return null
+      return <HomeMachiningSection key={key} block={block} />
+    case 'homeEngineering':
+      if (heroRendersHomeSections && sections.engineering === block) return null
+      return <HomeEngineeringSection key={key} block={block} />
     case 'homeProcess':
-      if (heroRendersHomeSections && processBlock === block) return null
+      if (heroRendersHomeSections && sections.process === block) return null
       return <HomeProcess key={key} block={block} />
+    case 'homeLocations':
+      if (heroRendersHomeSections && sections.locationsBlock === block) return null
+      return (
+        <HomeLocationsSection
+          key={key}
+          addresses={locations?.addresses}
+          block={block}
+          image={locations?.image}
+        />
+      )
     default:
       return null
   }
@@ -128,11 +173,18 @@ function renderHomeBlock(
 
 function HomeHero(props: {
   block: HomeHeroLayoutBlock
-  industriesBlock?: HomeIndustriesLayoutBlock
-  processBlock?: HomeProcessLayoutBlock
-  servicesBlock?: HomeServicesLayoutBlock
+  locations?: HomeLocationsProps
+  sections: HomeSectionBlocks
 }) {
-  const { block, industriesBlock, processBlock, servicesBlock = defaultHomeServicesBlock } = props
+  const { block, sections } = props
+  const {
+    engineering: engineeringBlock,
+    industries: industriesBlock,
+    locationsBlock,
+    machining: machiningBlock,
+    process: processBlock,
+    services: servicesBlock = defaultHomeServicesBlock,
+  } = sections
 
   return (
     <>
@@ -142,7 +194,6 @@ function HomeHero(props: {
         data-responsive-layout="hero"
         id="top"
       >
-        <HeroContrastController />
         <div className="hero-video-layer" aria-hidden="true">
           <SafePicture
             className="hero-image"
@@ -190,15 +241,37 @@ function HomeHero(props: {
         </div>
 
         <div className="hero-content-band">
-          <div className="hero-content">
+          {/*
+           * The hero is already on screen, so this plays on load rather than
+           * on scroll: the copy settles in over the footage a beat after it
+           * starts, which is what makes the two read as one shot.
+           */}
+          {/*
+           * One sequence over the whole panel rather than two blocks fading
+           * in: the eyebrow, then the headline a word at a time, then the
+           * summary and its buttons. The stagger runs through the plain
+           * wrappers between them, because the order comes from the React
+           * tree rather than the DOM -- so the copy reads as it is set down,
+           * which is the point of the beat between each part.
+           */}
+          <RevealGroup amount={0} className="hero-content" delay={0.2} stagger={0.055}>
             <div className="hero-copy">
-              <Eyebrow>{block.eyebrow}</Eyebrow>
-              <h1>{block.heading}</h1>
+              {/* The Eyebrow atom's markup, staged as its own beat. */}
+              {block.eyebrow ? (
+                <RevealItem as="p" className="eyebrow">
+                  {block.eyebrow}
+                </RevealItem>
+              ) : null}
+              <h1>
+                <RevealWords text={block.heading} />
+              </h1>
             </div>
 
             <div className="hero-summary">
-              <p className="hero-text">{optionalText(block.description)}</p>
-              <div className="hero-actions">
+              <RevealItem as="p" className="hero-text">
+                {optionalText(block.description)}
+              </RevealItem>
+              <RevealItem as="div" className="hero-actions">
                 {block.primaryLabel && block.primaryHref ? (
                   <ButtonLink href={block.primaryHref} variant="primary">
                     {block.primaryLabel}
@@ -209,11 +282,17 @@ function HomeHero(props: {
                     {block.secondaryLabel}
                   </ButtonLink>
                 ) : null}
-              </div>
+              </RevealItem>
             </div>
-          </div>
+          </RevealGroup>
 
-          <div className="hero-services-marquee" aria-label="Services carousel">
+          <Reveal
+            amount={0}
+            aria-label="Services carousel"
+            className="hero-services-marquee"
+            delay={0.55}
+            motion="fade"
+          >
             <div className="hero-services-rail">
               {[0, 1].map((trackIndex) => (
                 <div
@@ -229,13 +308,24 @@ function HomeHero(props: {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
-      <HomeServicesScroller block={servicesBlock} />
+      <HomeServicesGrid block={servicesBlock} />
       {industriesBlock ? <HomeIndustriesAccordion block={industriesBlock} /> : null}
+      {/* The capability run: the machines, then the engineering that drives
+          them, then the process they sit inside. Both leading sections are
+          committed defaults, as with the locations section. */}
+      <HomeMachiningSection block={machiningBlock} />
+      <HomeEngineeringSection block={engineeringBlock} />
       {processBlock ? <HomeProcessSection block={processBlock} /> : null}
-      {processBlock ? <HomeGlobeSection /> : null}
+      {processBlock ? (
+        <HomeLocationsSection
+          addresses={props.locations?.addresses}
+          block={locationsBlock}
+          image={props.locations?.image}
+        />
+      ) : null}
     </>
   )
 }

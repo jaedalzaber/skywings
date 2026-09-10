@@ -17,30 +17,33 @@ import { RichTextSection } from './RichTextSection'
  * for any industry.
  *
  * The hero is the only block that loads eagerly; everything below the fold
- * defers its media.
+ * defers its media. The first intro block owns the page `<h1>`.
  */
 export function IndustryBlocks(props: { blocks: IndustryPageLayout }) {
+  const firstIntro = props.blocks.findIndex((block) => block.blockType === 'industryIntro')
+
   return (
-    <>
+    <div className="industry-page">
       {props.blocks.map((block, index) => (
         <IndustryBlock
           block={block}
           isFirst={index === 0}
+          isTitle={index === firstIntro}
           key={`${block.blockType}-${block.id ?? index}`}
         />
       ))}
-    </>
+    </div>
   )
 }
 
-function IndustryBlock(props: { block: IndustryPageBlock; isFirst: boolean }) {
-  const { block, isFirst } = props
+function IndustryBlock(props: { block: IndustryPageBlock; isFirst: boolean; isTitle: boolean }) {
+  const { block, isFirst, isTitle } = props
 
   switch (block.blockType) {
     case 'industryHero':
       return <IndustryHeroSection block={block} priority={isFirst} />
     case 'industryIntro':
-      return <IndustryIntroSection block={block} />
+      return <IndustryIntroSection block={block} headingLevel={isTitle ? 'h1' : 'h2'} />
     case 'cardCarousel':
       return <CardCarouselSection block={block} />
     case 'industryValue':

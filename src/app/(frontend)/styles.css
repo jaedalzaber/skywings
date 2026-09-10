@@ -12,6 +12,74 @@
   --yellow-soft: #fbf3db;
   --red-soft: #fdebec;
   --max: 76.25rem;
+  /*
+   * One page container, shared by .site-shell, the full-bleed header and every
+   * page-level stylesheet, so a bar that spans the viewport still starts its
+   * contents on the same line as the sections under it.
+   *
+   * --page-gutter is .site-shell's own padding, restated at each breakpoint
+   * below. --page-inset is the distance from the viewport edge in to that
+   * content edge (the gutter alone until --max caps the shell, the leftover
+   * margin plus the gutter after), and --page-content is the content box it
+   * leaves. Both are substituted lazily, so they follow --page-gutter on their
+   * own and only the one value needs restating.
+   */
+  /*
+   * The width a full-bleed section should span, and the negative margin that
+   * takes it out of the page container.
+   *
+   * These read 100vw, which counts the classic scrollbar while a block's
+   * containing width does not -- so every full-bleed section used to sit a
+   * scrollbar wider than the content box and overflow by half of that each
+   * side. body's overflow-x: clip hid it, until a pinned section became
+   * position: fixed, escaped the clip, and shifted the page sideways on the way
+   * into the process band.
+   *
+   * `scrollbar-gutter: stable` on html (below) is what makes 100vw honest here:
+   * with the gutter reserved as part of the layout, viewport units exclude it.
+   * The pair is kept as tokens so that assumption lives in one place rather
+   * than in every section that bleeds.
+   */
+  --bleed-width: 100vw;
+  --bleed-margin: calc(50% - 50vw);
+  --viewport: 100vw;
+
+  --page-gutter: 1rem;
+  --page-inset: max(
+    var(--page-gutter),
+    calc(var(--viewport) / 2 - var(--max) / 2 + var(--page-gutter))
+  );
+  --page-content: calc(var(--viewport) - 2 * var(--page-inset));
+  /*
+   * Height of the sticky header, mirroring .topbar's own height below. Anything
+   * that pins under the bar offsets by this instead of a hand-picked number, so
+   * it sits flush rather than leaving a band of dead space.
+   */
+  --header-height: 3.25rem;
+}
+
+/*
+ * Entrance motion is opt-in per element: a component marks what it reveals
+ * with data-reveal, and this is the one place that can switch the whole page
+ * off. Anyone who has asked for less motion gets every part at rest, whatever
+ * the script would otherwise have set inline.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
+
+/*
+ * Transforms do not apply to inline boxes, so a headline split into words has
+ * to give each one a block of its own to move in. Inline-block keeps them
+ * flowing and wrapping as words either way, which is what makes the split
+ * invisible until it animates.
+ */
+.reveal-word {
+  display: inline-block;
 }
 
 .safe-image-fallback {
@@ -26,9 +94,9 @@
 .site-footer {
   position: relative;
   display: flex;
-  width: 100vw;
+  width: var(--bleed-width);
   min-height: 100svh;
-  margin: 0 calc(50% - 50vw);
+  margin: 0 var(--bleed-margin);
   padding: clamp(2rem, 7vw, 6.4rem) clamp(1rem, 6.7vw, 7.25rem) 1.4rem;
   flex-direction: column;
   gap: clamp(3rem, 7vw, 7.75rem);
@@ -282,7 +350,6 @@
   white-space: nowrap;
   border: 0;
 }
-
 @media (min-width: 40rem) {
   .footer-newsletter-form {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -297,7 +364,6 @@
     gap: 2rem;
   }
 }
-
 @media (min-width: 64rem) {
   .footer-content {
     flex: 1;
@@ -338,7 +404,6 @@
     flex-wrap: nowrap;
   }
 }
-
 @media (min-width: 90rem) {
   .site-footer {
     padding-inline: max(7.25rem, calc((100vw - 93rem) / 2));
@@ -352,6 +417,14 @@
 html {
   scroll-behavior: auto;
   background: var(--canvas);
+  /*
+   * Reserve the scrollbar's gutter from the first frame. Two reasons: a short
+   * page and a long one lay out to the same width, and --scrollbar-width can be
+   * measured before the content exists -- the inline script in layout.tsx runs
+   * ahead of the body, when nothing is tall enough to have summoned a scrollbar
+   * yet. No effect where scrollbars are overlays.
+   */
+  scrollbar-gutter: stable;
 }
 
 html.lenis,
@@ -397,33 +470,112 @@ a {
   position: sticky;
   top: 0;
   z-index: 50;
+  /*
+   * Full bleed out of the centred .site-shell: the negative inline margin
+   * cancels the shell's padding and its auto centring in one step, so the bar
+   * spans the viewport at every shell width. body carries overflow-x: clip, so
+   * the scrollbar's share of 100vw cannot open a horizontal scrollbar.
+   */
   margin-top: -1rem;
-  margin-inline: calc(-1rem + 0.4375rem);
-  width: calc(100% + 2rem - 0.875rem);
+  margin-inline: var(--bleed-margin);
+  width: var(--bleed-width);
 }
 
 .nav-spacer {
-  height: 0.359rem;
+  height: 0;
 }
 
 .topbar {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
-  height: 3.25rem;
-  padding: 0.477rem 0.358rem 0.477rem 0.563rem;
-  border: 0.477px solid #e5e5e5;
-  border-radius: 0.596rem;
-  background: var(--nav-surface, rgba(255, 255, 255, 0.57));
+  height: var(--header-height);
+  /*
+   * The bar bleeds edge to edge, but its contents ride the same gutter as the
+   * page container below, so the logo and the CTA line up with section copy
+   * instead of drifting to the viewport edges on wide screens.
+   */
+  padding-block: 0.477rem;
+  padding-inline: var(--page-inset);
+  border: 0;
+  border-bottom: 1px solid #e5e5e5;
+  border-radius: 0;
+  /* Eases the tighten-on-scroll further down rather than snapping heights. */
+  transition:
+    min-height 200ms ease,
+    padding-block 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .topbar {
+    transition: none;
+  }
+}
+
+/* The frosted surface is a layer behind the bar rather than a filter on the
+   bar itself: a backdrop-filter on an ancestor limits every descendant's
+   backdrop-filter to that ancestor's own pixels, which left the Industries
+   dropdown sharp over hero imagery. */
+.topbar::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--nav-surface, rgba(255, 255, 255, 0.94));
+  -webkit-backdrop-filter: var(--nav-backdrop, blur(0.745rem));
   backdrop-filter: var(--nav-backdrop, blur(0.745rem));
+  content: '';
+  pointer-events: none;
   transition: background-color 220ms ease;
 }
 
-html[data-section-nav-active='true'] {
+/*
+ * Header themes. A section marks itself with `data-nav-surface`, and
+ * HeaderSurfaceController mirrors the value here while the bar is over it, so
+ * adding a theme to a new section is one attribute and no JS.
+ */
+html[data-nav-surface='white'] {
   --nav-surface: #fff;
   --nav-backdrop: none;
+}
+
+html[data-nav-surface='dark'] {
+  --nav-surface: #1c1c1c;
+  --nav-backdrop: none;
+  --nav-ink: #ffffff;
+  --nav-line: rgba(255, 255, 255, 0.14);
+}
+
+/*
+ * The bar's own colours follow the tokens above, defaulting to the light
+ * treatment, so a theme only has to redefine the three of them.
+ */
+html[data-nav-surface='dark'] .topbar {
+  border-bottom-color: var(--nav-line);
+}
+
+html[data-nav-surface='dark'] .nav-links a,
+html[data-nav-surface='dark'] .nav-link-control,
+html[data-nav-surface='dark'] .brand-wordmark {
+  color: var(--nav-ink);
+}
+
+/* The mark is painted through a mask, so its colour is the wrapper's fill. */
+html[data-nav-surface='dark'] .brand-logo:not(:has(.safe-image-fallback)) {
+  background: var(--nav-ink);
+}
+
+html[data-nav-surface='dark'] .nav-cta {
+  border-color: var(--nav-ink);
+  color: #1c1c1c;
+  background: var(--nav-ink);
+}
+
+html[data-nav-surface='dark'] .mobile-nav-toggle {
+  color: var(--nav-ink);
 }
 
 .brand {
@@ -435,11 +587,42 @@ html[data-section-nav-active='true'] {
 }
 
 .brand-logo {
+  /* One indirection so the scrolled state can repoint the mask below. */
+  --brand-mark-src: var(--brand-logo-src);
   display: grid;
-  width: 5.163rem;
-  height: 2.391rem;
+  width: 6.163rem;
+  height: 3.591rem;
   place-items: center;
   overflow: hidden;
+  padding: 2rem 0;
+  transition:
+    width 200ms ease,
+    height 200ms ease,
+    padding 200ms ease;
+}
+
+/*
+ * Scrolled state. The bar cannot reach its 3.5rem target while this box is
+ * 4rem of vertical padding tall -- box-sizing keeps a padded box at least as
+ * tall as its own padding, so the logo, not min-height, was setting the bar
+ * height. Dropping the padding and the box height lets min-height bind, and
+ * the mask scales the lockup down with it.
+ */
+html[data-nav-stuck='true'] .brand-logo {
+  /*
+   * Both variables are set by SiteHeader only when a Navigation symbol is
+   * uploaded, so with none the mask keeps the full lockup and the box keeps
+   * its width -- the logo simply scales down with the bar.
+   */
+  --brand-mark-src: var(--brand-symbol-src, var(--brand-logo-src));
+  width: var(--brand-symbol-width, 6.163rem);
+  height: 2.25rem;
+  padding: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo {
+    transition: none;
+  }
 }
 
 .brand-logo img {
@@ -447,6 +630,24 @@ html[data-section-nav-active='true'] {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/*
+ * Brand blue mark. The asset is a flat silhouette, so the wrapper is filled
+ * with the token and clipped to the logo's own alpha rather than shipping a
+ * recolored file — one place to change the color, and it follows whichever
+ * logo the CMS is serving. The <img> stays mounted for its alt text, and
+ * anything without masking simply keeps the original artwork.
+ */@supports (mask-image: url('')) or (-webkit-mask-image: url('')) {
+  .brand-logo:not(:has(.safe-image-fallback)) {
+    background: var(--blue);
+    -webkit-mask: var(--brand-mark-src) no-repeat center / contain;
+    mask: var(--brand-mark-src) no-repeat center / contain;
+  }
+
+  .brand-logo:not(:has(.safe-image-fallback)) img {
+    opacity: 0;
+  }
 }
 
 .brand-wordmark {
@@ -550,12 +751,12 @@ html[data-section-nav-active='true'] {
   width: min(16.3125rem, calc(100vw - 2rem));
   flex-direction: column;
   padding: 0.96875rem 1.375rem 0.96875rem 1.625rem;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.55);
   box-shadow:
-    0 0.75rem 1.75rem rgba(20, 46, 84, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+    0 1rem 2.25rem rgba(20, 46, 84, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
@@ -573,13 +774,9 @@ html[data-section-nav-active='true'] {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.38) 0%,
-    rgba(255, 255, 255, 0.22) 100%
-  );
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
-  backdrop-filter: blur(18px) saturate(145%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.87) 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
   content: '';
   pointer-events: none;
 }
@@ -593,7 +790,7 @@ html[data-section-nav-active='true'] {
   min-height: 2.4167rem;
   align-items: center;
   padding: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(20, 46, 84, 0.12);
   color: #141414;
   font-size: 0.875rem;
   font-weight: 500;
@@ -618,6 +815,183 @@ html[data-section-nav-active='true'] {
   visibility: visible;
 }
 
+/*
+ * Products opens a category map rather than a flat list: one column per
+ * industry, its product families beneath. Menus without a nested level keep
+ * the single-column panel above untouched.
+ */
+.nav-item--mega {
+  /*
+   * Static so the mega panel positions against .topbar (the nearest
+   * positioned ancestor) instead of the trigger. Centred on the header it
+   * can use the full bar width without running off either edge, which the
+   * trigger-centred version could not.
+   */
+  position: static;
+  --nav-mega-offset: 0.75rem;
+}
+
+/*
+ * With .nav-item--mega static, the shared .nav-item::after hover bridge
+ * resolves against .topbar instead of the trigger and stretches the full
+ * header width, directly over the path from the Industries trigger down to
+ * its own dropdown. Crossing it armed the Products panel, which then covered
+ * the industry links and made them impossible to click. The bridge is
+ * re-created on the trigger, the only element that should arm this menu.
+ */
+.nav-item--mega::after {
+  content: none;
+}
+
+.nav-item--mega > a,
+.nav-item--mega > .nav-link-control {
+  position: relative;
+}
+
+.nav-item--mega > a::after,
+.nav-item--mega > .nav-link-control::after {
+  position: absolute;
+  top: 100%;
+  right: -1.25rem;
+  left: -1.25rem;
+  display: block;
+  height: calc(var(--nav-submenu-offset) + 0.375rem);
+  content: '';
+  z-index: 19;
+}
+
+.nav-submenu--mega {
+  /*
+   * Absolutely positioned children resolve against .topbar padding box, so
+   * left/right: 0 stretched the panel across the bar gutters, past the logo
+   * and the CTA. Insetting it by the same gutter the bar pads its contents
+   * with keeps the panel on the page container.
+   */
+  left: var(--page-inset);
+  right: var(--page-inset);
+  display: grid;
+  width: auto;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  /* Long category lists scroll inside the panel rather than off-screen. */
+  max-height: min(44rem, calc(100vh - 5rem));
+  overflow-x: hidden;
+  overflow-y: auto;
+  /*
+   * Nine industries wrap to a second row of columns at container width, so
+   * rows start at the top rather than stretching to fill the panel.
+   */
+  align-content: start;
+  column-gap: 1.75rem;
+  row-gap: 1.5rem;
+  padding: 1.75rem 2.25rem;
+  /*
+   * Held on the gutter above, so only the Y drop is animated.
+   * That offset is repeated in the open state below, because the reveal
+   * animates the same transform property.
+   */
+  transform: translate3d(0, calc(var(--nav-mega-offset) + 0.1rem), 0);
+
+  /*
+   * The shared ::before carries the frosted layer, but it is absolutely
+   * positioned, so inside this scroll container it sizes to the visible box
+   * and scrolls away with the content -- leaving the lower half of a
+   * scrolled panel unfrosted. An element background paints the whole box and
+   * does not scroll, so the mega variant carries its own glass instead.
+   */
+  background:
+    linear-gradient(180deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%),
+    rgb(255, 255, 255);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  /* backdrop-filter: blur(24px) saturate(150%); */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(13, 61, 120, 0.32) transparent;
+}
+
+.nav-submenu--mega::before {
+  display: none;
+}
+
+/* Slim, tinted scrollbar so a scrolled panel still reads as one glass sheet. */
+.nav-submenu--mega::-webkit-scrollbar {
+  width: 0.625rem;
+}
+
+.nav-submenu--mega::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-submenu--mega::-webkit-scrollbar-thumb {
+  border: 0.1875rem solid transparent;
+  border-radius: 999px;
+  background: rgba(13, 61, 120, 0.32);
+  background-clip: content-box;
+}
+
+.nav-submenu--mega::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 61, 120, 0.55);
+  background-clip: content-box;
+}
+
+.nav-item:hover .nav-submenu--mega,
+.nav-item:focus-within .nav-submenu--mega {
+  transform: translate3d(0, var(--nav-mega-offset), 0);
+}
+
+.nav-submenu-group {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/*
+ * Category heading. Scoped with a:not(...) rather than a bare descendant
+ * rule, because the flat menu's divider is reset on the items only -- an
+ * unscoped 'group a' reset outranked .nav-submenu-heading and wiped the rule
+ * under every heading.
+ *
+ * The reserved two-line box keeps every column's first link on the same
+ * baseline whether its heading wraps or not, so the panel reads as a grid.
+ */
+.nav-submenu--mega .nav-submenu-heading {
+  min-height: 2.5em;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(20, 46, 84, 0.16);
+  color: #272727;
+  font-size: 1.19125rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  /* text-transform: uppercase; */
+}
+
+/*
+ * Column links. Spacing is padding rather than min-height: a min-height stops
+ * separating items the moment a label wraps to two lines, which ran the long
+ * fabrication labels straight into the next link.
+ */
+.nav-submenu--mega .nav-submenu-group a:not(.nav-submenu-heading) {
+  min-height: 0;
+  align-items: flex-start;
+  padding-block: 0.3125rem;
+  border-bottom: 0;
+  color: rgba(8, 8, 8, 0.616);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.002em;
+  line-height: 1.25;
+}
+
+.nav-submenu--mega .nav-submenu-group a:not(.nav-submenu-heading):hover,
+.nav-submenu--mega .nav-submenu-group a:not(.nav-submenu-heading):focus-visible {
+  color: #0063db;
+  font-weight: 600;
+}
+
 .nav-actions {
   display: none;
   flex: 0 0 auto;
@@ -628,23 +1002,29 @@ html[data-section-nav-active='true'] {
 .nav-cta {
   display: inline-flex;
   width: 7.213rem;
-  min-height: 2.853rem;
+  min-height: 2.253rem;
   align-items: center;
   justify-content: center;
   padding: 0.55rem 0.716rem;
   border: 0.477px solid #e5e5e5;
-  border-radius: 0.477rem;
-  background: var(--default-nav-cta, #b2b2b2);
+  border-radius: 0.177rem;
+  background: var(--default-nav-cta, #1a1919);
   color: #ffffff;
   font-size: 0.835rem;
   font-weight: 500;
   line-height: 0.97;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
-.nav-cta:hover {
-  background: #9f9f9f;
+/* Brand blue on hover, matching the mobile drawer contact button. */
+.nav-cta:hover,
+.nav-cta:focus-visible {
+  border-color: #1f42e3;
+  background: #1f42e3;
 }
 
 .mobile-nav-toggle,
@@ -854,7 +1234,6 @@ html[data-section-nav-active='true'] {
   line-height: 0.97;
   text-decoration: none;
 }
-
 @keyframes mobile-nav-enter {
   from {
     opacity: 0;
@@ -878,7 +1257,7 @@ html[data-section-nav-active='true'] {
 }
 
 .hero-section {
-  margin: calc(-4.657rem + 1px) calc(50% - 50vw) 0;
+  margin: calc(-4.657rem + 1px) var(--bleed-margin) 0;
 }
 
 .hero-container {
@@ -899,6 +1278,38 @@ html[data-section-nav-active='true'] {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(210, 210, 210, 0.18) 48%), #d3d3d3;
+}
+
+/*
+ * The footage settles out of a slight over-scale as the page opens, so the
+ * hero arrives as a shot coming to rest rather than an image appearing. The
+ * layer above clips it, so nothing bleeds past the hero while it runs.
+ *
+ * `scale` rather than `transform`: it is its own property, so it composes
+ * with whatever transform a cover already carries instead of replacing it.
+ * CSS rather than the reveal system, because there is no state to co-ordinate
+ * -- it plays once, on load, and the two never overlap.
+ */
+@keyframes hero-cover-settle {
+  from {
+    scale: 1.055;
+  }
+
+  to {
+    scale: 1;
+  }
+}
+
+.hero-video-layer .hero-image,
+.hero-video-layer .hero-cover-video {
+  animation: hero-cover-settle 2.1s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video-layer .hero-image,
+  .hero-video-layer .hero-cover-video {
+    animation: none;
+  }
 }
 
 .hero-video-placeholder {
@@ -988,8 +1399,8 @@ html[data-section-nav-active='true'] {
   width: 100%;
   min-height: 17.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.46);
-  background: rgba(217, 217, 217, 0.74);
-  backdrop-filter: blur(0.891rem);
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(0.0891rem);
 }
 
 .hero-content {
@@ -1002,10 +1413,12 @@ html[data-section-nav-active='true'] {
 
 .hero-services-marquee {
   width: 100%;
-  height: 3.875rem;
+  /* One source for the strip's height: the same token the hero subtracts from
+     the video, so the two can never drift apart at a breakpoint. */
+  height: var(--hero-marquee-height, 3.875rem);
   overflow: hidden;
-  background: rgba(195, 195, 195, 0.74);
-  color: #6f6f6f;
+  background: #ededed;
+  color: #2f3540;
 }
 
 .hero-services-rail {
@@ -1027,133 +1440,85 @@ html[data-section-nav-active='true'] {
 
 .hero-service-label {
   flex: 0 0 auto;
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
 }
-
-.services-showcase {
-  margin: 0 calc(50% - 50vw);
-  overflow: clip;
-  background: #ffffff;
+/*
+ * Services. A dark full-bleed band carrying one two-tone headline over a 3x2
+ * grid of service cards. Each card is a cropped image with a frosted label
+ * sitting on its bottom edge; hovering one swaps the image for its animation.
+ */
+.services-grid {
+  margin: 0 var(--bleed-margin);
+  padding: clamp(3rem, 7vw, 5.5rem) var(--page-inset) clamp(4.5rem, 10vw, 9rem);
+  background: #1c1c1c;
+  color: #ffffff;
 }
 
-.services-showcase-pin {
-  width: 100%;
-  padding: 8rem 0 8.5rem;
-  background: #ffffff;
-}
-
-.services-showcase-shell {
+.services-grid-inner {
   width: min(100%, var(--max));
   margin: 0 auto;
-  padding: 0 1rem;
 }
 
-.services-showcase-heading {
-  display: grid;
-  gap: 2rem;
-}
-
-.services-showcase-title-group {
-  display: grid;
-  --services-title-offset: calc(0.95rem + 2.75rem);
-  gap: 2.75rem;
-}
-
-.services-showcase-eyebrow {
-  margin: 0;
-  color: #3867ff;
-  font-family: var(--font-title), 'Segoe UI', Arial, sans-serif;
-  font-size: 0.95rem;
+/*
+ * Muted by default so the emphasised runs carry the claim. The colour split
+ * is the whole point of the treatment, so it lives on the two selectors below
+ * rather than being applied per span from the CMS.
+ */
+.services-grid-heading {
+  max-width: 46ch;
+  margin: 0 0 clamp(2.25rem, 4.5vw, 3.5rem);
+  color: #8b8b8b;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.34;
+  letter-spacing: -0.035em;
 }
 
-.services-showcase h2 {
-  max-width: 4.8ch;
-  margin: 0;
-  color: #121111;
-  font-size: clamp(1.35rem, 5vw, 2rem);
-  font-weight: 900;
-  line-height: 0.82;
-  text-transform: uppercase;
-  letter-spacing: -0.06em;
+.services-grid-heading-strong {
+  color: #ffffff;
 }
 
-.services-showcase-copy {
+.services-grid-list {
   display: grid;
-  align-content: end;
-  gap: 1.6rem;
-  max-width: 31rem;
+  gap: clamp(1rem, 1.6vw, 1.5rem);
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.services-showcase-copy p {
-  margin: 0;
-  color: #121111;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
+@media (min-width: 40rem) {
+  .services-grid-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.services-showcase-copy strong {
-  font-weight: 700;
+@media (min-width: 64rem) {
+  .services-grid-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.services-showcase-viewport {
-  width: 100%;
-  margin-top: 5.75rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-
-.services-showcase-viewport::-webkit-scrollbar {
-  display: none;
-}
-
-.services-showcase-track {
-  display: flex;
-  width: max-content;
-  gap: 1.5rem;
-  padding: 0 1rem;
-}
-
-.services-showcase-card {
-  display: grid;
-  gap: 0.625rem;
-  flex: 0 0 auto;
-  width: min(23.4375rem, calc(100vw - 2.5rem));
-}
-
-.services-showcase-card-number {
-  margin: 0;
-  color: #a9a9a9;
-  font-family: var(--font-title), 'Segoe UI', Arial, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.services-showcase-card-surface {
+/*
+ * The label sits outside the media box rather than inside it: the media clips
+ * its own overflow for the rounded crop, and a backdrop-filter inside a
+ * clipping ancestor samples the clipped layer instead of the image.
+ */
+.services-grid-card {
   position: relative;
-  min-height: 26.6875rem;
-  padding: 2rem 1.5rem;
+  margin: 0;
+}
+
+.services-grid-card-media {
+  position: relative;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
-  background: #ececec;
-  border-radius: .5rem;
+  border-radius: 0.75rem;
+  background: #1f1f1f;
 }
 
-.services-showcase-card-surface::after {
-  position: absolute;
-  inset: 0;
-  content: '';
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.02) 100%);
-  pointer-events: none;
-}
-
-.services-showcase-card-image {
+.services-grid-card-image,
+.services-grid-card-motion {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1161,19 +1526,63 @@ html[data-section-nav-active='true'] {
   object-fit: cover;
 }
 
-.services-showcase-card-title {
-  position: relative;
-  z-index: 1;
-  max-width: 13ch;
-  margin: 0;
-  color: #272727;
-  font-size: 1.7rem;
-  font-weight: 500;
-  line-height: 1.06;
+.services-grid-card-image {
+  transition: transform 420ms ease;
 }
 
-.services-showcase-card-title.light {
-  color: #ffffff;
+.services-grid-card:hover .services-grid-card-image {
+  transform: scale(1.04);
+}
+
+/*
+ * An animation rather than a transition: the element is mounted only while the
+ * card is active, and a freshly mounted node has no previous value to
+ * transition from, so opacity would have snapped straight to 1.
+ */
+.services-grid-card-motion {
+  z-index: 1;
+  animation: services-motion-in 220ms ease both;
+}
+
+@keyframes services-motion-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.services-grid-card-label {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.5rem;
+  background: rgba(24, 24, 24, 0.42);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  color: #f4f4f4;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-grid-card-image,
+  .services-grid-card:hover .services-grid-card-image {
+    transform: none;
+    transition: none;
+  }
+
+  .services-grid-card-motion {
+    animation: none;
+  }
 }
 
 .industries-showcase {
@@ -1182,18 +1591,17 @@ html[data-section-nav-active='true'] {
   --industries-title-sticky-height: 6.875rem;
   --industries-peek: 57px;
   --industries-card-height: 570px;
-  --industries-gutter: max(1rem, calc((100% - 76.375rem) / 2)); /* 349px on 1920px */
+  --industries-gutter: var(--page-inset);
   --industries-content: 57.3125rem; /* 917px */
   --industries-image: clamp(18rem, 30.36vw, 36.4375rem); /* 583px */
   --industries-col-gap: clamp(2rem, 3.7vw, 4.4375rem); /* 71px */
-  margin: 0 calc(50% - 50vw);
+  margin: 0 var(--bleed-margin);
   padding-top: clamp(2.5rem, 5vh, 4rem);
   background: #ffffff;
 }
 
 .industries-showcase-intro {
   position: relative;
-  z-index: -10;
   display: grid;
   gap: 1.25rem;
   padding: 0 var(--industries-gutter) 1.5625rem;
@@ -1253,7 +1661,7 @@ html[data-section-nav-active='true'] {
 .industries-showcase-card-title {
   color: #2d2d2d;
   font-size: 1.375rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.03;
   letter-spacing: -0.04em;
   text-transform: capitalize;
@@ -1268,7 +1676,7 @@ html[data-section-nav-active='true'] {
   max-width: 38.8125rem;
   margin: 0;
   color: #121111;
-  font-size: 1rem;
+  font-size: 1.2rem;
   line-height: 1.44;
   letter-spacing: 0.03em;
 }
@@ -1323,31 +1731,40 @@ html[data-section-nav-active='true'] {
   justify-content: center;
   padding: 0.5rem 2.75rem;
   border-radius: 0.28rem;
-  background: #2b2b2b;
+  background: #0e0d0da8;
+  backdrop-filter: blur(14px) saturate(240%);
   color: #ffffff;
   font-size: 0.766rem;
   font-weight: 700;
   line-height: 1.007;
   letter-spacing: 0.02em;
   text-decoration: none;
+  
 }
 
 .industries-showcase-card-media {
-  --industry-media-y: 0rem;
+  --industry-media-y: 0%;
   position: relative;
   min-height: 14rem;
   margin: 0 var(--industries-gutter) 2.5rem;
   overflow: hidden;
   background: #d9d9d9;
+  border-radius: 5.75rem;
 }
 
+/*
+ * The overscan has to exceed the parallax travel or the frame's grey backdrop
+ * shows past the image edge. --industry-media-y is a percentage of this image's
+ * own height (set in IndustryHeroMedia), peaking at 6%, so 1.14 -- 7% per side
+ * -- keeps a margin at every frame size, from the full hero down to a collapsed
+ * card's strip.
+ */
 .industries-showcase-card-media-image {
   object-fit: cover;
-  transform: translate3d(0, var(--industry-media-y), 0) scale(1.08);
+  transform: translate3d(0, var(--industry-media-y), 0) scale(1.14);
   transition: transform 120ms linear;
   will-change: transform;
 }
-
 @media (prefers-reduced-motion: reduce) {
   .industries-showcase-card-media-image {
     transform: none;
@@ -1447,7 +1864,6 @@ h3 {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-
 @keyframes hero-services-slide {
   from {
     transform: translate3d(0, 0, 0);
@@ -1499,14 +1915,14 @@ h3 {
 .hero-container .button {
   min-height: 3.0625rem;
   min-width: 12rem;
-  border-color: rgba(255, 255, 255, 0.82);
-  border-radius: 0.514rem;
-  font-size: 0.9rem;
+  border-color: rgba(255, 255, 255, 0.26);
+  border-radius: 0.314rem;
+  font-size: 1.29rem;
   font-weight: 700;
 }
 
 .hero-container .button-primary {
-  border-color: #e5e5e5;
+  border-color: var(--blue);
   background: var(--blue);
   color: #ffffff;
 }
@@ -1517,7 +1933,7 @@ h3 {
 
 .hero-container .button-secondary {
   background: rgba(255, 255, 255, 0.08);
-  color: #1b1b1b;
+  color: #f8f8f8;
 }
 
 .wire-label {
@@ -1656,49 +2072,27 @@ h3 {
   background: var(--surface);
   text-decoration: none;
 }
-
 @media (min-width: 40rem) {
+  :root {
+    --page-gutter: 1.25rem;
+  }
+
   .site-shell {
     padding: 1.25rem;
   }
 
   .nav-container {
     margin-top: -1.25rem;
-    margin-inline: calc(-1.25rem + 0.4375rem);
-    width: calc(100% + 2.5rem - 0.875rem);
-  }
-
-  .nav-links {
-    display: none;
   }
 
   .topbar {
     flex-wrap: nowrap;
   }
 
-  .services-showcase-shell,
-  .services-showcase-track {
-    padding: 0 1.5rem;
+  .nav-links {
+    display: none;
   }
-
-  .services-showcase-heading {
-    grid-template-columns: minmax(17rem, 28.625rem) minmax(18rem, 30.875rem);
-    align-items: start;
-    justify-content: space-between;
-    gap: 3rem;
-  }
-
-  .services-showcase-copy {
-    margin-left: auto;
-    padding-top: var(--services-title-offset);
-    padding-top: 60px;
-  }
-
-  .services-showcase-track {
-    gap: 2rem;
-  }
-
-  .industries-showcase-intro {
+     .industries-showcase-intro {
     grid-template-columns: 7.5rem minmax(0, 1fr);
     column-gap: clamp(3rem, 6vw, 56rem);
     align-items: start;
@@ -1732,8 +2126,11 @@ h3 {
     justify-content: space-between;
   }
 }
-
 @media (min-width: 64rem) {
+  :root {
+    --page-gutter: 1.5rem;
+  }
+
   .site-shell {
     padding: 1.5rem;
     padding-bottom: 0;
@@ -1741,18 +2138,33 @@ h3 {
 
   .nav-container {
     margin-top: -1.5rem;
-    margin-inline: 0;
-    width: auto;
   }
 
-  .nav-spacer {
-    height: 1.0625rem;
+  :root {
+    --header-height: 5rem;
   }
 
   .topbar {
     height: auto;
-    min-height: 3.594rem;
-    padding: 0.477rem 0.358rem 0.477rem 2.266rem;
+    min-height: var(--header-height);
+    padding-block: 0.477rem;
+  }
+
+  /*
+   * Scrolled state: the bar tightens to 3.5rem so it takes less of the
+   * viewport once it is pinned over content. The padding comes down with it
+   * because the tallest child (the 2.591rem brand logo) plus the resting
+   * padding already measures ~3.55rem -- min-height alone would not bind.
+   */
+  /* --header-height, not a literal, so anything pinning under the bar (the
+     industry card stack) follows it into the condensed state. */
+  html[data-nav-stuck='true'] {
+    --header-height: 3.5rem;
+  }
+
+  html[data-nav-stuck='true'] .topbar {
+    min-height: var(--header-height);
+    padding-block: 0.35rem;
   }
 
   .nav-links {
@@ -1776,37 +2188,13 @@ h3 {
     gap: clamp(4rem, 11vw, 11.25rem);
     padding: 1.95rem 1.5rem 2.35rem;
   }
-
-  .services-showcase-pin {
-    padding: 9.5rem 0 10rem;
-  }
-
-  .services-showcase-viewport {
-    overflow: hidden;
-  }
-
-  .services-showcase-track {
-    gap: 2.4375rem;
-    padding-left: max(1.5rem, calc((100vw - var(--max)) / 2 + 13.4375rem));
-    padding-right: max(1.5rem, calc((100vw - var(--max)) / 2 + 1.5rem));
-  }
-
-  .services-showcase-card {
-    width: 23.4375rem;
-  }
-
-  .industries-showcase-intro {
-    position: sticky;
-    top: var(--industries-sticky-top);
+     .industries-showcase-intro {
     grid-template-columns: 7.5rem minmax(0, 51.279rem);
     gap: 4.7375rem;
-    width: min(100%, 76.375rem);
+    width: min(100%, var(--page-content));
     margin: 0 auto;
-    min-height: var(--industries-title-sticky-height);
     padding-right: 0;
     padding-left: 0;
-    z-index: 00;
-
   }
 
   .industries-showcase-stack::after {
@@ -1818,8 +2206,7 @@ h3 {
   .industries-showcase-card {
     position: sticky;
     top: calc(
-      var(--industries-sticky-top) + var(--industries-title-sticky-height) +
-        (var(--industry-index) * var(--industries-peek))
+      var(--industries-sticky-top) + (var(--industry-index) * var(--industries-peek))
     );
     z-index: calc(2 + var(--industry-index));
     display: grid;
@@ -1851,6 +2238,8 @@ h3 {
 
   .industries-showcase-card-title {
     font-size: 1.375rem;
+    letter-spacing: -0.05em; 
+
   }
 
   .industries-showcase-card-summary {
@@ -1860,7 +2249,7 @@ h3 {
   }
 
   .industries-showcase-card-summary p {
-    font-size: 1rem;
+    font-size: 2.2rem;
   }
 
   .industries-showcase-product-grid {
@@ -1879,6 +2268,7 @@ h3 {
   .industries-showcase-card-media {
     min-height: 31.375rem;
     margin: 1.3125rem 0 0;
+    border-radius: 5.75rem;
   }
 
   h1 {
@@ -1911,674 +2301,954 @@ h3 {
   }
 }
 
-/* Manufacturing process */
+/*
+ * Manufacturing process.
+ *
+ * One markup, two compositions. The base rules stack the steps as cards,
+ * which is what phones and reduced-motion users get. From 64rem up (and only
+ * without a reduced-motion preference) the same list becomes a pinned
+ * horizontal accordion: the section holds the viewport while each step
+ * collapses into a narrow rail and the next one slides in from the right,
+ * driven by the scroll position in HomeProcessSection.
+ */
 .manufacturing-process {
-  --process-blue: #2948df;
-  --process-line: rgba(255, 255, 255, 0.24);
-  --process-columns: minmax(0, 1fr);
-  width: 100vw;
-  min-height: 150svh;
-  margin: 0 calc(50% - 50vw);
-  padding: clamp(3.5rem, 8vw, 8rem) max(1rem, calc((100vw - 98rem) / 2));
-  color: #fff;
-  background: var(--process-blue);
+  --process-surface: #1c1c1c;
+  --process-line: rgba(255, 255, 255, 0.16);
+  --process-muted: #9a9a9a;
+  /* Wide enough that the longest label ("Machining") is not clipped. */
+  --process-rail: clamp(5rem, 6.2vw, 6rem);
+  /*
+   * The closing panel's fixed share. It holds this width for the whole
+   * sequence and only takes the rest on the final beat, so it reads as a
+   * fixed destination rather than something being squeezed.
+   *
+   * Trimmed from 32%/26rem: it was taking about a third of the row for a
+   * heading and a button, and the open step beside it had to fit a three-line
+   * title and its description in what was left.
+   */
+  --process-cta: clamp(15rem, 25%, 20rem);
+  /*
+   * Not a panel width -- the panels are sized by flex. This is the measure the
+   * copy inside one is laid out to, so a narrowing panel clips its title
+   * instead of reflowing the words.
+   */
+  --process-expand: clamp(18rem, 24vw, 24rem);
+  /*
+   * Fixed measures for the copy inside a panel. Both are set rather than left
+   * to fill the panel, because the panel's width animates and anything sized
+   * from it rewraps while it moves.
+   */
+  /* Inset on a card's leading edge, shared by the rail and the description. */
+  --process-card-pad: 0.875rem;
+  /* How far the copy dissolves at the edge it disappears behind. */
+  --process-fade-edge: 2.25rem;
+  /*
+   * In em, so it tracks the title's own font size. The longest word,
+   * "Inspection", measures ~5.16em and "Inspection &" ~6.07em at every
+   * breakpoint, so a box between the two breaks the longest title as
+   * "Final / Inspection / & Delivery" -- three lines, ampersand on the last.
+   *
+   * A vw width cannot do this: the font clamps at 2rem past ~1600px while vw
+   * keeps growing, so the value that fits the word at 1366 overflows it at
+   * 1920. That mismatch is what was slicing "Inspection" mid-word.
+   */
+  --process-title-width: 5.6em;
+  --process-body-width: clamp(12rem, 18vw, 18.5rem);
+  /* Breathing room between the frame rules and the copy inside them. */
+  --process-pad: clamp(1rem, 1.6vw, 1.75rem);
+  --process-handoff-cover: 0rem;
+  position: relative;
+  z-index: 30;
+  isolation: isolate;
+  width: var(--bleed-width);
+  margin: 0 var(--bleed-margin);
+  color: #ffffff;
+  background: var(--process-surface);
 }
 
-.process-header {
+/*
+ * The industries section's last card is sticky until this section covers it.
+ * The cover extends the surface upward by --process-handoff-cover so the
+ * hand-off has no seam, whichever breakpoint sets the distance.
+ */
+.manufacturing-process::before {
+  position: absolute;
+  z-index: 0;
+  top: calc(-1 * var(--process-handoff-cover));
+  right: 0;
+  left: 0;
+  height: var(--process-handoff-cover);
+  background: var(--process-surface);
+  content: '';
+  pointer-events: none;
+}
+
+.manufacturing-process > * {
+  position: relative;
+  z-index: 1;
+}
+
+.process-shell {
+  width: min(100%, var(--max));
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 5rem) var(--page-gutter) clamp(3rem, 7vw, 5rem);
+}
+
+.process-shell {
+  position: relative;
+}
+
+.process-head {
   display: grid;
-  grid-template-columns: var(--process-columns);
-  border: 1px solid var(--process-line);
+  gap: 1rem;
 }
 
-.process-header h2 {
-  margin: 0;
-  padding: 1.5rem;
-  color: #fff;
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(2rem, 3.15vw, 3.25rem);
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.process-specs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: 0.75rem 2rem;
-  padding: 0 1.5rem 0.75rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
-}
-
-.process-mark {
+/*
+ * The pinned section holds the viewport for several screens of scrolling, and
+ * without a cue that reads as "this is a track with an end" it can feel like
+ * the page has stopped. The rail fills as the sequence advances, so the reader
+ * can see both that it is moving and how much is left -- no copy required.
+ */
+.process-progress {
+  /* Stacked cards carry no scroll track, so the cue has nothing to report. */
   display: none;
-}
-
-.process-grid {
-  display: grid;
-  grid-template-columns: var(--process-columns);
-  border-right: 1px solid var(--process-line);
-  border-bottom: 1px solid var(--process-line);
-  border-left: 1px solid var(--process-line);
-}
-
-.process-column {
-  display: flex;
-  min-height: 31rem;
-  flex-direction: column;
-}
-
-.process-step {
-  display: flex;
-  min-height: 5.4rem;
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
   overflow: hidden;
-  border-bottom: 1px solid var(--process-line);
+  background: var(--process-line);
 }
 
-.process-step[data-active='true'] {
-  min-height: 20rem;
-}
-
-.process-step-trigger {
-  display: flex;
+.process-progress span {
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: inherit;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 1.25rem;
-  padding: 1.8rem 2.4rem;
-  border: 0;
-  color: inherit;
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  background: #ffffff;
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
-.process-step-trigger:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: -4px;
+/*
+ * Supporting copy, shown only where there is genuinely room for it: the full
+ * desktop composition. On a phone, and on a wide-but-short landscape laptop,
+ * it is the first thing to crowd the row and push the closing paragraph and
+ * the scroll cue off the bottom of the screen.
+ */
+.process-intro,
+.process-summary {
+  display: none;
+  margin: 0;
+  color: var(--process-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
-.process-step-visual {
+@media (min-width: 64rem) and (min-height: 45rem) {
+  .process-intro,
+  .process-summary {
+    display: block;
+  }
+}
+
+.process-summary {
+  max-width: 58ch;
+}
+
+/* Brand phrases carried in white against the muted line around them. */
+.process-emphasis {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.process-heading {
+  max-width: 14ch;
+  margin: 0 0 clamp(1.75rem, 3.5vw, 2.75rem);
+  color: #ffffff;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(2rem, 3.4vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+/* Stacked cards: the base composition. */
+.process-accordion {
   display: grid;
-  width: min(100%, 15rem);
-  flex: 1;
-  place-items: center;
-  align-self: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background-image:
-    linear-gradient(var(--process-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--process-line) 1px, transparent 1px);
-  background-size: 2rem 2rem;
+  margin: 0;
+  padding: 0;
+  gap: 1px;
+  border: 1px solid var(--process-line);
+  background: var(--process-line);
+  list-style: none;
 }
 
-.process-step-infographic {
+.process-panel {
+  background: var(--process-surface);
+}
+
+.process-panel-inner {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.process-panel-rail {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.process-panel-label {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.process-panel-icon {
+  display: grid;
+  width: 3.25rem;
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.process-panel-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.process-step-visual:has(.process-step-infographic) {
-  width: min(100%, 10rem);
-  height: auto;
-  flex: 0 0 auto;
-  aspect-ratio: 1;
-  border: 0;
-  background: none;
-}
-
-.process-step-visual > span {
-  display: grid;
-  width: 4.75rem;
-  aspect-ratio: 1;
-  place-items: center;
-  border: 1px solid #fff;
+.process-panel-title {
+  margin: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: 1.25rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
-.process-step-copy {
+.process-panel-description {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--process-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.process-panel--cta {
+  color: #ffffff;
+  background: var(--blue);
+}
+
+.process-panel--cta .process-panel-inner {
+  gap: 2rem;
+}
+
+.process-cta-copy {
   display: grid;
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
-.process-step-copy strong {
+.process-cta-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.process-cta-heading {
+  max-width: 12ch;
+  margin: 0;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(1.05rem, 1.25vw, 1.35rem);
-  line-height: 1.15;
-  letter-spacing: 0;
+  font-size: clamp(1.75rem, 3vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  padding: 0.5rem 0;
 }
 
-.process-step-title {
-  display: block;
+.process-cta-text {
+  max-width: 44ch;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
-.process-step-description {
-  max-width: 29rem;
-  color: rgba(255, 255, 255, 0.92);
-  font-family: var(--font-body), Roboto, sans-serif;
-  font-size: 0.95rem;
-  line-height: 1.45;
+.process-cta-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 0.25rem;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  justify-self: start;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
-.process-model-stage {
+.process-cta-link:hover,
+.process-cta-link:focus-visible {
+  color: var(--blue);
+  background: #ffffff;
+}
+
+/* Pinned accordion. */
+@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+  /*
+   * 0, not 2.5rem: this extended the dark surface up over the industries
+   * section to hide the seam while it slid over the pinned stack. The sections
+   * no longer overlap, so the same strip would just paint a dark band across
+   * the bottom of the industries band.
+   */
+  .manufacturing-process {
+    --process-handoff-cover: 0rem;
+  }
+
+  .process-pin {
+    position: relative;
+    display: flex;
+    min-height: 100svh;
+    flex-direction: column;
+    justify-content: center;
+    /* Clears the sticky bar, which otherwise crops the heading while pinned. */
+    padding-top: 3.5rem;
+  }
+
+  /*
+   * The row bleeds to both screen edges, so the closing panel finishes flush
+   * with the viewport instead of stopping at the page gutter. Only the
+   * heading stays on the container.
+   */
+  /*
+   * Every vertical value below is svh-led with a low floor. They used to
+   * clamp against rem floors, which never gave way on a short landscape
+   * laptop -- the stack simply overran the viewport and took the closing
+   * paragraph and the progress rail off the bottom of the screen with it.
+   */
+  .process-shell {
+    width: 100%;
+    padding-inline: 0;
+    padding-block: clamp(0.875rem, 3.5svh, 2.5rem);
+  }
+
+  .process-heading {
+    /* Height-capped as well as width-capped: wide-but-short is the hard case. */
+    font-size: min(clamp(1.75rem, 3.4vw, 3.25rem), 7svh);
+    margin-bottom: 0;
+  }
+
+  /*
+   * The grid: heading and its line on one row, the panel row banded by rules
+   * above and below, the closing paragraph beneath. Copy stays on the page
+   * container while the rules and the row run the full width.
+   */
+  /*
+   * Inset past the frame rule, not flush to it, so the copy sits inside the
+   * grid rather than appearing to hang off its edge.
+   */
+  .process-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    align-items: start;
+    gap: 2rem;
+    padding: 0 calc(var(--page-inset) + var(--process-pad)) clamp(0.75rem, 3svh, 2.25rem);
+  }
+
+  .process-intro {
+    text-align: right;
+  }
+
+  /*
+   * Margin, not padding: max-width is a border-box measure here, so an inset
+   * expressed as padding is subtracted from the 58ch measure and squeezes the
+   * paragraph into a narrow column.
+   */
+  /* Wider measure so the paragraph costs fewer lines where height is scarce. */
+  .process-summary {
+    max-width: min(100%, 96ch);
+    margin-inline: calc(var(--page-inset) + var(--process-pad));
+    padding-top: clamp(0.625rem, 2.5svh, 1.5rem);
+  }
+
+  /*
+   * The frame: one rule down each container edge, run off the pinned box so
+   * it reaches the top and bottom of the viewport rather than stopping at the
+   * shell's padding. Painted above the panels, which are transparent, so the
+   * rule carries straight through the band.
+   */
+  .process-pin::before,
+  .process-pin::after {
+    position: absolute;
+    z-index: 2;
+    /*
+     * Up over the hand-off strip, which extends this section's surface above
+     * its own box to cover the sticky industry card. Starting at 0 left the
+     * rules short of the top of the dark area.
+     */
+    top: calc(-1 * var(--process-handoff-cover));
+    bottom: 0;
+    width: 1px;
+    background: var(--process-line);
+    content: '';
+    pointer-events: none;
+  }
+
+  .process-pin::before {
+    left: var(--page-inset);
+  }
+
+  .process-pin::after {
+    right: var(--page-inset);
+  }
+
+  /*
+   * The rules run the full viewport while the cards stay on the page
+   * container, so the band reads as ruled paper the content sits on rather
+   * than a box floating in the middle.
+   */
+  .process-band {
+    border-block: 1px solid var(--process-line);
+  }
+
+  .process-progress {
+    display: block;
+  }
+
+  .process-accordion {
+    display: flex;
+    width: min(100%, var(--page-content));
+    height: clamp(12rem, 44svh, 23rem);
+    margin-inline: auto;
+    gap: 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+  }
+
+  /*
+   * Every step is on the row at once: the active one at --process-expand, the
+   * rest as rails. A step collapsing and the next expanding are equal and
+   * opposite, so the panels beyond the pair never move -- the row only
+   * redistributes around the boundary between them.
+   */
+  /*
+   * Sized by flex, not by width. A step contributes a rail once it has
+   * collapsed (flex-basis) and shares everything left over while it is open
+   * (flex-grow), so the row is always exactly full whatever the mix -- which
+   * is what lets the closing panel keep a fixed width without a gap opening
+   * beside it. min-width: 0 matters: flex items default to min-width: auto and
+   * would refuse to shrink below their content.
+   */
+  .process-panel {
+    position: relative;
+    flex: 0 0 0px;
+    min-width: 0;
+    overflow: hidden;
+    /*
+     * An inset shadow rather than a border, so a step still waiting at zero
+     * width paints nothing. A border would leave a stack of 1px slivers
+     * against the closing panel before any step has emerged.
+     */
+    box-shadow: inset -1px 0 0 var(--process-line);
+  }
+
+  /*
+   * Two steps are open at rest, so the row starts full rather than with one
+   * over-wide panel. Pre-JS this is also the resting state.
+   */
+  .process-panel[data-panel='step']:nth-child(-n + 2) {
+    flex-grow: 1;
+  }
+
+  /*
+   * The leftmost panel has no neighbour to its left to draw the divider, so
+   * the row carries the opening rule itself.
+   */
+  .process-accordion {
+    border-left: 1px solid var(--process-line);
+  }
+
+  .process-panel--cta {
+    flex: 0 0 var(--process-cta);
+    box-shadow: none;
+  }
+
+  .process-panel-inner {
+    display: block;
+    height: 100%;
+    /* Content holds its expanded measure so a narrowing panel clips it
+       rather than reflowing the words. */
+    min-width: var(--process-expand);
+    /* Tighter on the left: that edge carries the rail, which sits close to
+       its own divider, while the right still clears the title. */
+    padding: 1.25rem 1.5rem 1.25rem var(--process-card-pad);
+  }
+
+  .process-panel--cta .process-panel-inner {
+    min-width: 0;
+  }
+
+  .process-panel-rail {
+    width: calc(var(--process-rail) - var(--process-card-pad) - 0.5rem);
+    gap: 1.75rem;
+  }
+
+  /* One line each: a wrapped label would push the icon out of the rail. */
+  .process-panel-label {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  /*
+   * A fixed measure, anchored to the panel's right edge. Bounding it left and
+   * right instead made its width track the animating panel, so the text
+   * rewrapped mid-animation and the title visibly jumped between two and three
+   * lines. With a set width every title breaks the same way at every moment,
+   * and only its opacity changes.
+   *
+   * `text-wrap: balance` is deliberately absent for the same reason: it
+   * re-decides the break points as the box changes.
+   */
+  /*
+   * A window on the title, bounded left by the rail. The title inside keeps a
+   * fixed width and hugs the window's right edge, so as the panel narrows the
+   * title slides behind the rail and is clipped away instead of crossing over
+   * its own label. That is what lets it hold full opacity almost until the
+   * panel is a rail, rather than having to be faded out early to avoid the
+   * collision.
+   */
+  .process-panel-title-clip {
+    position: absolute;
+    top: 1.15rem;
+    right: 1.5rem;
+    left: calc(var(--process-rail) + 0.5rem);
+    /* Three lines at the size below, so the window is a fixed box whatever the
+       title's own line count turns out to be. */
+    height: 3.4em;
+    overflow: hidden;
+    /*
+     * Flex, not an absolutely positioned child, purely so the title can be
+     * centred vertically without a transform: GSAP drives the title's `x` as it
+     * slides in, and a translateY here would be overwritten by it. flex-end
+     * keeps the title on the window's right, which is what lets it slide behind
+     * the rail as the panel narrows.
+     */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /*
+     * A soft leading edge on top of the opacity fade, not instead of it. The
+     * title slides behind the rail as the panel narrows, and a straight cut
+     * sliced it mid-letter; this dissolves the last couple of rem. The
+     * description keeps a straight edge -- it is anchored left and fades on
+     * opacity alone.
+     */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--process-fade-edge));
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--process-fade-edge));
+    font-size: min(clamp(1.35rem, 2vw, 2rem), 4.5svh);
+  }
+
+  .process-panel-title {
+    /* In flow now -- the window above centres it. Relative only so it keeps a
+       stacking position; the fixed width is what the wrap depends on. */
+    position: relative;
+    inset: auto;
+    width: var(--process-title-width);
+    flex: 0 0 auto;
+    max-width: none;
+    /* Inherited from the window, so the two cannot drift apart. */
+    font-size: inherit;
+    /* Sits on the right, reads from the left: a straight left edge, ragged right. */
+    text-align: left;
+  }
+
+  /*
+   * The description's own window, mirroring the title's -- and, like the title,
+   * with no trailing-edge mask: the copy fades as a block on opacity rather
+   * than dissolving into the panel edge.
+   */
+  .process-panel-body-clip {
+    position: absolute;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    left: var(--process-card-pad);
+    overflow: hidden;
+  }
+
+  /* Fixed width for the same reason as the title above. */
+  .process-panel-description {
+    position: static;
+    width: var(--process-body-width);
+    max-width: none;
+    font-size: 1rem;
+  }
+
+  /*
+   * Sized to fit the panel rather than the viewport: at its fixed width the
+   * closing panel is the narrowest thing in the row, and viewport-scaled type
+   * pushed the button off the bottom edge.
+   */
+  /*
+   * This panel holds the most copy in the shortest box, so every part of it
+   * is height-aware. On a landscape laptop the fixed sizes pushed the button
+   * straight off the bottom edge.
+   */
+  .process-panel--cta .process-panel-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(0.5rem, 1.6svh, 1rem);
+    padding: clamp(0.875rem, 2.2svh, 1.25rem) 1.5rem;
+  }
+
+  .process-cta-copy {
+    gap: clamp(0.375rem, 1svh, 0.75rem);
+  }
+
+  .process-cta-label {
+    font-size: 0.6875rem;
+  }
+
+  /* Fixed for the same reason as the step titles: this panel widens too. */
+  .process-cta-heading {
+    font-size: min(clamp(1.5rem, 2.2vw, 2.125rem), 4.6svh);
+  }
+
+  .process-cta-text {
+    font-size: min(0.875rem, 2.3svh);
+    line-height: 1.4;
+  }
+
+  .process-cta-link {
+    align-self: flex-end;
+    justify-self: auto;
+    min-width: 0;
+    min-height: clamp(2.125rem, 5.5svh, 2.5rem);
+    padding: 0.4rem 1.15rem;
+    font-size: min(0.875rem, 2.3svh);
+  }
+}
+
+/*
+ * Locations. An editorial two-column spread: a tall portrait aerial that
+ * enters with the section and then holds against the foot of the viewport
+ * while the headline and the two facilities scroll up past it, each revealing
+ * as it rises. White ground, black type, thin blue rules. The held image and
+ * the scroll-linked reveals run from 64rem up without a reduced-motion
+ * preference; below that, or with one, it is a plain stack.
+ */
+.locations {
+  --locations-pad: clamp(1.25rem, 3svh, 2rem);
+  /* The gap the held image keeps to the foot of the viewport. */
+  --locations-bottom-pad: 1.5rem;
+  --locations-gap: clamp(2rem, 5vw, 5rem);
+  --locations-media-col: minmax(0, 33%);
+  /* How far a facility is set in from the copy's left edge; the rule runs
+     back across it, so the two facilities step down and to the right. */
+  --locations-indent: 0px;
+  --locations-ink: #111111;
+  --locations-muted: #4a4a4a;
   position: relative;
-  min-height: 31rem;
+  width: var(--bleed-width);
+  margin: 0 var(--bleed-margin);
+  padding: clamp(2rem, 5svh, 3.25rem) 0 clamp(2.5rem, 6svh, 4rem);
+  color: var(--locations-ink);
+  background: #ffffff;
+}
+
+.locations-inner {
+  width: min(100%, var(--max));
+  margin: 0 auto;
+  padding-inline: var(--page-gutter);
+}
+
+.locations-grid {
+  display: grid;
+  gap: var(--locations-gap);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.locations-media {
+  margin: 0;
+}
+
+.locations-media-frame {
+  position: relative;
+  height: clamp(22rem, 70svh, 36rem);
   overflow: hidden;
-  background: var(--process-blue);
+  border-radius: 0.375rem;
+  background: #e3e6ea;
 }
 
-.process-model-stage::after {
+/* Taller than the frame so the drift never exposes an edge. */
+.locations-media-image {
   position: absolute;
-  inset: 0;
-  border: 0;
-  content: '';
-  pointer-events: none;
+  top: -5%;
+  right: 0;
+  left: 0;
+  height: 110%;
 }
 
-.process-model-stage canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.process-model-fallback {
+.locations-media-image img {
+  display: block;
   width: 100%;
   height: 100%;
-  background-image:
-    linear-gradient(var(--process-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--process-line) 1px, transparent 1px);
-  background-size: 3rem 3rem;
+  object-fit: cover;
+  object-position: center;
 }
 
-@media (min-width: 64rem) {
-  .manufacturing-process {
-    --process-columns: repeat(2, minmax(0, 1fr)) minmax(0, 2fr);
-    padding-top: max(5.5rem, calc((100svh - 41.75rem) / 2));
-    padding-bottom: max(2rem, calc((100svh - 41.75rem) / 2));
-  }
-
-  .process-header {
-    grid-template-columns: var(--process-columns);
-    grid-template-rows: repeat(2, 3.75rem);
-    min-height: 7.5rem;
-  }
-
-  .process-header h2 {
-    grid-column: 1 / 3;
-    grid-row: 1 / span 2;
-    padding: 1.35rem 1.55rem;
-  }
-
-  .process-specs {
-    grid-column: 1 / 3;
-    grid-row: 2;
-    margin-left: 30.75%;
-    padding: 0 0.75rem 0.75rem 0;
-  }
-
-  .process-mark {
-    display: grid;
-    grid-column: 3;
-    grid-row: 1 / span 2;
-    min-height: 7.5rem;
-    place-items: start end;
-    border-left: 1px solid var(--process-line);
-    background-image:
-      linear-gradient(var(--process-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--process-line) 1px, transparent 1px);
-    background-size: 3.75rem 3.75rem;
-  }
-
-  .process-mark span {
-    display: grid;
-    width: 11.25rem;
-    height: 3.75rem;
-    place-items: center;
-    border-top: 0;
-    border-right: 0;
-    border: 1px solid #fff;
-    font-family: var(--font-title), Inter, sans-serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-
-  .process-grid {
-    grid-template-columns: var(--process-columns);
-  }
-
-  .process-column-left {
-    grid-column: 1;
-  }
-
-  .process-column-right {
-    grid-column: 2;
-  }
-
-  .process-model-stage {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-  .process-column,
-  .process-model-stage {
-    height: min(34.25rem, calc(100svh - 15rem));
-    min-height: 0;
-  }
-
-  .process-column-left,
-  .process-column-right {
-    border-right: 1px solid var(--process-line);
-  }
-
-  .process-step {
-    flex-basis: 5.4rem;
-  }
-
-  .process-step[data-fill-column='true'] {
-    flex-basis: 0;
-  }
-
-  .process-step[data-active='true'] {
-    min-height: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .process-step,
-  .process-step * {
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Global delivery map */
-.global-delivery {
-  position: relative;
-  display: grid;
-  width: 100vw;
-  min-height: 100svh;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  margin: 0 calc(50% - 50vw);
-  overflow: hidden;
-  color: #ffffff;
-  background: #2d2d2d;
-}
-
-.global-delivery-main {
-  position: relative;
-  display: grid;
-  min-height: 41rem;
-  align-items: center;
-  padding: clamp(6.25rem, 12vh, 8rem) 1rem 2rem;
-}
-
-.global-delivery-copy {
-  position: relative;
-  z-index: 3;
-  min-width: 200rem;
-}
-
-.global-delivery h2 {
-  display: grid;
-  max-width: 24ch;
-  margin: 0;
+/* The country mark is set over the foot of the photograph, running off its
+   left edge, at a size that makes it part of the picture, not a caption. */
+.locations-media-mark {
+  position: absolute;
+  bottom: -0.06em;
+  left: -0.04em;
   color: #ffffff;
   font-family: var(--font-title), Inter, sans-serif;
-  font-size: clamp(2.55rem, 3.37vw, 3.25rem);
-  font-weight: 300;
-  line-height: 0.93;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  font-size: clamp(5rem, 11vw, 11rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  pointer-events: none;
+  user-select: none;
 }
 
-.global-delivery h2 strong,
-.global-delivery h2 span {
+.locations-copy {
+  display: grid;
+  align-content: start;
+  gap: clamp(2.5rem, 6svh, 3.5rem);
+}
+
+.locations-title {
+  margin: 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.9rem, 3.05vw, 3rem);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.locations-title-line {
   display: block;
 }
 
-.global-delivery h2 strong {
-  font-weight: 800;
-}
-
-.global-delivery-africa {
-  display: flex !important;
-  align-items: baseline;
-  gap: 0.22em;
-}
-
-.global-delivery-africa i {
-  font-style: normal;
+.locations-title-line--light {
   font-weight: 300;
 }
 
-.globe-branches {
-  display: grid;
-  max-width: 34rem;
-  gap: 1rem;
-  margin-top: 4.75rem;
-}
-
-.globe-branch-card {
-  position: relative;
-  display: grid;
-  width: 100%;
-  min-height: 10.75rem;
-  align-content: start;
-  gap: 1.15rem;
-  padding: 1.65rem 0.75rem 0.8rem;
-  color: #303030;
-  background: #f5f5f5;
-  box-shadow: 0 2rem 2rem rgba(0, 0, 0, 0.14);
-  border-bottom: 1px solid rgba(4, 71, 255, 0.08);
-}
-
-.globe-branch-card::after {
-  position: absolute;
-  right: 0.75rem;
-  bottom: -0.1875rem;
-  left: 0.75rem;
-  height: 0.375rem;
-  background: rgba(0, 0, 0, 0.2);
-  content: '';
-  filter: blur(0.375rem);
-  pointer-events: none;
-}
-
-.globe-branch-card h3 {
-  max-width: 8ch;
-  margin: 0;
-  color: #303030;
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: 1.45rem;
-  font-weight: 800;
-  line-height: 0.92;
+/* Small caps line under the headline, in the accent. */
+.locations-reach {
+  margin: 1.25rem 0 0;
+  color: var(--blue);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.globe-branch-card h3::first-line {
+.locations-reach-dot {
+  margin: 0 0.6em;
+}
+
+.locations-list {
+  display: grid;
+  gap: clamp(2.5rem, 6svh, 3.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.locations-item {
+  padding-left: var(--locations-indent);
+}
+
+/* Heading and rule share a box only as wide as the words, so the rule ends
+   where the name ends and -- through the negative margin -- starts back at
+   the copy column's left edge however far the facility is set in. */
+.locations-item-head {
+  width: max-content;
+  max-width: 100%;
+}
+
+.locations-name {
+  display: grid;
+  align-content: start;
+  margin: 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.locations-name strong {
   font-weight: 800;
 }
 
-.globe-branch-card p,
-.globe-branch-card a {
-  margin: 0;
-  color: #303030;
-  font-family: var(--font-body), Roboto, sans-serif;
-  font-size: 0.76rem;
-  line-height: 1.28;
-  letter-spacing: 0;
+.locations-name span {
+  font-weight: 300;
 }
 
-.globe-branch-card a {
+.locations-rule {
+  display: block;
+  height: 1px;
+  margin: 0.75rem 0 0 calc(-1 * var(--locations-indent));
+  background: var(--blue);
+  transform-origin: left center;
+}
+
+.locations-detail {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+}
+
+.locations-address,
+.locations-phone {
+  margin: 0;
+  color: var(--locations-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.locations-phone {
+  width: fit-content;
+  color: var(--locations-ink);
+  font-weight: 600;
   text-decoration: none;
 }
 
-.globe-stage {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  min-height: 25rem;
-  margin-top: 3rem;
-  overflow: hidden;
-  isolation: isolate;
+.locations-phone:hover,
+.locations-phone:focus-visible {
+  color: var(--blue);
+  text-decoration: underline;
 }
 
-.globe-map-background {
-  position: absolute;
-  inset: -8% -18% -10% -6%;
-  background-image:
-    /* linear-gradient(90deg, #2d2d2d 0%, rgba(45, 45, 45, 0.62) 24%, rgba(45, 45, 45, 0) 55%), */
-    /* radial-gradient(circle at 62% 48%, rgba(255, 255, 255, 0.18), transparent 28%), */ url('/images/home/delivery-map.png');
-  background-position:
-    center,
-    center,
-    center right;
-  background-repeat: no-repeat;
-  background-size: cover, cover, contain;
-  content: '';
-  filter: drop-shadow(0 2rem 3.5rem rgba(0, 0, 0, 0.28));
-  opacity: 0.95;
-}
-
-.globe-label-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-.globe-location-label {
-  position: absolute;
-  display: grid;
-  min-width: 6.25rem;
-  min-height: 2.35rem;
-  place-items: center;
-  padding: 0.5rem 1.15rem;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #1f42e3;
-  box-shadow: 0 1.35rem 1.4rem rgba(0, 0, 0, 0.14);
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.globe-location-europe {
-  top: 24%;
-  left: 34%;
-  min-width: 5.1rem;
-  min-height: 2rem;
-  background: #cbd3f9;
-  font-size: 0.7rem;
-}
-
-.globe-location-uae {
-  top: 47%;
-  left: 50%;
-  min-width: 8.85rem;
-  min-height: 3.4rem;
-  font-size: 1.2rem;
-}
-
-.globe-location-saudi {
-  top: 35%;
-  right: 8%;
-}
-
-.globe-location-africa {
-  top: 69%;
-  right: 5%;
-}
-
-.globe-clients {
-  position: relative;
-  z-index: 5;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  background: #2d2d2d;
-}
-
-.our-clients-title {
-  margin-top: 150px;
-}
-
-.globe-clients > p {
-  width: min(100%, 101rem);
-  margin: 0 auto;
-  padding: 0.95rem 1rem 0.8rem;
-  color: #ffffff;
-  font-family: var(--font-body), Roboto, sans-serif;
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.globe-client-viewport {
-  height: 5.25rem;
-  overflow: hidden;
-}
-
-.globe-client-rail {
-  display: flex;
-  width: max-content;
-  height: 100%;
-  animation: globe-client-slide 28s linear infinite;
-  will-change: transform;
-}
-
-.globe-client-track {
-  display: flex;
-  min-width: max-content;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: clamp(4rem, 8vw, 9rem);
-  padding-right: clamp(4rem, 8vw, 9rem);
-}
-
-.globe-client-logo {
-  display: inline-flex;
-  min-width: 5.5rem;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: 1.55rem;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.globe-client-rappi,
-.globe-client-vinted {
-  font-style: italic;
-  font-weight: 800;
-}
-
-.globe-client-ge {
-  width: 3.5rem;
-  min-width: 3.5rem;
-  aspect-ratio: 1;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  font-family: Georgia, serif;
-}
-
-.globe-client-glovo {
-  font-size: 1.8rem;
-}
-
-.globe-client-telenor,
-.globe-client-fairmoney {
-  font-size: 1.15rem;
-}
-
-@keyframes globe-client-slide {
-  from {
-    transform: translate3d(0, 0, 0);
+/* Editorial spread. */
+@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+  .locations-grid {
+    /*
+     * Taller than the image on purpose, and only just: that surplus is the
+     * whole scroll the image spends held at the foot of the viewport, so the
+     * story stays compact instead of running for screens of empty white.
+     */
+    min-height: 118svh;
+    grid-template-columns: var(--locations-media-col) minmax(0, 1fr);
+    align-items: start;
   }
 
-  to {
-    transform: translate3d(-50%, 0, 0);
+  /*
+   * Bottom-anchored, not top: the image rises in with the section, locks with
+   * its lower edge --locations-bottom-pad above the foot of the viewport for
+   * the main phase, then lifts away with the section when the column ends.
+   * Its height is what is left of the viewport between the bar and that gap.
+   */
+  .locations-media {
+    /*
+     * align-self: end is load-bearing, not decoration. A sticky box with a
+     * bottom offset is only ever pulled *up*, towards the foot of the
+     * viewport, when its resting place is below it -- so the figure has to
+     * rest at the foot of its column. Held there, it is clamped to the top of
+     * the column while the section is still rising (it enters with the
+     * section), locks once the column has cleared, and settles back at the
+     * column's foot to leave with the section.
+     */
+    align-self: end;
+    position: sticky;
+    bottom: var(--locations-bottom-pad);
+  }
+
+  .locations-media-frame {
+    height: calc(
+      100svh - var(--header-height) - var(--locations-bottom-pad) - var(--locations-pad)
+    );
+  }
+
+  /*
+   * The gaps are sized against one budget: the copy has to be no taller than
+   * the held image plus its gap to the foot of the viewport, because that is
+   * exactly the room there is when the image locks. Filled to it, the three
+   * groups read as the static layout at that moment and the column runs out
+   * at nearly the same time as the picture -- spread further and Thoban would
+   * be below the fold, spread less and the section ends on empty white.
+   */
+  .locations-copy {
+    gap: clamp(2rem, 12svh, 6.5rem);
+    padding-top: 0.35em;
+  }
+
+  .locations-list {
+    gap: clamp(2rem, 14svh, 7.5rem);
+  }
+
+  /* The facilities step down and to the right, the second further in. */
+  .locations-item[data-location='1'] {
+    --locations-indent: clamp(1.5rem, 5vw, 4.5rem);
+  }
+
+  .locations-item[data-location='2'] {
+    --locations-indent: clamp(4rem, 15vw, 12rem);
+  }
+
+  .locations-detail {
+    padding-top: 1.5rem;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .globe-client-rail {
-    animation: none;
-  }
-}
-
-@media (min-width: 40rem) {
-  .globe-branches {
-    grid-template-columns: repeat(2, minmax(0, clamp(11rem, 12.27vw, 15.5rem)));
-  }
-
-  .globe-branch-card:nth-child(2) {
-    transform: translateY(1.9rem);
-  }
-}
-
-@media (min-width: 64rem) {
-  .global-delivery {
-    min-height: clamp(44rem, 48.69vw, 61.5rem);
+/*
+ * Short desktops -- a wide laptop at 620px or so -- have far less room beside
+ * the image, and the same budget still applies. Everything comes down a step
+ * so the whole composition still lands in one screen rather than leaving the
+ * last phone number under the fold.
+ */
+@media (min-width: 64rem) and (max-height: 46rem) and (prefers-reduced-motion: no-preference) {
+  .locations-title {
+    font-size: clamp(1.6rem, 2.4vw, 2.25rem);
   }
 
-  .global-delivery-main {
-    grid-template-columns: minmax(27rem, 0.92fr) minmax(35rem, 1.08fr);
-    width: min(100%, 101rem);
-    min-height: calc(clamp(44rem, 48.69vw, 61.5rem) - 8.25rem);
-    margin: 0 auto;
-    padding: clamp(6rem, 9.85vw, 12.4rem) max(1rem, 9.6vw) 0rem;
+  .locations-reach {
+    margin-top: 0.85rem;
   }
 
-  .global-delivery-copy {
-    align-self: start;
-    min-width: 200rem;
+  .locations-copy {
+    gap: clamp(1.5rem, 7svh, 3rem);
   }
 
-  .globe-branches {
-    margin-top: clamp(3.6rem, 4.1vw, 5.2rem);
+  .locations-list {
+    gap: clamp(1.5rem, 8svh, 3.5rem);
   }
 
-  .globe-branch-card {
-    min-height: clamp(7.6rem, 8.5vw, 10.75rem);
-    gap: clamp(0.75rem, 0.95vw, 1.15rem);
-    padding-top: clamp(1.1rem, 1.54vw, 1.65rem);
+  .locations-name {
+    font-size: 1.25rem;
   }
 
-  .globe-branch-card h3 {
-    font-size: clamp(1.05rem, 1.29vw, 1.625rem);
+  .locations-rule {
+    margin-top: 0.5rem;
   }
 
-  .globe-branch-card p,
-  .globe-branch-card a {
-    font-size: clamp(0.58rem, 0.66vw, 0.76rem);
+  .locations-detail {
+    gap: 0.5rem;
+    padding-top: 0.9rem;
   }
 
-  .globe-stage {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: min(57vw, 66rem);
-    height: min(36vw, 42rem);
-    min-height: 25rem;
-    margin: 0;
-  }
-
-  .globe-map-background {
-    inset: -14% -8% -18% -12%;
-  }
-
-  .globe-location-europe {
-    left: 38%;
-  }
-
-  .globe-location-uae {
-    left: 53%;
-  }
-
-  .globe-location-saudi {
-    right: auto;
-    left: 73%;
-  }
-
-  .globe-location-africa {
-    right: auto;
-    left: 80%;
-  }
-
-  .globe-clients > p {
-    padding-right: 1rem;
-    padding-left: 1rem;
-  }
-
-  .globe-client-track {
-    padding-left: max(1rem, calc((100vw - 101rem) / 2 + 1rem));
+  .locations-address,
+  .locations-phone {
+    font-size: 0.875rem;
+    line-height: 1.45;
   }
 }
 
@@ -2604,7 +3274,7 @@ h3 {
   margin-bottom: 0;
 }
 
-.catalog-grid,
+.catalogue-grid,
 .relationship-grid,
 .article-list {
   display: grid;
@@ -3070,7 +3740,6 @@ h3 {
   border-top: 1px solid var(--line);
   padding-top: 1rem;
 }
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -3080,7 +3749,6 @@ h3 {
     animation: none;
   }
 }
-
 @media (min-width: 40rem) {
   .page-hero,
   .product-detail-hero,
@@ -3088,7 +3756,7 @@ h3 {
     padding: 4rem 1.5rem;
   }
 
-  .catalog-grid,
+  .catalogue-grid,
   .relationship-grid,
   .footer-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3112,17 +3780,16 @@ h3 {
     grid-column: 1 / -1;
   }
 }
-
 @media (min-width: 64rem) {
   .product-detail-hero {
     grid-template-columns: minmax(0, 0.85fr) minmax(28rem, 1fr);
   }
 
-  .catalog-grid {
+  .catalogue-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .shop-section .catalog-grid {
+  .shop-section .catalogue-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
@@ -3134,9 +3801,9 @@ h3 {
 /* Keep the full-bleed Figma footer above authoritative over legacy footer rules. */
 footer.site-footer {
   display: flex;
-  width: 100vw;
+  width: var(--bleed-width);
   min-height: 100svh;
-  margin: 0 calc(50% - 50vw);
+  margin: 0 var(--bleed-margin);
   padding: clamp(2rem, 7vw, 6.4rem) clamp(1rem, 6.7vw, 7.25rem) 1.4rem;
   flex-direction: column;
   align-items: stretch;
@@ -3171,7 +3838,6 @@ footer.site-footer .footer-copyright {
 footer.site-footer p {
   color: #fcfcfc;
 }
-
 @media (min-width: 90rem) {
   footer.site-footer {
     padding-inline: max(7.25rem, calc((100vw - 93rem) / 2));
@@ -3182,9 +3848,9 @@ footer.site-footer p {
 footer.site-footer {
   position: relative;
   display: flex;
-  width: 100vw;
+  width: var(--bleed-width);
   min-height: 100svh;
-  margin: 0 calc(50% - 50vw);
+  margin: 0 var(--bleed-margin);
   padding: 0.625rem 0 0.75rem;
   flex-direction: column;
   align-items: center;
@@ -3214,7 +3880,7 @@ footer.site-footer dd {
   --figma-footer-grid-cell: calc(100% / 29);
 
   position: relative;
-  width: calc(100% - 1.25rem);
+  width: var(--page-content);
   aspect-ratio: 4.814 / 1;
   flex: 0 0 auto;
   overflow: hidden;
@@ -3250,7 +3916,8 @@ footer.site-footer dd {
 
 .figma-footer-content {
   display: grid;
-  width: calc(100% - 2.75rem);
+  width: var(--page-content);
+  /* The 365px frame's single-column measure; released from 40rem up. */
   max-width: 20.0625rem;
   gap: 3.4375rem;
   font-size: 0.875rem;
@@ -3467,7 +4134,6 @@ footer.site-footer .figma-footer-copyright {
   line-height: 1.19;
   text-align: center;
 }
-
 @media (min-width: 40rem) {
   footer.site-footer {
     padding: 0 0 0.7667rem;
@@ -3476,9 +4142,15 @@ footer.site-footer .figma-footer-copyright {
     border-radius: 0;
   }
 
+  /*
+   * The site's one page container, not a width of the footer's own. The bar
+   * is full-bleed (100vw out of .site-shell), so nothing about its own box
+   * says where the gutter is; min(82.5vw, 99rem) put the wordmark and the
+   * contact columns a good 100px outside every section above them.
+   */
   .figma-footer-wordmark,
   .figma-footer-content {
-    width: min(82.5vw, 99rem);
+    width: var(--page-content);
     max-width: none;
   }
 
@@ -3570,8 +4242,7 @@ footer.site-footer .figma-footer-copyright {
 }
 
 /* Laptop: size the footer to its content (no full-viewport gap above the
-   wordmark) and scale the text up from the cramped tablet frame. */
-@media (min-width: 64rem) {
+   wordmark) and scale the text up from the cramped tablet frame. */@media (min-width: 64rem) {
   footer.site-footer {
     min-height: auto;
     padding-block: clamp(2.5rem, 5vw, 4rem);
@@ -3614,7 +4285,6 @@ footer.site-footer .figma-footer-copyright {
     font-size: 0.9375rem;
   }
 }
-
 @media (min-width: 120rem) {
   footer.site-footer {
     padding-block: clamp(3rem, 4vw, 4.5rem);
@@ -3703,4 +4373,2804 @@ footer.site-footer .figma-footer-copyright {
   footer.site-footer .figma-footer-copyright {
     font-size: 1.25rem;
   }
+}
+
+/* ===== Home responsive composition ===== */
+
+/*
+ * Home page responsive composition.
+ * Laptop/tablet (1024px) is the structural reference; mobile and desktop
+ * retain the same semantic tree and animation state.
+ */
+
+/*
+ * The header keeps its flow height on inner pages; over the hero it floats,
+ * so the hero owns the top of the document at every header height.
+ */
+.site-shell:has([data-responsive-layout='hero']) .nav-container {
+  height: 0;
+}
+
+[data-responsive-layout='hero'] {
+  --hero-description-color: rgba(255, 255, 255, 0.9);
+  --hero-heading-color: #ffffff;
+  --hero-marquee-height: 3.875rem;
+  --hero-heading-overlay-height: 9.75rem;
+  /*
+   * Narrowest measure, in ems, that breaks the tagline into two lines (17em
+   * measured; the extra half gives short-copy variants room). Unitless so the
+   * same number caps the headline box and divides the column width into the
+   * largest type that still fits that measure.
+   */
+  --hero-heading-measure: 17.5;
+  /*
+   * The band bleeds full width but its copy rides the same container as every
+   * section below it, so the headline starts on the page's inline edge rather
+   * than to the left of it.
+   *
+   * .hero-content is already capped at --max and centred, so the gutter alone
+   * lands its edges on the page container -- the standalone clamp this used to
+   * hold sat ~16px inside the container instead, leaving the headline short of
+   * the logo and the description short of the header CTA.
+   */
+  --hero-inline-padding: var(--page-gutter);
+  --hero-content-gap: 2.5rem;
+  --hero-summary-reserved-height: clamp(10.5rem, 30svh, 14rem);
+  --hero-text-height: auto;
+  --hero-video-height: calc(100svh - var(--hero-summary-reserved-height));
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-direction: column;
+  min-height: 100svh;
+  margin-top: 0;
+  overflow: visible;
+  background: #fff;
+}
+
+[data-responsive-layout='hero'] .hero-video-layer {
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
+  height: var(--hero-video-height);
+}
+
+[data-responsive-layout='hero'] .hero-image,
+[data-responsive-layout='hero'] .hero-image img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-responsive-layout='hero'] .hero-image {
+  z-index: 1;
+}
+
+[data-responsive-layout='hero'] .hero-image img {
+  object-fit: cover;
+}
+
+[data-responsive-layout='hero'] .hero-video-placeholder {
+  z-index: 0;
+}
+
+[data-responsive-layout='hero'] .hero-cover-video--mobile {
+  display: block;
+}
+
+[data-responsive-layout='hero'] .hero-content-band {
+  display: block;
+  width: 100%;
+  margin-top: calc(-1 * var(--hero-heading-overlay-height));
+  min-height: 0;
+  border-top: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(0.6px);
+}
+
+[data-responsive-layout='hero'] .hero-content {
+  display: grid;
+  width: 100%;
+  height: auto;
+  max-width: var(--max);
+  margin-inline: auto;
+  align-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+[data-responsive-layout='hero'] .hero-copy {
+  position: static;
+  box-sizing: border-box;
+  display: grid;
+  width: 100%;
+  min-height: var(--hero-heading-overlay-height);
+  max-width: none;
+  align-items: center;
+  padding: 1.125rem 1.375rem 1rem 1.5625rem;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+[data-responsive-layout='hero'] .hero-copy .eyebrow {
+  display: none;
+}
+
+[data-responsive-layout='hero'] h1 {
+  max-width: 11em;
+  margin: 0;
+  color: var(--hero-heading-color);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.9375rem;
+  font-weight: 400;
+  line-height: 0.97;
+  letter-spacing: -0.01em;
+}
+
+[data-responsive-layout='hero'] .hero-summary {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: var(--hero-summary-reserved-height);
+  gap: 0.875rem;
+  padding: 1rem 1.375rem 1.25rem 1.5625rem;
+  background: transparent;
+}
+
+[data-responsive-layout='hero'] .hero-text {
+  /* Hidden on mobile and laptop; the desktop band is the only place it fits. */
+  display: none;
+  margin: 0;
+  color: var(--hero-description-color);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+}
+
+[data-responsive-layout='hero'] .hero-actions {
+  display: flex;
+  align-items: center;
+  /* grid-template-columns: repeat(2, minmax(0, 1fr)); */
+  gap: 0.75rem;
+  width: 80%;
+}
+
+[data-responsive-layout='hero'] .button {
+  width: 100%;
+  min-width: 0;
+  min-height: 1.6875rem;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+[data-responsive-layout='hero'] .hero-services-marquee {
+  display: block;
+}
+
+[data-responsive-layout='industries'] {
+  --industries-card-height: 38.1875rem;
+  --industries-peek: 3.5625rem;
+  /* Flush under the sticky header. IndustriesStackController measures the bar
+     and writes --header-height onto this section; the :root value is the
+     pre-hydration fallback. */
+  --industries-sticky-top: var(--header-height);
+  --industries-title-sticky-height: 10.5rem;
+  --industries-title-mask-height: 1.25rem;
+  /* Cards pin where the title used to. The title's own height and mask are no
+     longer added in: with the title scrolling away there is nothing above the
+     stack to clear, and keeping them left a dead band under the header. */
+  --industries-card-sticky-top: var(--industries-sticky-top);
+  --industries-label-column: 1.5rem;
+  --industries-title-gap: 0.9375rem;
+  --industries-inline-padding: 0.375rem;
+  --industries-intro-padding: 1.25rem;
+  --industries-counter-left: 0.375rem;
+  --industries-gallery-bleed: 0rem;
+  --industries-product-start-offset: 0rem;
+  --industries-product-gap: 0.5rem;
+  --industries-product-half-gap: 0.25rem;
+  --industries-product-width: 10rem;
+  /* How far the product rail dissolves at each end, in place of a hard cut. */
+  --industries-rail-fade: 2rem;
+  /* Breathing room around the hero image, on all four sides. Kept modest so the
+     slice left in a collapsed strip is still a legible band. */
+  --industries-media-inset: 0.875rem;
+  /*
+   * Fraction of the available height the hero fills. 1 -- the image runs the
+   * full height of its frame, so the card ends where the image ends and a
+   * collapsed strip keeps equal padding above and below it.
+   *
+   * This was 0.6667 to keep the hero a supporting image beside the copy, but
+   * that left a third of every card empty below the image, and on laptop the
+   * hero read as half-size. Turn it back down if the full-height image starts
+   * dominating the row again.
+   */
+  --industries-media-scale: 1;
+  /* Inset of the CTA bar from the image's edges. */
+  --industries-cta-margin: 1rem;
+  /*
+   * One value for the CTA's fade, used as both the opacity duration and the
+   * delay that holds its resize back until that fade has finished. The two
+   * have to stay equal or the pill snaps into view at one end or the other.
+   */
+  --industries-cta-fade: 180ms;
+  /*
+   * How far out of focus an arriving card's contents start. Scaled by the same
+   * progress as the fade, so the two resolve together -- raise it for a softer
+   * arrival, set it to 0 to keep the fade alone.
+   */
+  --industries-enter-blur: 0.875rem;
+  --industries-card-bottom-gap: 2.5rem;
+  /* Space after the last card, now that this is ordinary section padding
+     rather than the distance the next section used to overlap by. */
+  --industries-end-gap: 3rem;
+  /*
+   * No negative margin. This used to pull the following section up by a
+   * viewport so it slid over the pinned stack -- but that reads as the
+   * industries band being stuck while another section drives over it. Once the
+   * cards have collected, the whole section scrolls away and the next one
+   * follows it, so the space below is ordinary padding.
+   */
+  margin-bottom: 0;
+  padding-bottom: var(--industries-end-gap);
+  padding-top: 3rem;
+}
+
+/*
+ * The title scrolls away with the rest of the band. It used to pin above the
+ * card stack, which is why it carried a z-index, a reserved sticky height and
+ * two full-bleed white masks (one covering the gap above it, one the seam
+ * below) to hide cards sliding underneath. With nothing to hide, all of that
+ * would only paint over the section above.
+ */
+/* Centred band: eyebrow over heading, both on the page's centre line. */
+[data-responsive-layout='industries'] .industries-showcase-intro {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 0.75rem;
+  padding: 1.5rem var(--page-inset) 2.5rem;
+  background: #ffffff;
+  text-align: center;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-eyebrow {
+  /* Centred with the heading, so no narrow measure forcing an odd wrap. */
+  max-width: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-responsive-layout='industries'] h2 {
+  width: min(100%, 13ch);
+  max-width: none;
+  font-size: 1.875rem;
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-stack {
+  padding-inline: 0;
+  /*
+   * The stages overlap by design, so the last one reaches (count - 1) peeks
+   * below where the stack's flow ends. Without this the deepest stage -- and
+   * the card pinned inside it -- hangs over the following section.
+   */
+  padding-bottom: calc((var(--industries-count, 6) - 1) * var(--industries-peek));
+}
+
+/*
+ * No trailing spacer. It existed only to give the last card somewhere to stay
+ * pinned while the section's negative bottom margin dragged the next section
+ * over it. With that overlap gone the spacer is a viewport of dead scroll.
+ */
+[data-responsive-layout='industries'] .industries-showcase-stack::after {
+  display: none;
+  content: '';
+}
+
+/*
+ * Each card sits in its own stage so the collected stack releases in one piece.
+ * As plain siblings in a single container the cards unpinned in reverse -- the
+ * lowest first -- and slid up onto the still-pinned ones, collapsing the
+ * stagger before anything moved.
+ *
+ * A sticky card unpins when its containing block's bottom rises past
+ * `top + height`. Its `top` is one peek lower per card, so simply aligning the
+ * stage ends is not enough: each stage also has to run `index * peek` further
+ * to cancel that. Stage i therefore spans i*step to count*step + i*peek, and
+ * the substitution leaves an unpin point identical for every card.
+ *
+ * Height and negative margin together contribute exactly one step to the flow,
+ * so the stack is still count*step tall however the stages overlap.
+ */
+[data-responsive-layout='industries'] {
+  --industries-step: calc(var(--industries-card-height) + var(--industries-card-bottom-gap));
+}
+
+/*
+ * The `index * peek` tail is written out in both places rather than kept in its
+ * own custom property: --industry-index only exists on the stage, so a property
+ * declared on the section that referenced it would be invalid at computed-value
+ * time and inherit down as invalid -- which silently collapsed the stage to the
+ * card's own height and killed the sticky range entirely.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-stage {
+  position: relative;
+  z-index: calc(2 + var(--industry-index));
+  height: calc(
+    (var(--industries-count, 6) - var(--industry-index)) * var(--industries-step) +
+      var(--industry-index) * var(--industries-peek)
+  );
+  margin-bottom: calc(
+    -1 *
+      (
+        (var(--industries-count, 6) - var(--industry-index) - 1) * var(--industries-step) +
+          var(--industry-index) * var(--industries-peek)
+      )
+  );
+  pointer-events: none;
+}
+
+/*
+ * Each card pins one peek lower than the one before it, so what stays on screen
+ * is a strip per card. --industry-index is set per stage by
+ * HomeIndustriesAccordion; IndustriesStackController marks the covered ones
+ * with data-collapsed.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card {
+  position: sticky;
+  top: calc(var(--industries-card-sticky-top) + var(--industry-index) * var(--industries-peek));
+  display: block;
+  height: var(--industries-card-height);
+  overflow: hidden;
+  border-color: #ebebeb;
+  border-radius: 0;
+  background: #ffffff;
+  /* The stage is inert so its empty tail does not swallow clicks meant for the
+     card stacked beneath it; the card itself takes pointer events back. */
+  pointer-events: auto;
+}
+
+/*
+ * A card arrives by fading its contents up over its own white -- never by
+ * fading the card. The distinction is the whole point: a card at less than
+ * full opacity is a window onto the card it is covering, and the one below
+ * shows through it at exactly the moment the two overlap. The background above
+ * therefore stays solid at every scroll position, and only the printed matter
+ * comes up over it, against white the whole way.
+ *
+ * --industries-enter is written per card by IndustriesStackController. The
+ * fallback of 1 is what a page with no JS -- and a reader who has asked for
+ * reduced motion -- gets: everything in place, nothing faded.
+ *
+ * No transition: the value is remapped from the scroll position every frame,
+ * so easing it here would only add lag between the card and the page.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-inner,
+[data-responsive-layout='industries'] .industries-showcase-card-media-frame {
+  opacity: var(--industries-enter, 1);
+}
+
+/*
+ * The contents come into focus on the same progress as they come up, so the
+ * two can only resolve together. Blur runs the other way, hence (1 - enter):
+ * furthest out at the start, nothing by the time the card settles.
+ *
+ * Gated on data-entering rather than left to reach blur(0) on its own. Any
+ * filter but `none` keeps a compositing layer and a stacking context open, and
+ * a settled card should not still be paying for its arrival -- the controller
+ * drops the attribute as soon as the progress reaches 1.
+ */
+[data-responsive-layout='industries']
+  .industries-showcase-card[data-entering='true']
+  :is(.industries-showcase-card-inner, .industries-showcase-card-media-frame) {
+  filter: blur(calc((1 - var(--industries-enter, 1)) * var(--industries-enter-blur)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-responsive-layout='industries'] .industries-showcase-card-inner,
+  [data-responsive-layout='industries'] .industries-showcase-card-media-frame {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  row-gap: 1.0625rem;
+  height: 100%;
+  padding: 1.875rem var(--page-inset) 2rem;
+}
+
+/*
+ * The counter used to hold the container's left edge, pushing the title in by
+ * a label column. The title owns that edge now, so the counter is dropped --
+ * hidden rather than removed from the markup so it can be restored by deleting
+ * this one rule.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-code {
+  display: none;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-body {
+  grid-row: 1;
+  grid-column: 1;
+  gap: 1.75rem;
+}
+
+/*
+ * Explicit row, after the product rail's row 3. The rows either side are placed
+ * by hand, so an auto-placed summary would drop into the free row 2 -- above
+ * the carousel, which is the opposite of what it should read as.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-summary {
+  grid-row: 4;
+  grid-column: 1;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-media--compact {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 310 / 117;
+  margin: 0;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-media--wide {
+  display: none;
+  border-radius: 5px;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-title {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: -0.06em;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-card-summary p {
+  font-size: 0.875rem;
+  line-height: 1.44;
+  letter-spacing: -0.02em;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-grid {
+  box-sizing: border-box;
+  display: block;
+  grid-row: 3;
+  /* 1, not 2: the inner grid lost its label column when the counter was
+     dropped, so column 2 no longer exists. */
+  grid-column: 1;
+  width: calc(100% + var(--industries-gallery-bleed));
+  margin-left: calc(-1 * var(--industries-gallery-bleed));
+  margin-top: 1rem;
+  padding-bottom: 1.75rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  /*
+   * The rail runs past both ends of its box, and overflow alone cut the first
+   * and last cards off mid-image. This dissolves them over --industries-rail-
+   * fade instead, so the row reads as continuing rather than being sliced.
+   *
+   * Vertical stops at 0/100% keep the mask horizontal only -- a plain
+   * `to right` gradient would fade the bottom of the card captions too.
+   */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--industries-rail-fade),
+    #000 calc(100% - var(--industries-rail-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--industries-rail-fade),
+    #000 calc(100% - var(--industries-rail-fade)),
+    transparent 100%
+  );
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-track {
+  width: 100%;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-set {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(var(--industries-product-width), 1fr));
+  gap: var(--industries-product-gap);
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-set[aria-hidden='true'] {
+  pointer-events: none;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-grid[data-moving='true'] {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/*
+ * The rail's transform is written by IndustryProductRail, not by a keyframe
+ * animation. Two things it has to do are impossible with one:
+ * animation-play-state is binary, so hovering stopped it dead instead of easing
+ * it down, and a drag cannot take the animation over and hand its momentum
+ * back. --industry-product-duration still sets the cruising speed; the
+ * component reads it.
+ */
+[data-responsive-layout='industries']
+  .industries-showcase-product-grid[data-moving='true']
+  .industries-showcase-product-track {
+  display: flex;
+  width: max-content;
+  gap: var(--industries-product-gap);
+  will-change: transform;
+}
+
+/*
+ * Drag affordance. The rail is grabbable, and text and images must not take a
+ * selection while the pointer is being dragged across them -- that is the blue
+ * highlight box a drag would otherwise paint over the cards.
+ */
+[data-responsive-layout='industries'] .industries-showcase-product-grid[data-moving='true'] {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+[data-responsive-layout='industries']
+  .industries-showcase-product-grid[data-moving='true'][data-dragging='true'] {
+  cursor: grabbing;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-image,
+[data-responsive-layout='industries'] .industries-showcase-product-link {
+  -webkit-user-drag: none;
+}
+
+[data-responsive-layout='industries']
+  .industries-showcase-product-grid[data-moving='true']
+  .industries-showcase-product-set {
+  display: flex;
+  width: max-content;
+  flex: 0 0 auto;
+  gap: var(--industries-product-gap);
+}
+
+[data-responsive-layout='industries']
+  .industries-showcase-product-grid[data-moving='true']
+  .industries-showcase-product-card {
+  width: var(--industries-product-width);
+  flex: 0 0 var(--industries-product-width);
+}
+/* The marquee keyframes are gone: IndustryProductRail writes the transform. */
+
+[data-responsive-layout='industries'] .industries-showcase-product-frame {
+  position: relative;
+  border-radius: 5px;
+  /* Contains the hover zoom: without it the scaled image spills over the
+     neighbouring cards rather than growing within its own frame. */
+  overflow: hidden;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-image {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-grid::-webkit-scrollbar {
+  display: none;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-product-card figcaption {
+  min-height: 1.65rem;
+  font-size: 0.9rem;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+[data-responsive-layout='industries'] .industries-showcase-cta {
+  grid-row: 2;
+  grid-column: 1;
+  margin-top: 0.25rem;
+  padding-inline: 1.5rem;
+}
+
+/*
+/*
+ * The image and the CTA are stacked in one grid cell rather than the CTA
+ * being absolutely positioned. That is what makes the button track the image:
+ * align-self: end puts it on the image's bottom edge, so when the image
+ * shrinks to a collapsed strip the button rides up with it, with no second
+ * set of offsets to keep in sync.
+ *
+ * The frame's padding is on the frame, so it is unaffected by the image
+ * resizing -- the collapsed strip keeps its inset above and below.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-media-frame {
+  display: grid;
+  grid-template-areas: 'media';
+  align-content: start;
+  /*
+   * No padding on the right: the card's own padding already stops at the page
+   * container, so an inset here held the image a further --industries-media-
+   * inset short of it and the right edge never lined up with the section above.
+   * Top and bottom keep theirs -- that is the breathing room a collapsed strip
+   * shows above and below its slice of image.
+   */
+  padding: var(--industries-media-inset) 0 var(--industries-media-inset)
+    var(--industries-media-inset);
+}
+
+/*
+ * The image is sized from --industries-visible, the live strip height the
+ * controller measures, so it shrinks continuously as the next card rises
+ * instead of snapping between an open and a collapsed height. The fallback
+ * covers the pre-hydration render and any card the script has not measured.
+ *
+ * No transition: the value already changes once per frame with the scroll, so
+ * easing it only makes the image lag behind the card edge.
+ */
+[data-responsive-layout='industries'] .industries-showcase-card-media--wide {
+  display: block;
+  grid-area: media;
+  height: calc(
+    (
+        var(--industries-visible, var(--industries-card-height)) - 2 *
+          var(--industries-media-inset)
+      ) * var(--industries-media-scale)
+  );
+  min-height: 0;
+  margin: 0;
+  border-radius: 5px;
+}
+
+/*
+ * Expanded: a bar along the bottom of the image, inset from its edges.
+ *
+ * Anchored to the image's right corner in both states, with an explicit width
+ * rather than justify-self: stretch, so the collapse below can ease the bar
+ * down into a pill: width, height, padding and radius all transition, where a
+ * change of alignment could only snap.
+ */
+[data-responsive-layout='industries'] .industries-showcase-cta {
+  position: static;
+  grid-area: media;
+  align-self: end;
+  justify-self: end;
+  z-index: 3;
+  width: calc(100% - 2 * var(--industries-cta-margin));
+  min-height: 3.25rem;
+  margin: var(--industries-cta-margin);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  /*
+   * Opacity is the only thing that ever eases. The bar and the collapsed pill
+   * are two sizes, and easing between them is what made this control unstable:
+   * whichever direction it ran, the resize played in full view -- growing back
+   * into a bar as it faded out, or shrinking out of one as it faded in.
+   *
+   * Geometry is therefore instant, and the collapsed rule below holds it back
+   * until the fade has finished, so every resize happens at opacity 0.
+   */
+  transition: opacity var(--industries-cta-fade) ease;
+}
+
+
+/*
+ * A collapsed row stays white on hover. It used to tint to --surface-soft as a
+ * list-item affordance, but against the white cards above and below it read as
+ * one row being singled out rather than as a pointer cue. The CTA appearing is
+ * the hover feedback.
+ */
+
+/*
+ * A collapsed row is one title line tall, so a heading that wraps would have
+ * its second line sliced off by the card above it. Clamping reads as
+ * deliberate where a cut line reads as broken. No-op on wide screens, where
+ * these titles already fit on one line.
+ */
+[data-responsive-layout='industries']
+  .industries-showcase-card[data-collapsed='true']
+  .industries-showcase-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+
+/*
+ * A collapsed card is a row in a list, not an offer -- its CTA is hidden
+ * outright and only comes back on hover or keyboard focus. Declared here rather
+ * than in the desktop block so it holds at every width the cards collapse at.
+ *
+ * The pill geometry belongs here, on the collapsed state itself, and NOT on
+ * the hover rule. Hover then changes nothing but opacity, so the control never
+ * moves under the pointer: it fades in at pill size, and fades out at pill
+ * size.
+ *
+ * The resize is what used to be visible, and the two zero-duration delays are
+ * what settle it. Coming here from the open card the geometry is held for the
+ * length of the fade, so the bar goes out as a bar and only then becomes a
+ * pill, unseen. Going back the base rule applies instead, with no delay, so
+ * the pill is a bar again before it has faded up. Nothing animates its size in
+ * either direction -- the size simply is what the state says, always changed
+ * behind an opacity of 0.
+ */
+[data-responsive-layout='industries']
+  .industries-showcase-card[data-collapsed='true']
+  .industries-showcase-cta {
+  width: 11.5rem;
+  min-width: max-content;
+  min-height: 2rem;
+  margin: 0 0.625rem 0.5rem 0;
+  padding: 0.35rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--industries-cta-fade) ease,
+    width 0s var(--industries-cta-fade),
+    min-height 0s var(--industries-cta-fade),
+    margin 0s var(--industries-cta-fade),
+    padding 0s var(--industries-cta-fade),
+    border-radius 0s var(--industries-cta-fade),
+    font-size 0s var(--industries-cta-fade);
+}
+
+/* Hover and keyboard focus bring it back, and change nothing else. */
+[data-responsive-layout='industries']
+  .industries-showcase-card[data-collapsed='true']:is(:hover, :focus-within)
+  .industries-showcase-cta {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (min-width: 48rem) and (max-width: 89.999rem) {
+  [data-responsive-layout='hero'] {
+    --hero-text-height: 20svh;
+    /* Trimmed with the desktop strip; the labels are a touch smaller here. */
+    --hero-marquee-height: 1.75rem;
+    /* Only the button pair sits here — the description is hidden below 90rem. */
+    --hero-actions-column: clamp(15rem, 24vw, 20rem);
+    --hero-video-height: calc(100svh - var(--hero-text-height) - var(--hero-marquee-height));
+    flex-direction: row;
+    min-height: 100svh;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  [data-responsive-layout='hero'] .hero-video-layer {
+    position: absolute;
+    inset: 0;
+    flex: none;
+    height: auto;
+  }
+
+  [data-responsive-layout='hero'] .hero-cover-video--mobile {
+    display: none;
+  }
+
+  [data-responsive-layout='hero'] .hero-cover-video--laptop {
+    display: block;
+  }
+
+  [data-responsive-layout='hero'] .hero-content-band {
+    display: block;
+    margin-top: 0;
+    min-height: var(--hero-text-height);
+    border-top: 1px solid rgba(255, 255, 255, 0.46);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3.6px);
+  }
+
+  /*
+   * The buttons take a fixed column and the tagline takes everything left of
+   * them, so the headline gets the widest measure the band can give it.
+   * `min-height` rather than `height`: a band that cannot grow clips the
+   * headline on short viewports.
+   */
+  [data-responsive-layout='hero'] .hero-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--hero-actions-column);
+    min-height: var(--hero-text-height);
+    align-content: center;
+    align-items: self-end;
+    gap: var(--hero-content-gap);
+    padding: 2rem var(--hero-inline-padding);
+  }
+
+  [data-responsive-layout='hero'] .hero-copy,
+  [data-responsive-layout='hero'] .hero-summary {
+    position: static;
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  [data-responsive-layout='hero'] .hero-copy {
+    display: block;
+    max-width: none;
+  }
+
+  [data-responsive-layout='hero'] .hero-summary {
+    display: flex;
+    max-width: none;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  /*
+   * Two lines, as large as they can be drawn: the box is capped at the measure
+   * that forces the break, and the type is sized to whatever the column left
+   * of the buttons can hold at that measure (up to 2.75rem).
+   */
+  [data-responsive-layout='hero'] h1 {
+    max-width: calc(var(--hero-heading-measure) * 1em);
+    font-size: min(
+      2.25rem,
+      calc(
+        (
+            min(100vw, var(--max)) - 2 * var(--hero-inline-padding) - var(--hero-content-gap) -
+              var(--hero-actions-column)
+          ) /
+          var(--hero-heading-measure)
+      )
+    );
+    font-weight: 700;
+    line-height: 1.13;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  [data-responsive-layout='hero'] .hero-text {
+    font-size: 0.75rem;
+  }
+
+  [data-responsive-layout='hero'] .button {
+    min-height: 2.125rem;
+    font-size: 0.72rem;
+  }
+
+  /* Figma laptop lockup: buttons sit side by side, not stacked. */
+  [data-responsive-layout='hero'] .hero-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  /* Figma: 12.4px / 107% / -4% on a shorter strip. */
+  [data-responsive-layout='hero'] .hero-services-marquee {
+    height: var(--hero-marquee-height);
+  }
+
+  [data-responsive-layout='hero'] .hero-service-label {
+    font-size: 0.775rem;
+    font-weight: 500;
+    line-height: 1.07;
+    letter-spacing: -0.04em;
+  }
+
+  [data-responsive-layout='industries'] {
+    --industries-title-sticky-height: 6.5rem;
+    /* As on desktop, the collected strips come out of the card's height so the
+       last card still lands inside the viewport. */
+    /*
+     * clamp, not min: the collected strips come out of the card's height, and
+     * on a short viewport five of them left almost nothing behind -- the card
+     * shrank to ~128px and clipped its own product rail. The floor keeps the
+     * title and the rail visible; below it the stack simply outgrows the
+     * viewport, which scrolling handles.
+     */
+    --industries-card-height: clamp(
+      21rem,
+      calc(
+        100svh - var(--industries-card-sticky-top) -
+          (var(--industries-count, 6) - 1) * var(--industries-peek) - 1.5rem
+      ),
+      29.9375rem
+    );
+    /* Has to clear the card's top padding plus one line of the title, or every
+       collapsed row clips its own heading. Sized past that minimum so the strip
+       of image left in a collapsed row is properly readable. */
+    --industries-peek: 5.1rem;
+    /* A fifth wider than the base ratio: laptop hides the card description, so
+       the row has the width to spend on the hero. */
+    --industries-image: clamp(21.6rem, 36.43vw, 43.725rem);
+    /* Inherits var(--header-height) from the base rule -- see the note there. */
+    --industries-label-column: 4.89925rem;
+    --industries-title-gap: 3.8125rem;
+    --industries-inline-padding: clamp(1.5rem, 3vw, 2.5rem);
+    --industries-counter-left: calc(
+      max(0px, (100vw - var(--max)) / 2) + clamp(1.5rem, 3vw, 2.5rem)
+    );
+    --industries-gallery-bleed: 1.5625rem;
+    --industries-product-start-offset: 7.5rem;
+    --industries-product-gap: 1rem;
+    --industries-product-half-gap: 0.5rem;
+    --industries-product-width: clamp(11rem, 18vw, 16rem);
+    --industries-card-bottom-gap: 3rem;
+    --industries-end-gap: 4rem;
+    padding-top: 8rem;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    row-gap: 0.75rem;
+    width: min(100%, var(--page-content));
+    margin: 0 auto;
+    /* The box itself sits on the gutter, so the inline padding the base rule
+       uses to inset the text would double it. */
+    padding: 0.75rem 0 3.5rem;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-eyebrow {
+    font-size: 0.8125rem;
+  }
+
+  [data-responsive-layout='industries'] h2 {
+    width: min(100%, 24ch);
+    font-size: 2rem;
+    text-align: start;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-stack {
+    width: 100%;
+    margin: 0;
+  }
+
+  /*
+   * Two columns, the image one bleeding off the right. The text column is a
+   * grid item starting at the card's own edge, so the gutter has to live here
+   * -- the inner box cannot centre itself inside a column that narrow.
+   */
+  /* Both edges on the page container: without the right-hand inset the hero
+     ran to the viewport edge while the title sat on the gutter. */
+  [data-responsive-layout='industries'] .industries-showcase-card {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) var(--industries-image);
+    column-gap: var(--industries-col-gap);
+    padding-right: var(--page-inset);
+    padding-left: var(--page-inset);
+    border-radius: 0;
+  }
+
+  /* Single column, as on desktop: the counter is dropped, so there is no label
+     column to clear and the title starts on the container edge. */
+  [data-responsive-layout='industries'] .industries-showcase-card-inner {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    width: min(100%, var(--page-content));
+    margin: 0 auto;
+    /* Gutter comes from the card's padding-left above; the top matches the
+       media frame's inset so the title lines up with the image beside it. */
+    padding: var(--industries-media-inset) 0 0.75rem;
+    overflow: visible;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-card-body {
+    grid-column: 1;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-card-media--compact {
+    display: none;
+  }
+
+  /*
+   * Laptop has the least card height to spend: the summary and the product
+   * carousel do not both fit, and the carousel is the part that sells the
+   * industry. The copy is dropped here and returns at 90rem.
+   */
+  [data-responsive-layout='industries'] .industries-showcase-card-summary {
+    display: none;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-grid {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    width: calc(100% + var(--industries-gallery-bleed));
+    margin-left: calc(-1 * var(--industries-gallery-bleed));
+    margin-top: 1.75rem;
+    padding-left: calc(var(--industries-gallery-bleed) + var(--industries-product-start-offset));
+  }
+
+  /*
+   * No grid placement here. The CTA lives in the media frame and shares the
+   * image's cell (grid-area: media, set with the shared rules above the
+   * breakpoints). Putting it in a column of its own created an implicit second
+   * track inside the frame, which split the frame's width and left the hero
+   * about 90px wide.
+   */
+
+  /*
+   * Height and margin come from the shared rule above the breakpoints. Setting
+   * height: auto here collapsed the image to nothing -- the <img> inside is
+   * absolutely positioned (Next's `fill`), so it has no intrinsic height for
+   * `auto` to resolve against, and the row rendered empty. The frame's padding
+   * supplies the breathing room the margin used to.
+   */
+  [data-responsive-layout='industries'] .industries-showcase-card-media--wide {
+    display: block;
+    border-radius: 5px;
+  }
+}
+@media (min-width: 90rem) {
+  [data-responsive-layout='hero'] {
+    /*
+     * A label strip, not a band: 62px left it reading as a section of its own
+     * under the hero. Trimmed to sit close around the 13px labels, which also
+     * hands the height back to the video above it.
+     */
+    --hero-marquee-height: 2.625rem;
+    --hero-text-height: 20svh;
+    /* Holds the description beside the headline and button stack. */
+    --hero-actions-column: 23.5rem;
+    --hero-video-height: calc(100svh - var(--hero-text-height) - var(--hero-marquee-height));
+    flex-direction: row;
+    min-height: 100svh;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  [data-responsive-layout='hero'] .hero-video-layer {
+    position: absolute;
+    inset: 0;
+    flex: none;
+    height: auto;
+  }
+
+  [data-responsive-layout='hero'] .hero-cover-video--laptop {
+    display: none;
+  }
+
+  [data-responsive-layout='hero'] .hero-cover-video--desktop {
+    display: block;
+  }
+
+  [data-responsive-layout='hero'] .hero-content-band {
+    display: block;
+    margin-top: 0;
+    min-height: calc(var(--hero-text-height) + var(--hero-marquee-height));
+    border-top: 1px solid rgba(255, 255, 255, 0.137);
+    background: rgba(0, 0, 0, 0.521);
+    backdrop-filter: blur(10.6px);
+  }
+
+  [data-responsive-layout='hero'] .hero-content {
+    grid-template-areas:
+      'heading description'
+      'actions description';
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--hero-actions-column);
+    min-height: var(--hero-text-height);
+    align-content: center;
+    gap: 1rem 2.5rem;
+    padding: 1.5rem var(--hero-inline-padding);
+  }
+
+  [data-responsive-layout='hero'] .hero-copy,
+  [data-responsive-layout='hero'] .hero-summary {
+    position: static;
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  /*
+   * display: block, as in the laptop rule. Left as the base flex column, the
+   * headline's own max-width measure was centred inside this grid area, so it
+   * started ~28px in from the container edge instead of on it.
+   */
+  [data-responsive-layout='hero'] .hero-copy {
+    display: block;
+    grid-area: heading;
+    max-width: none;
+  }
+
+  /*
+   * display: contents drops the wrapper box so .hero-text and .hero-actions
+   * become grid items of .hero-content. That is what lets the buttons sit
+   * under the heading while the description keeps the right-hand column,
+   * without duplicating either in the markup per breakpoint.
+   */
+  [data-responsive-layout='hero'] .hero-summary {
+    display: contents;
+  }
+
+  /* See the laptop rule: same two-line measure, sized to the wider column. */
+  [data-responsive-layout='hero'] h1 {
+    max-width: calc(var(--hero-heading-measure) * 1em);
+    font-size: min(
+      2.5rem,
+      calc(
+        (
+            min(100vw, var(--max)) - 2 * var(--hero-inline-padding) - var(--hero-content-gap) -
+              var(--hero-actions-column)
+          ) /
+          var(--hero-heading-measure)
+      )
+    );
+    line-height: 1.06;
+    text-wrap: balance;
+    letter-spacing: -0.05em;
+  }
+
+  [data-responsive-layout='hero'] .hero-text {
+    grid-area: description;
+    font-size: 0.9375rem;
+    letter-spacing: -0.02em;
+  }
+
+  [data-responsive-layout='hero'] .hero-actions {
+    grid-area: actions;
+    display: flex;
+  }
+
+  [data-responsive-layout='hero'] .button {
+    width: auto;
+    /* The pair has to sit inside --hero-actions-column beside the headline. */
+    min-width: 11rem;
+    min-height: 0.0625rem;
+    font-size: 0.9rem;
+  }
+
+  [data-responsive-layout='hero'] .hero-services-marquee {
+    display: block;
+  }
+
+  [data-responsive-layout='hero'] .hero-text {
+    display: block;
+  }
+
+  [data-responsive-layout='industries'] {
+    --industries-title-sticky-height: 7.5rem;
+    /*
+     * The active card plus one collected strip for every card pinned above it
+     * has to fit the viewport, so the strips come out of the card's height.
+     * --industries-count is set on the section from the block's item count.
+     */
+    /*
+     * clamp, not min: the collected strips come out of the card's height, and
+     * on a short viewport five of them left almost nothing behind -- the card
+     * shrank to ~128px and clipped its own product rail. The floor keeps the
+     * title and the rail visible; below it the stack simply outgrows the
+     * viewport, which scrolling handles.
+     */
+    --industries-card-height: clamp(
+      21rem,
+      calc(
+        100svh - var(--industries-card-sticky-top) -
+          (var(--industries-count, 6) - 1) * var(--industries-peek) - 1.5rem
+      ),
+      23rem
+    );
+    /* Strip left by a collapsed card. Past the minimum a title line needs, so
+       the slice of image beside it is properly readable. */
+    --industries-peek: 5.1rem;
+    --industries-label-column: 7.5rem;
+    --industries-title-gap: 4.7375rem;
+    --industries-inline-padding: clamp(1.5rem, 3vw, 2.5rem);
+    --industries-card-padding-left: var(--page-inset);
+    /* Unused: declared here and at three other breakpoints, read nowhere. */
+    --industries-counter-left: 0px;
+    /* 0, not the page inset: the rail starts on the container edge with the
+       title and copy, so bleeding it left as well clipped the first card. */
+    --industries-gallery-bleed: 0rem;
+    /* Was 12.25rem to clear the dropped label column; the rail starts on the
+       container edge with the title and copy now. */
+    --industries-product-start-offset: 0rem;
+    --industries-product-gap: 1.78rem;
+    --industries-product-half-gap: 0.89rem;
+    --industries-product-width: clamp(12rem, 15vw, 18rem);
+    --industries-right-gap: clamp(1.5rem, 6vw, 6rem);
+    --industries-card-bottom-gap: 3.25rem;
+    --industries-end-gap: 5rem;
+    padding-top: 5rem;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    row-gap: 0.875rem;
+    width: min(100%, var(--page-content));
+    margin: 0 auto;
+    padding: 1rem 0 5rem;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-eyebrow {
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  [data-responsive-layout='industries'] h2 {
+    width: min(100%, 24ch);
+    max-width: none;
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1.05;
+        text-align: start;
+  }
+
+  /* The image's right edge lands on the page container, like the title's left
+     edge -- --industries-right-gap was a width of its own and let the image
+     run past the container on wide screens. */
+  [data-responsive-layout='industries'] .industries-showcase-card {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) var(--industries-image);
+    column-gap: var(--industries-col-gap);
+    padding-right: var(--page-inset);
+    padding-left: var(--industries-gutter);
+    border-radius: 0;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-card-inner {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 44.8125rem);
+    /* Matches the media frame's inset, so the title's optical top edge lines up
+       with the top of the image beside it. */
+    /* row-gap: 1.25rem; */
+    width: min(100%, var(--page-content));
+    margin: 0 auto;
+    padding: 1.85rem 0 0.75rem;
+    overflow: visible;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-card-body {
+    grid-column: 1;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-card-media--compact {
+    display: none;
+  }
+
+  /* Title and copy share the container's left edge -- no label column, no
+     indent on the summary. */
+  [data-responsive-layout='industries'] .industries-showcase-card-summary {
+    max-width: 46ch;
+    margin-left: 0;
+    padding: 0;
+    color: var(--muted);
+  }
+
+  /* Sized so one line plus the card's top padding fits inside
+     --industries-peek, which is what a collapsed card leaves on screen. */
+  [data-responsive-layout='industries'] .industries-showcase-card-title {
+    font-size: clamp(1.5rem, 1.5vw, 2.125rem);
+    font-weight: 700;
+    color: #353434;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-grid {
+    grid-column: 1 / -1;
+    width: calc(100% + var(--industries-gallery-bleed));
+    margin-left: calc(-1 * var(--industries-gallery-bleed));
+    /* margin-top: 2.25rem; */
+    padding-left: calc(var(--industries-gallery-bleed) + var(--industries-product-start-offset));
+  }
+
+  /* Frame, image sizing and CTA states are shared with laptop -- see the rules
+     above the breakpoints. Only revealing the wide hero differs here. */
+  [data-responsive-layout='industries'] .industries-showcase-card-media--wide {
+    display: block;
+  }
+}
+
+@media (min-width: 90rem) and (min-height: 50rem) {
+  [data-responsive-layout='industries'] {
+    /*
+     * clamp, not max: the collected strips have to come out of the card's
+     * height or the last card runs past the bottom of the viewport. The floor
+     * only guards against a very short window, where scrolling is expected.
+     */
+    --industries-card-height: clamp(
+      22rem,
+      calc(
+        100svh - var(--industries-card-sticky-top) -
+          ((var(--industries-count, 6) - 1) * var(--industries-peek)) - 1rem
+      ),
+      23rem
+    );
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-grid {
+    margin-top: 0;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-frame {
+    aspect-ratio: 297 / 170;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-card figcaption {
+    margin-top: 0.25rem;
+  }
+}
+@media (min-width: 64rem) and (max-width: 89.999rem) {
+  [data-responsive-layout='industries'] {
+    --industries-counter-left: calc(
+      max(0px, (100vw - var(--max)) / 2) + clamp(1.5rem, 3vw, 2.5rem)
+    );
+    --industries-gallery-bleed: 2.5625rem;
+  }
+}
+@media (min-width: 64rem) {
+  /* See the base rule: the trailing spacer went with the section overlap. */
+  [data-responsive-layout='industries'] .industries-showcase-stack::after {
+    display: none;
+  }
+}
+
+/*
+ * The description is dropped on laptop only -- the 48-90rem block above does
+ * it. An aspect-ratio rule here previously extended that to every landscape
+ * viewport, which also swallowed it on desktop, where there is room for it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .hero-services-rail {
+    animation: none;
+  }
+
+   [data-responsive-layout='industries'] .industries-showcase-product-grid[data-moving='true'] {
+    overflow-x: auto;
+  }
+
+  /*
+   * No transform override here. IndustryProductRail already refuses to cruise
+   * under reduced motion -- it reads the same media query -- so the rail is
+   * still by default. Forcing the transform off would also disable dragging,
+   * which is a deliberate action rather than motion the reader did not ask for.
+   */
+  [data-responsive-layout='industries'] .industries-showcase-product-track {
+    animation: none;
+  }
+
+  [data-responsive-layout='industries'] .industries-showcase-product-image {
+    transition: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  /* 1.04 was close enough to nothing that the hover read as dead. */
+  [data-responsive-layout='industries']
+    .industries-showcase-product-link:is(:hover, :focus-visible)
+    .industries-showcase-product-image {
+    transform: scale(1.12);
+  }
+}
+
+/*
+ * Machining capability.
+ *
+ * A dark full-bleed section: a framed heading cell over an accordion of
+ * machine groups. One group is open at a time -- its row takes the brand blue
+ * and its panel sets the machine list, in mono, against a photograph of the
+ * cell. No pinning and no scroll choreography, so the composition is the same
+ * at every viewport; only the open/close easing is dropped under a
+ * reduced-motion preference.
+ */
+.machining {
+  --machining-surface: #1c1c1c;
+  --machining-line: rgba(255, 255, 255, 0.14);
+  --machining-muted: #9a9a9a;
+  --machining-accent: var(--blue);
+  /* The panel is a light card inset in the dark section, as in the design. */
+  --machining-panel: #dedede;
+  --machining-panel-ink: #171717;
+  --machining-pad: clamp(1.25rem, 3vw, 2.5rem);
+  --machining-row-height: clamp(4rem, 6vw, 6.5rem);
+  --machining-media: clamp(16rem, 48%, 34rem);
+  /*
+   * The open panel's height, set rather than left to the content: the machine
+   * lists run from three names to fifteen, and a panel that grew with them
+   * made every group open to a different size. The list scrolls inside this
+   * instead, and the photograph fills whatever is left beside it.
+   */
+  --machining-panel-height: clamp(17rem, 30vw, 26rem);
+  position: relative;
+  z-index: 29;
+  isolation: isolate;
+  width: var(--bleed-width);
+  margin: 0 var(--bleed-margin);
+  color: #ffffff;
+  background: var(--machining-surface);
+}
+
+.machining-inner {
+  padding: clamp(3rem, 7vw, 6rem) var(--page-inset) clamp(3.5rem, 8vw, 7rem);
+}
+
+/*
+ * The heading takes the left half only, in a hairline cell of its own. The
+ * right half stays empty dark ground, so the framed title reads against the
+ * full-width rows beneath it rather than sitting in a band of its own.
+ */
+.machining-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.machining-head-title {
+  padding: var(--machining-pad);
+  border: 1px solid var(--machining-line);
+  border-bottom: 0;
+}
+
+/*
+ * The figures fill the empty half, set against the middle of the title cell
+ * rather than stretched with it -- the cell is a grid item and would
+ * otherwise pull them to its full height.
+ */
+.machining-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-self: center;
+  gap: clamp(1.5rem, 9vw, 8.5rem);
+  margin: 0 50px;
+  padding: var(--machining-pad);
+}
+
+/* Label first in the document, figure lifted above it on the page. */
+.machining-stat {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.machining-stat-value {
+  margin: 0;
+  font-size: clamp(1.75rem, 4.2vw, 4.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.machining-stat-label {
+  margin-top: 0.5rem;
+  font-size: clamp(0.875rem, 1.8vw, 1.2625rem);
+  line-height: 1.2;
+  color: #ffffff65;
+}
+
+.machining-eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--machining-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.machining-title {
+  margin: 0;
+  font-size: clamp(2.25rem, 5.5vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+/* The heading is authored with a line break; each half sets on its own line. */
+.machining-title-line {
+  display: block;
+  letter-spacing: -0.05em;
+}
+
+/* The rule under the heading cell runs the full width, unlike the cell. */
+.machining-list {
+  border: 1px solid var(--machining-line);
+}
+
+.machining-item + .machining-item {
+  border-top: 1px solid var(--machining-line);
+}
+
+.machining-row-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.machining-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  min-height: var(--machining-row-height);
+  padding: 1rem var(--machining-pad);
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.28s ease,
+    color 0.28s ease;
+}
+
+.machining-row-title {
+  font-size: clamp(1.125rem, 2vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * One box, two icons: the horizontal bar is always drawn and the vertical one
+ * rotates away as the row opens, so the plus turns into a cross.
+ */
+.machining-row-icon {
+  position: relative;
+  flex: none;
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.machining-row-icon::before,
+.machining-row-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentcolor;
+  content: '';
+  transition: transform 0.28s ease;
+}
+
+.machining-row-icon::after {
+  transform: rotate(90deg);
+}
+
+.machining-item[data-open='true'] .machining-row {
+  color: #ffffff;
+  background: var(--machining-accent);
+}
+
+.machining-item[data-open='true'] .machining-row-icon::before {
+  transform: rotate(45deg);
+}
+
+.machining-item[data-open='true'] .machining-row-icon::after {
+  transform: rotate(-45deg);
+}
+
+/*
+ * Collapsed as a 0fr grid row: the panel eases open to whatever height its own
+ * content needs, with no measured pixel value anywhere.
+ */
+/*
+ * The panel is its own grid row, eased between zero and the fixed open
+ * height. Both ends are lengths, so the row interpolates; the height lives on
+ * the track rather than on the panel's contents, because a grid item with a
+ * height of its own ignores the track and stands its full size open or shut.
+ */
+.machining-panel {
+  display: grid;
+  grid-template-rows: 0px;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.36s ease,
+    visibility 0.36s;
+}
+
+.machining-panel[data-open='true'] {
+  grid-template-rows: var(--machining-panel-height);
+  visibility: visible;
+}
+
+.machining-panel-inner {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  color: var(--machining-panel-ink);
+  background: var(--machining-panel);
+  overflow: hidden;
+}
+
+.machining-machines {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--machining-pad);
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  list-style: none;
+}
+
+.machining-media {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: var(--machining-media);
+  margin: 0;
+}
+
+/* Takes whatever the nav bar leaves of the panel's fixed height. */
+.machining-media-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.machining-media-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Split control bar under the photograph, as wide as the image. */
+.machining-media-nav {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+}
+
+.machining-media-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem;
+  border: 0;
+  border-left: 1px solid rgba(23, 23, 23, 0.18);
+  color: inherit;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.machining-media-arrow:first-child {
+  border-left: 0;
+}
+
+.machining-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .machining-item[data-open='false'] .machining-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .machining-media-arrow:hover {
+    background: rgba(23, 23, 23, 0.08);
+  }
+}
+
+.machining-row:focus-visible,
+.machining-media-arrow:focus-visible {
+  outline: 2px solid var(--machining-accent);
+  outline-offset: -3px;
+}
+
+.machining-media-arrow:focus-visible {
+  outline-color: var(--machining-panel-ink);
+}
+
+/*
+ * Phones and narrow tablets: the heading cell takes the full width, and the
+ * photograph sits under the machine list rather than beside it. Stacked, the
+ * panel is sized by its content -- a fixed height there would either crop the
+ * list or leave the photograph a sliver.
+ */
+@media (max-width: 47.99rem) {
+  .machining-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Content-height panels collapse on the 0fr/1fr track instead. */
+  .machining-panel {
+    grid-template-rows: 0fr;
+  }
+
+  .machining-panel[data-open='true'] {
+    grid-template-rows: 1fr;
+  }
+
+  .machining-panel-inner {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .machining-machines {
+    overflow-y: visible;
+  }
+
+  .machining-media {
+    width: 100%;
+  }
+
+  .machining-media-frame {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .machining-row,
+  .machining-row-icon::before,
+  .machining-row-icon::after,
+  .machining-panel {
+    transition: none;
+  }
+}
+
+/*
+ * Engineering -- the white counterpart to the machining section above it.
+ * A photograph held on the left, the heading in its own hairline cell, the two
+ * disciplines side by side in one brand-blue band, and the simulation note in
+ * the copy column under it. Pure layout: no pinning and no scroll
+ * choreography, so the composition is the same at every viewport and nothing
+ * is dropped under a reduced-motion preference.
+ */
+.engineering {
+  --engineering-line: var(--line-strong);
+  --engineering-accent: var(--blue);
+  --engineering-muted: var(--muted);
+  --engineering-pad: clamp(1.25rem, 3vw, 2.5rem);
+  /*
+   * Softened corners, 10px at the smallest and a little wider on a big
+   * screen. Only corners on the outside of the composition are rounded: the
+   * heading cell, the band and the note are flush, so their joins stay
+   * square, and so does the inside corner where the photograph meets the
+   * heading cell.
+   */
+  --engineering-radius: clamp(0.625rem, 0.8vw, 1rem);
+  /*
+   * The photograph starts above the heading cell, as in the design: it spans
+   * an empty first row that the copy column leaves open.
+   */
+  --engineering-lift: clamp(1.5rem, 5vw, 6rem);
+  position: relative;
+  z-index: 29;
+  isolation: isolate;
+  width: var(--bleed-width);
+  margin: 0 var(--bleed-margin);
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.engineering-inner {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: var(--engineering-lift) auto auto auto;
+  padding: clamp(3rem, 7vw, 6rem) var(--page-inset) clamp(3.5rem, 8vw, 7rem);
+}
+
+/* Spans the lift, the heading cell and the band, ending where the band does. */
+.engineering-media {
+  display: block;
+  height: 100%;
+  min-height: clamp(18rem, 40vw, 34rem);
+  margin: 0;
+  grid-column: 1;
+  grid-row: 1 / 4;
+  /*
+   * Square where the two meet: the photograph's bottom-right and the heading
+   * cell's top-left are the inside corner of the composition, so they run
+   * straight into each other instead of curving apart.
+   */
+  border-radius: var(--engineering-radius) var(--engineering-radius) 0 var(--engineering-radius);
+  /* Clips the photograph to the rounded frame; no radius on the image itself. */
+  overflow: hidden;
+  /*
+   * Placeholder tone under the photograph, the same grey SafeImg falls back
+   * to. An upload that is slow, blocked or broken then reads as a picture
+   * that has not arrived rather than as an empty column: an image whose load
+   * fails before hydration never fires onError, so nothing swaps in for it.
+   */
+  background: #d9d9d9;
+}
+
+.engineering-media-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Heading cell: hairline frame, title left, section number in the corner. */
+.engineering-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: var(--engineering-pad);
+  border: 1px solid var(--engineering-line);
+  border-bottom: 0;
+  border-radius: 0 var(--engineering-radius) 0 0;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.engineering-title {
+  margin: 0;
+  font-size: clamp(2.25rem, 5.0vw, 4.0rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.engineering-code {
+  flex: none;
+  margin: 0;
+  color: var(--engineering-accent);
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.engineering-disciplines {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 2;
+  grid-row: 3;
+  color: #ffffff;
+  background: var(--engineering-accent);
+}
+
+.engineering-discipline {
+  display: flex;
+  flex-direction: column;
+  min-height: clamp(20rem, 34vw, 30rem);
+  padding: var(--engineering-pad);
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.engineering-discipline:first-child {
+  border-left: 0;
+}
+
+.engineering-discipline-eyebrow {
+  margin: 0;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.engineering-discipline-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/*
+ * Bottom-aligned, so the two lists start on the same line even though only
+ * one discipline carries a leading paragraph.
+ */
+.engineering-discipline-copy {
+  margin-top: auto;
+  padding-top: clamp(2rem, 5vw, 4rem);
+}
+
+.engineering-discipline-copy p {
+  margin: 0 0 1.25rem;
+  max-width: 26ch;
+}
+
+.engineering-list-lead {
+  margin: 0 0 0.75rem;
+}
+
+.engineering-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.engineering-list li {
+  margin-top: 0.35rem;
+}
+
+/* The note continues the frame under the band, in the copy column only. */
+.engineering-note {
+  padding: var(--engineering-pad);
+  border: 1px solid var(--engineering-line);
+  border-top: 0;
+  border-radius: 0 0 var(--engineering-radius) var(--engineering-radius);
+  grid-column: 2;
+  grid-row: 4;
+}
+
+.engineering-note p {
+  margin: 0 0 1.25rem;
+  max-width: 52ch;
+}
+
+.engineering-note .engineering-list-lead {
+  margin-bottom: 0.75rem;
+}
+
+.engineering-note .engineering-list {
+  color: var(--engineering-muted);
+}
+
+/* Tablets and phones: one column, in reading order, photograph first. */
+@media (max-width: 63.99rem) {
+  .engineering-inner {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  /*
+   * Stacked, the photograph is a card of its own above the framed column --
+   * nothing meets it any more, so both pieces get their corners back.
+   */
+  .engineering-media {
+    min-height: 0;
+    margin-bottom: clamp(1rem, 3vw, 1.75rem);
+    aspect-ratio: 4 / 3;
+    border-radius: var(--engineering-radius);
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .engineering-head {
+    border-radius: var(--engineering-radius) var(--engineering-radius) 0 0;
+  }
+
+  .engineering-head,
+  .engineering-disciplines,
+  .engineering-note {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .engineering-disciplines {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .engineering-discipline {
+    min-height: 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .engineering-discipline:first-child {
+    border-top: 0;
+  }
+
+  .engineering-discipline-copy {
+    padding-top: 1.5rem;
+  }
+}
+
+/*
+ * Product catalogue.
+ *
+ * A reference shelf rather than a shop: no price, no cart, no badge. A dark
+ * band carries the breadcrumb and the title the sidebar is currently on, and
+ * below it the page turns white and gets out of the way of the product
+ * photography. Restraint is the brief -- white, light grey, black, and the
+ * Sky Wings blue only where something is selected or actionable.
+ */
+.catalogue-intro {
+  width: var(--bleed-width);
+  /*
+   * Pulled up under the sticky bar and padded back down, so the band runs
+   * behind it with no seam -- and, because the bar is then over a section
+   * that declares itself dark, HeaderSurfaceController gives it the light-on-
+   * dark treatment. Tracking --header-height rather than a literal keeps the
+   * two in step when the bar condenses on scroll.
+   */
+  margin-block-start: calc(-1 * var(--header-height));
+  margin-inline: var(--bleed-margin);
+  padding: calc(var(--header-height) + clamp(1.75rem, 5svh, 3rem)) 0 clamp(2rem, 6svh, 3.5rem);
+  background: #1c1c1c;
+  color: #ffffff;
+}
+
+.catalogue-intro-inner {
+  width: min(100%, var(--max));
+  margin: 0 auto;
+  padding-inline: var(--page-gutter);
+  text-align: center;
+}
+
+.catalogue-breadcrumb ol {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+}
+
+.catalogue-breadcrumb a,
+.catalogue-breadcrumb-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.catalogue-breadcrumb a:hover,
+.catalogue-breadcrumb-button:hover,
+.catalogue-breadcrumb a:focus-visible,
+.catalogue-breadcrumb-button:focus-visible {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.catalogue-breadcrumb [aria-current='page'] {
+  color: #ffffff;
+}
+
+.catalogue-breadcrumb-sep {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.catalogue-intro-title {
+  /* Out of the global h1 measure: a 15ch cap would centre the title inside
+     its own narrow box rather than across the band. */
+  max-width: none;
+  margin: 0.85rem 0 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.catalogue-layout {
+  width: min(100%, var(--max));
+  margin: 0 auto;
+  /*
+   * No inline padding: .site-shell already holds the page container, so a
+   * gutter here would inset the catalogue a second time and leave it narrower
+   * than the bar above it and every other section on the site.
+   */
+  padding: clamp(1.75rem, 4svh, 2.75rem) 0 clamp(3rem, 8svh, 5rem);
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+  grid-template-columns: minmax(0, 1fr);
+  background: #ffffff;
+}
+
+/* The sidebar is a drawer below laptop; the aside itself is simply not shown. */
+.catalogue-sidebar {
+  display: none;
+}
+
+.catalogue-tree-heading {
+  margin: 0;
+  padding: 0.9rem 1.25rem;
+  background: var(--blue);
+  color: #ffffff;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.catalogue-tree-all,
+.catalogue-tree-parent,
+.catalogue-tree-child {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 0;
+  background: none;
+  color: #1a1a1a;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.catalogue-tree-all,
+.catalogue-tree-parent {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid #ececec;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.catalogue-tree-all:hover,
+.catalogue-tree-parent:hover,
+.catalogue-tree-child:hover {
+  background: #f6f6f6;
+}
+
+/* Selected reads as a held row: a neutral ground and heavier type, not a
+   colour wash -- the blue is saved for the header and the actions. */
+.catalogue-tree-all[data-active],
+.catalogue-tree-parent[data-active],
+.catalogue-tree-child[data-active] {
+  background: #eeeeee;
+  color: #000000;
+  font-weight: 700;
+}
+
+.catalogue-tree-count {
+  color: #8a8a8a;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.catalogue-tree-parent-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Plus while closed, minus while open -- drawn here off data-open, so no icon
+   is swapped in the markup. */
+.catalogue-tree-toggle {
+  position: relative;
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.catalogue-tree-toggle::before,
+.catalogue-tree-toggle::after {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1px;
+  background: #6f6f6f;
+  content: '';
+  transition: transform 220ms ease;
+}
+
+.catalogue-tree-toggle::after {
+  transform: rotate(90deg);
+}
+
+.catalogue-tree-toggle[data-open='true']::after {
+  transform: rotate(0deg);
+}
+
+/*
+ * Collapsed with a 0fr grid row rather than unmounted, so the panel eases to
+ * its own height without a measured pixel value.
+ */
+.catalogue-tree-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 260ms ease;
+  visibility: hidden;
+}
+
+.catalogue-tree-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+
+.catalogue-tree-children {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalogue-tree-child {
+  padding: 0.7rem 1.25rem 0.7rem 2.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.catalogue-main {
+  min-width: 0;
+}
+
+.catalogue-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.catalogue-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalogue-search {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 16rem;
+  align-items: center;
+}
+
+.catalogue-search-icon {
+  position: absolute;
+  right: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #8a8a8a;
+  pointer-events: none;
+}
+
+.catalogue-search-input {
+  width: 100%;
+  padding: 0.6rem 2.75rem 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: #f1f1f1;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.catalogue-search-input::placeholder {
+  color: #9a9a9a;
+}
+
+.catalogue-search-input:focus-visible {
+  border-color: var(--blue);
+  outline: 2px solid rgba(36, 83, 212, 0.25);
+  outline-offset: 1px;
+}
+
+.catalogue-search-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.catalogue-search-clear {
+  position: absolute;
+  right: 2.4rem;
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #ececec;
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.catalogue-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.catalogue-sort-label {
+  color: #4a4a4a;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.catalogue-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.catalogue-select select {
+  appearance: none;
+  padding: 0.55rem 2.4rem 0.55rem 1rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalogue-select-chevron {
+  position: absolute;
+  right: 1rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid #6f6f6f;
+  border-bottom: 1.5px solid #6f6f6f;
+  transform: translateY(-25%) rotate(45deg);
+  pointer-events: none;
+}
+
+.catalogue-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: clamp(1.75rem, 4svh, 2.75rem);
+  padding-top: clamp(1.25rem, 3svh, 2rem);
+  border-top: 1px solid #ececec;
+}
+
+.catalogue-count {
+  margin: 0;
+  color: #6f6f6f;
+  font-size: 0.9375rem;
+}
+
+.catalogue-pager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.catalogue-pager-step,
+.catalogue-pager-page {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.catalogue-pager-step:hover:not(:disabled),
+.catalogue-pager-page:hover:not([data-active]) {
+  background: #e4e4e4;
+}
+
+.catalogue-pager-step:disabled {
+  color: #b4b4b4;
+  cursor: default;
+}
+
+.catalogue-pager-page[data-active] {
+  background: #1c1c1c;
+  color: #ffffff;
+}
+
+.catalogue-grid {
+  display: grid;
+  gap: clamp(1.25rem, 2.4vw, 2rem);
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 1rem;
+}
+
+/* Borderless: the canvas is the card. */
+.catalogue-card {
+  min-width: 0;
+}
+
+.catalogue-card-link {
+  display: grid;
+  gap: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.catalogue-card-canvas {
+  /* The site default inset for a product render. A product can override it
+     from the CMS; see 'Card image padding' on the product. */
+  --catalogue-card-pad: 11%;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.25rem;
+  background: #f1f1f1;
+  transition: background-color 240ms ease;
+}
+
+/*
+ * The two images are treated differently on purpose. The first is a render
+ * on no background, so it is inset and fitted whole -- cropping it would cut
+ * the product. The second is a photograph, so it fills the card edge to edge.
+ */
+.catalogue-card-fit {
+  position: absolute;
+  inset: var(--catalogue-card-pad);
+}
+
+.catalogue-card-fit img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/*
+ * The second view sits over the first at rest and fades across on hover, so
+ * the swap has no gap in it -- a product that has one shows another angle
+ * rather than only growing slightly.
+ */
+.catalogue-card-hover {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition:
+    opacity 260ms ease,
+    transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.catalogue-card-hover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.catalogue-card-link:hover .catalogue-card-hover,
+.catalogue-card-link:focus-visible .catalogue-card-hover {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.catalogue-card-body {
+  display: grid;
+  gap: 0.2rem;
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.catalogue-card-title {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Held back until the card is hovered or focused, and reserved for no height
+   so nothing below it moves when it arrives. */
+.catalogue-card-action {
+  height: 0;
+  color: var(--blue);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 220ms ease,
+    transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.catalogue-card-arrow {
+  display: inline-block;
+  transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.catalogue-card-link:hover .catalogue-card-canvas,
+.catalogue-card-link:focus-visible .catalogue-card-canvas {
+  background: #f7f7f7;
+}
+
+.catalogue-card-link:hover .catalogue-card-fit img,
+.catalogue-card-link:focus-visible .catalogue-card-fit img {
+  transform: scale(1.04);
+}
+
+.catalogue-card-link:hover .catalogue-card-body,
+.catalogue-card-link:focus-visible .catalogue-card-body {
+  transform: translateY(-3px);
+}
+
+.catalogue-card-link:hover .catalogue-card-action,
+.catalogue-card-link:focus-visible .catalogue-card-action {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.catalogue-card-link:hover .catalogue-card-arrow,
+.catalogue-card-link:focus-visible .catalogue-card-arrow {
+  transform: translateX(3px);
+}
+
+.catalogue-card-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+
+.catalogue-empty {
+  margin-top: 2.5rem;
+  padding: clamp(2rem, 6svh, 3.5rem) 0;
+  border-top: 1px solid #ececec;
+}
+
+.catalogue-empty-title {
+  margin: 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.catalogue-empty-text {
+  margin: 0.6rem 0 0;
+  max-width: 34rem;
+  color: #6f6f6f;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.catalogue-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.catalogue-empty-button {
+  padding: 0.7rem 1.25rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.catalogue-empty-button:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.catalogue-empty-link {
+  color: var(--blue);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.catalogue-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The sidebar as a drawer, below the width it can sit beside the grid. */
+.catalogue-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+}
+
+.catalogue-drawer-scrim {
+  order: 2;
+  flex: 1;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.catalogue-drawer-panel {
+  order: 1;
+  display: flex;
+  width: min(20rem, 88vw);
+  flex-direction: column;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.catalogue-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #ececec;
+}
+
+.catalogue-drawer-title {
+  margin: 0;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.catalogue-drawer-close {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f1f1;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (min-width: 48rem) {
+  .catalogue-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .catalogue-layout {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  /*
+   * Held under the bar while the grid scrolls past. Its own scroll is capped
+   * to what is left of the viewport so a long tree cannot outrun the screen
+   * and strand its lower categories.
+   */
+  .catalogue-sidebar {
+    position: sticky;
+    top: calc(var(--header-height) + 1rem);
+    display: block;
+    max-height: calc(100svh - var(--header-height) - 2rem);
+    border: 1px solid #ececec;
+    border-radius: 0.25rem;
+    overflow-y: auto;
+  }
+
+  /* The drawer's own trigger has no job once the sidebar is beside the grid. */
+  .catalogue-filter-button {
+    display: none;
+  }
+
+  .catalogue-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalogue-tree-panel,
+  .catalogue-card-canvas,
+  .catalogue-card-fit img,
+  .catalogue-card-hover,
+  .catalogue-card-body,
+  .catalogue-card-action,
+  .catalogue-card-arrow {
+    transition: none;
+  }
+}
+
+/*
+ * Product attributes: what it is made of, finished with, made by, and used
+ * for. Set as columns of plain lists rather than a table -- these are sets
+ * with no shared axis, and a table would invent a relationship between them.
+ */
+.pdp-attributes {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.pdp-attribute--wide {
+  grid-column: 1 / -1;
+}
+
+.pdp-attribute-title {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pdp-attribute-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pdp-attribute-list li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.pdp-attribute-list li:last-child {
+  border-bottom: 0;
+}
+
+.pdp-attribute-dims {
+  margin: 0;
+}
+
+.pdp-attribute-dims > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.pdp-attribute-dims dt {
+  color: #6f6f6f;
+}
+
+.pdp-attribute-dims dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pdp-attribute-note {
+  margin: 0.4rem 0 0;
+  max-width: 46rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/*
+ * The product code, set in the corner of a home card over the image, as the
+ * detail page sets it under the title. Green because it is a reference rather
+ * than a label -- something to quote back to us, not to read as part of the
+ * name.
+ */
+.industries-showcase-product-code {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  z-index: 2;
+  color: #1f7a4d;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
 }

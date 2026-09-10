@@ -9,81 +9,55 @@ export const HomeProcessBlock: Block = {
   },
   fields: [
     {
-      name: 'eyebrow',
-      type: 'text',
-      defaultValue: 'Manufacturing process',
-    },
-    {
       name: 'heading',
       type: 'text',
       required: true,
-      defaultValue: 'A clear production path from brief to delivery.',
+      defaultValue: 'Our Manufacturing Process',
     },
+    /*
+     * Both run alongside the row: `intro` sits opposite the heading, `summary`
+     * closes the section under the row. Authored as runs so the brand phrases
+     * can come forward in white against muted copy, the same shape the
+     * services heading uses.
+     */
     {
-      name: 'model3D',
-      label: 'Process 3D model',
-      type: 'upload',
-      relationTo: 'three-d-assets',
+      name: 'intro',
+      label: 'Line beside the heading',
+      type: 'array',
       admin: {
-        description: 'Upload/select the GLB or GLTF model shown in the center process viewer.',
+        description:
+          'Short line shown top-right, opposite the heading. Tick Emphasise to bring a run forward; keep the spaces around each run.',
       },
-    },
-    {
-      name: 'modelAppearance',
-      label: '3D model appearance',
-      type: 'group',
-      admin: {
-        description: 'Tune the process viewer wireframe, fade, and floor grid.',
-      },
+      defaultValue: [
+        { text: 'Sky Wings provides ' },
+        { emphasis: true, text: 'End-to-End Metal Manufacturing.' },
+      ],
       fields: [
+        { name: 'text', type: 'text', required: true },
+        { name: 'emphasis', type: 'checkbox', defaultValue: false, label: 'Emphasise' },
+      ],
+    },
+    {
+      name: 'summary',
+      label: 'Closing paragraph',
+      type: 'array',
+      admin: {
+        description: 'Paragraph shown bottom-left, under the row.',
+      },
+      defaultValue: [
+        { text: 'Sky Wings provides ' },
+        { emphasis: true, text: 'End-to-End Metal Manufacturing.' },
+        { text: ' We take a ' },
+        { emphasis: true, text: 'requirement' },
         {
-          name: 'lineOpacity',
-          label: 'Line opacity',
-          type: 'number',
-          defaultValue: 0.3,
-          min: 0.05,
-          max: 1,
-          admin: {
-            description: 'Higher values make the model wire lines stronger.',
-            step: 0.01,
-          },
+          text: ' — a drawing, a sample, a concept, or a problem to solve — and convert it into a ',
         },
-        {
-          name: 'lineThickness',
-          label: 'Line thickness',
-          type: 'number',
-          defaultValue: 0.75,
-          min: 0.25,
-          max: 2,
-          admin: {
-            description: 'Controls wireframe line width where the browser supports it.',
-            step: 0.05,
-          },
-        },
-        {
-          name: 'fadeStart',
-          label: 'Fade start distance',
-          type: 'number',
-          defaultValue: 5.5,
-          min: 0,
-          max: 30,
-          admin: {
-            description: 'Distance from the camera where model fade begins.',
-            step: 0.1,
-          },
-        },
-        {
-          name: 'fadeEnd',
-          label: 'Fade end distance',
-          type: 'number',
-          defaultValue: 12,
-          min: 0.1,
-          max: 50,
-          admin: {
-            description: 'Distance from the camera where model fade reaches the background.',
-            step: 0.1,
-          },
-        },
+        { emphasis: true, text: 'manufactured product' },
+        { text: '.' },
+      ],
+      fields: [
+        { name: 'text', type: 'text', required: true },
+        { name: 'emphasis', type: 'checkbox', defaultValue: false, label: 'Emphasise' },
       ],
     },
     {
@@ -91,14 +65,17 @@ export const HomeProcessBlock: Block = {
       type: 'array',
       required: true,
       minRows: 1,
+      admin: {
+        description:
+          'Shown as a pinned accordion on desktop: each step expands in turn and collapses into a narrow rail showing its number, label and icon.',
+      },
       defaultValue: [
-        { title: 'Requirement' },
-        { title: 'CAD design' },
-        { title: 'Cutting' },
-        { title: 'Machining' },
-        { title: 'Fabrication' },
-        { title: 'Finish' },
-        { title: 'Delivery' },
+        { label: 'Brief', title: 'Client Brief' },
+        { label: 'Design', title: 'Mechanical CAD Design' },
+        { label: 'Machining', title: 'Laser Cutting & Machining' },
+        { label: 'Assembly', title: 'Welding & Assembly' },
+        { label: 'Finishing', title: 'Surface Treatment & Finishing' },
+        { label: 'Delivery', title: 'Final Inspection & Delivery' },
       ],
       fields: [
         {
@@ -107,14 +84,95 @@ export const HomeProcessBlock: Block = {
           required: true,
         },
         {
+          name: 'label',
+          type: 'text',
+          admin: {
+            description:
+              'One or two words for the collapsed rail, e.g. "Brief". Falls back to the title.',
+          },
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+          admin: {
+            description: 'One sentence shown while the step is expanded.',
+          },
+        },
+        {
           name: 'infographicImage',
-          label: 'Infographic image',
+          label: 'Icon',
           type: 'upload',
           relationTo: 'media',
           admin: {
-            description: 'Optional visual shown when this process step is active.',
+            description: 'Line icon for the step. Stays visible in the collapsed rail.',
           },
         },
+      ],
+    },
+    {
+      name: 'cta',
+      label: 'Closing panel',
+      type: 'group',
+      admin: {
+        description: 'The panel that fills the row once every step has collapsed.',
+      },
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          defaultValue: 'Custom engineering',
+        },
+        {
+          name: 'heading',
+          type: 'text',
+          defaultValue: 'Custom Product Development',
+        },
+        {
+          name: 'copy',
+          type: 'textarea',
+          defaultValue:
+            'For requirements outside our standard product range, Sky Wings develops purpose-built equipment and fabricated products from specification and engineering through manufacturing and final assembly.',
+        },
+        {
+          name: 'ctaLabel',
+          type: 'text',
+          defaultValue: 'Custom Product Service',
+        },
+        {
+          name: 'ctaHref',
+          type: 'text',
+          defaultValue: '/contact',
+        },
+      ],
+    },
+
+    /*
+     * Retired by the accordion redesign: the section no longer shows an
+     * eyebrow or a 3D viewer. Kept hidden so a schema push stays additive --
+     * dropping them makes drizzle ask, interactively, whether each removal is
+     * a rename, and takes authored content with it. Drop them in a written
+     * migration once the old content is confirmed dead.
+     */
+    {
+      name: 'eyebrow',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
+      name: 'model3D',
+      type: 'upload',
+      relationTo: 'three-d-assets',
+      admin: { hidden: true },
+    },
+    {
+      name: 'modelAppearance',
+      type: 'group',
+      admin: { hidden: true },
+      fields: [
+        { name: 'lineOpacity', type: 'number', defaultValue: 0.3 },
+        { name: 'lineThickness', type: 'number', defaultValue: 0.75 },
+        { name: 'fadeStart', type: 'number', defaultValue: 5.5 },
+        { name: 'fadeEnd', type: 'number', defaultValue: 12 },
       ],
     },
   ],

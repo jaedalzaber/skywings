@@ -1,0 +1,30 @@
+/*
+ * A fixed square so every row is the same height whatever shape the product
+ * is, and the image is fitted whole inside it -- these are renders of long
+ * carts and small couplings alike, and cropping either tells the editor less
+ * than seeing the outline does.
+ */
+.product-thumb {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--theme-elevation-100);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &--empty {
+    color: var(--theme-elevation-400);
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+  }
+}

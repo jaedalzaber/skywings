@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
+import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import type { SiteHeaderData } from '@/data/site'
 
 import { HeaderSurfaceController } from './HeaderSurfaceController'
@@ -108,6 +110,30 @@ export function SiteHeader(props: SiteHeaderProps) {
     }
   }, [menuOpen])
 
+  /*
+   * The mark is a single-color silhouette, so the brand blue is painted on
+   * rather than baked into the asset: the wrapper takes the logo as a mask and
+   * fills it with the token. Handing the URL to CSS this way keeps it working
+   * for whichever logo is in play — the one uploaded to the CMS or the
+   * committed fallback.
+   */
+  const symbol = header.logoSymbol?.url ? header.logoSymbol : null
+
+  /*
+   * The scrolled bar swaps the mask to the compact symbol and narrows to suit
+   * it. Its width comes from the upload's own aspect ratio rather than a fixed
+   * value, so a square mark and a wide one both sit correctly at the stuck
+   * height; without a symbol both variables stay unset and the CSS falls back
+   * to scaling the full lockup.
+   */
+  const symbolAspect = symbol?.width && symbol?.height ? symbol.width / symbol.height : null
+
+  const logoStyle = {
+    '--brand-logo-src': `url("${logoUrl}")`,
+    ...(symbol?.url ? { '--brand-symbol-src': `url("${symbol.url}")` } : {}),
+    ...(symbolAspect ? { '--brand-symbol-width': `calc(2.25rem * ${symbolAspect.toFixed(4)})` } : {}),
+  } as CSSProperties
+
   const logoImage = (
     <Image
       alt={logo?.alt || header.brandName}
@@ -123,17 +149,30 @@ export function SiteHeader(props: SiteHeaderProps) {
     <header aria-label="Primary navigation" className="nav-container">
       <HeaderSurfaceController />
       <div aria-hidden="true" className="nav-spacer" />
-      <div className="topbar">
+      {/*
+       * The bar sets itself out on load: the mark, then the sections one at a
+       * time, then the call to action. Staged on the contents rather than on
+       * .nav-container, which is the sticky element -- a transform there would
+       * make it the containing block for anything fixed inside it, and the bar
+       * is the one part of the page that is always on screen.
+       */}
+      <RevealGroup amount={0} className="topbar" delay={0.12} stagger={0.06}>
         <Link aria-label={`${header.brandName} home`} className="brand" href="/">
-          <span className="brand-logo">{logoImage}</span>
+          <RevealItem as="span" className="brand-logo" style={logoStyle}>
+            {logoImage}
+          </RevealItem>
         </Link>
 
         <nav aria-label="Site sections" className="nav-links">
           {header.navigation.map((item) => {
             const itemDisabled = isDisabledNavigationItem(item)
+            const hasGroups = Boolean(item.children?.some((child) => child.children?.length))
 
             return (
-              <div className="nav-item" key={item.id ?? item.href}>
+              <RevealItem
+                className={hasGroups ? 'nav-item nav-item--mega' : 'nav-item'}
+                key={item.id ?? item.href}
+              >
                 {itemDisabled ? (
                   <button aria-disabled="true" className="nav-link-control" type="button">
                     <span>{item.label}</span>
@@ -150,20 +189,40 @@ export function SiteHeader(props: SiteHeaderProps) {
                   </a>
                 )}
                 {item.children?.length ? (
-                  <div className="nav-submenu">
-                    {item.children.map((child) => (
-                      <a href={child.href} key={child.id ?? child.href}>
-                        {child.label}
-                      </a>
-                    ))}
+                  <div className={hasGroups ? 'nav-submenu nav-submenu--mega' : 'nav-submenu'}>
+                    {item.children.map((child, childIndex) => {
+                      const childKey = child.id ?? `${child.href}-${childIndex}`
+
+                      // A child with its own children becomes a titled column
+                      // (industry -> product families) instead of a flat link.
+                      return child.children?.length ? (
+                        <div className="nav-submenu-group" key={childKey}>
+                          <a className="nav-submenu-heading" href={child.href}>
+                            {child.label}
+                          </a>
+                          {child.children.map((grandchild, grandchildIndex) => (
+                            <a
+                              href={grandchild.href}
+                              key={grandchild.id ?? `${grandchild.href}-${grandchildIndex}`}
+                            >
+                              {grandchild.label}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <a href={child.href} key={childKey}>
+                          {child.label}
+                        </a>
+                      )
+                    })}
                   </div>
                 ) : null}
-              </div>
+              </RevealItem>
             )
           })}
         </nav>
 
-        <div className="nav-actions">
+        <RevealItem className="nav-actions">
           {header.cta ? (
             <a
               className="nav-cta"
@@ -174,9 +233,10 @@ export function SiteHeader(props: SiteHeaderProps) {
               {header.cta.label}
             </a>
           ) : null}
-        </div>
+        </RevealItem>
 
-        <button
+        <RevealItem
+          as="button"
           aria-controls="mobile-navigation-drawer"
           aria-expanded={menuOpen}
           aria-label="Open navigation menu"
@@ -190,8 +250,8 @@ export function SiteHeader(props: SiteHeaderProps) {
             <span />
             <span />
           </span>
-        </button>
-      </div>
+        </RevealItem>
+      </RevealGroup>
 
       {menuOpen ? (
         <div
@@ -210,7 +270,9 @@ export function SiteHeader(props: SiteHeaderProps) {
                 href="/"
                 onClick={() => closeMenu()}
               >
-                <span className="brand-logo">{logoImage}</span>
+                <span className="brand-logo" style={logoStyle}>
+                  {logoImage}
+                </span>
               </Link>
               <button
                 aria-label="Close navigation menu"
@@ -252,15 +314,34 @@ export function SiteHeader(props: SiteHeaderProps) {
                           {item.label}
                         </Link>
                       )}
-                      {item.children.map((child) => (
-                        <Link
-                          href={child.href}
-                          key={child.id ?? child.href}
-                          onClick={() => closeMenu()}
-                        >
-                          {child.label}
-                        </Link>
-                      ))}
+                      {item.children.map((child, childIndex) => {
+                        const childKey = child.id ?? `${child.href}-${childIndex}`
+
+                        return child.children?.length ? (
+                          <div className="mobile-nav-product-group" key={childKey}>
+                            <Link
+                              className="mobile-nav-product-heading"
+                              href={child.href}
+                              onClick={() => closeMenu()}
+                            >
+                              {child.label}
+                            </Link>
+                            {child.children.map((grandchild, grandchildIndex) => (
+                              <Link
+                                href={grandchild.href}
+                                key={grandchild.id ?? `${grandchild.href}-${grandchildIndex}`}
+                                onClick={() => closeMenu()}
+                              >
+                                {grandchild.label}
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <Link href={child.href} key={childKey} onClick={() => closeMenu()}>
+                            {child.label}
+                          </Link>
+                        )
+                      })}
                     </div>
                   ) : null}
                 </section>

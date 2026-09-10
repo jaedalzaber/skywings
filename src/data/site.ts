@@ -3,10 +3,29 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 
 import { cachedQuery } from './cache'
+import { getMediaImage, type MediaImage as MediaImageData } from './media'
+import { industryRank } from './productTaxonomy'
+import { getProductNavigation, type ProductNavigationItem } from './catalog'
+import { getIndustryNavigation, type IndustryNavigationItem } from './industryPages'
 import { getPayloadClient } from './payload'
 import { TAGS } from './tags'
 
-export type HeaderNavigationItem = NonNullable<Header['navigation']>[number]
+type StoredHeaderNavigationItem = NonNullable<Header['navigation']>[number]
+type StoredHeaderNavigationChild = NonNullable<StoredHeaderNavigationItem['children']>[number]
+
+/**
+ * The Header global lets editors author two levels. The generated Products
+ * menu needs a third (industry -> family), so the rendered shape widens the
+ * stored one rather than adding a nested array -- and a DB migration -- for a
+ * level nobody hand-authors.
+ */
+export type HeaderNavigationChild = StoredHeaderNavigationChild & {
+  children?: { href: string; id?: string | null; label: string }[] | null
+}
+
+export type HeaderNavigationItem = Omit<StoredHeaderNavigationItem, 'children'> & {
+  children?: HeaderNavigationChild[] | null
+}
 export type HeaderCTA = NonNullable<Header['cta']>[number]
 export type FooterLinkGroup = NonNullable<Footer['linkGroups']>[number]
 export type FooterAddress = NonNullable<Footer['addresses']>[number]
@@ -16,6 +35,8 @@ export type SiteHeaderData = {
   brandName: string
   brandTagline: string
   logo?: Media | null
+  /** Compact mark for the scrolled bar; null falls back to a scaled logo. */
+  logoSymbol?: Media | null
   navigation: HeaderNavigationItem[]
   cta?: HeaderCTA | null
 }
@@ -27,6 +48,8 @@ export type SiteFooterData = {
   emailLabel: string
   headline: string
   legalLinks: FooterLegalLink[]
+  /** Home locations photograph; null falls back to the committed image. */
+  locationsImage?: MediaImageData | null
   linkGroups: FooterLinkGroup[]
   newsletterButtonLabel: string
   newsletterHeading: string
@@ -90,6 +113,7 @@ export const defaultFooterData: SiteFooterData = {
   emailAddress: 'info@skywings.ae',
   emailLabel: 'Send email',
   headline: 'Skywings',
+  locationsImage: null,
   legalLinks: [
     { label: 'Cookie Policy', href: '/cookie-policy' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
@@ -172,26 +196,66 @@ function getResolvableFaviconHref(media: Media | null): string {
   return defaultSiteMetadata.faviconHref
 }
 
-function normalizeHeaderNavigation(navigation: HeaderNavigationItem[]): HeaderNavigationItem[] {
+/**
+ * Fills the generated dropdowns. Precedence in both cases: an explicit
+ * multi-item list in the Header global wins (editors can hand-curate), then
+ * live content, then a hardcoded fallback so the menu never renders empty.
+ *
+ * Products nests two deep -- industry, then the product families focused on
+ * it -- so the panel doubles as a category map rather than a flat link list.
+ */
+/**
+ * Aviation leads the Industries menu as it leads every other listing.
+ *
+ * Applied by slug rather than by position, and to a hand-curated list as well
+ * as a generated one: the priority is a standing decision about the range, so
+ * it should not depend on an editor remembering to drag one row to the top.
+ * Everything else keeps the order it arrived in.
+ */
+function sortIndustryChildren(children: HeaderNavigationChild[]): HeaderNavigationChild[] {
+  const slugOf = (href: string) => href.split('/industries/')[1]?.split(/[?#]/)[0] ?? ''
+
+  return [...children].sort((a, b) => industryRank(slugOf(a.href)) - industryRank(slugOf(b.href)))
+}
+
+function normalizeHeaderNavigation(
+  navigation: HeaderNavigationItem[],
+  industryPages: IndustryNavigationItem[],
+  productCategories: ProductNavigationItem[],
+): HeaderNavigationItem[] {
   return navigation.map((item) => {
-    if (item.label.trim().toLowerCase() !== 'industries') {
-      return item
-    }
+    const label = item.label.trim().toLowerCase()
 
+    // A hand-curated list in the CMS always wins over generated children --
+    // except for its order, which the priority above still settles.
     if ((item.children?.length ?? 0) > 1) {
-      return item
+      return label === 'industries'
+        ? { ...item, children: sortIndustryChildren(item.children ?? []) }
+        : item
     }
 
-    return {
-      ...item,
-      children: industryNavigationChildren,
+    if (label === 'industries') {
+      return {
+        ...item,
+        children: sortIndustryChildren(
+          industryPages.length
+            ? industryPages.map(({ href, label: childLabel }) => ({ href, label: childLabel }))
+            : industryNavigationChildren,
+        ),
+      }
     }
+
+    if (label === 'products' && productCategories.length) {
+      return { ...item, children: productCategories }
+    }
+
+    return item
   })
 }
 
 async function fetchSiteHeader(): Promise<SiteHeaderData> {
   const payload = await getPayloadClient()
-  const [header, siteSettings] = await Promise.all([
+  const [header, siteSettings, industryPages, productCategories] = await Promise.all([
     payload.findGlobal({
       slug: 'header',
       depth: 1,
@@ -202,13 +266,18 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
       depth: 1,
       overrideAccess: false,
     }),
+    getIndustryNavigation(),
+    getProductNavigation(),
   ])
 
   return {
     ...defaultHeaderData,
     logo: getResolvableMedia(siteSettings.logo),
+    logoSymbol: getResolvableMedia(siteSettings.logoSymbol),
     navigation: normalizeHeaderNavigation(
       header.navigation?.length ? header.navigation : defaultHeaderData.navigation,
+      industryPages,
+      productCategories,
     ),
     cta: header.cta?.[0] ?? defaultHeaderData.cta,
   }
@@ -217,7 +286,7 @@ async function fetchSiteHeader(): Promise<SiteHeaderData> {
 const getCachedSiteHeader = cachedQuery(
   fetchSiteHeader,
   ['site-header'],
-  [TAGS.globals, TAGS.media],
+  [TAGS.globals, TAGS.media, TAGS.industryPages, TAGS.products, TAGS.industries],
 )
 
 export async function getSiteHeader(): Promise<SiteHeaderData> {
@@ -245,6 +314,8 @@ async function fetchSiteFooter(): Promise<SiteFooterData> {
     emailLabel: footer.emailLabel || defaultFooterData.emailLabel,
     headline: footer.headline || defaultFooterData.headline,
     legalLinks: footer.legalLinks?.length ? footer.legalLinks : defaultFooterData.legalLinks,
+    // Stored under the column the retired delivery section created.
+    locationsImage: getMediaImage(footer.deliveryImage),
     linkGroups: footer.linkGroups?.length ? footer.linkGroups : defaultFooterData.linkGroups,
     newsletterButtonLabel: footer.newsletterButtonLabel || defaultFooterData.newsletterButtonLabel,
     newsletterHeading: footer.newsletterHeading || defaultFooterData.newsletterHeading,

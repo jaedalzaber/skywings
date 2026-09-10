@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ProductImage } from '@/components/atoms/ProductImage'
 
 export type ProductLite = {
+  familySlug: string | null
   id: number
   image: { alt: string; url: string } | null
   industrySlugs: string[]

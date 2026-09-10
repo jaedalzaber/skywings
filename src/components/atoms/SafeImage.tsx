@@ -157,7 +157,20 @@ export function SafeVideo(
   }
 
   useEffect(() => {
-    setReady(false)
+    const video = videoRef.current
+
+    // On a reload the file comes from cache, so the element can reach a
+    // playable readyState — firing loadeddata/canplay — before hydration
+    // attaches these handlers. Those events are gone by the time we listen for
+    // them, which would leave the video stuck at opacity 0, so seed the state
+    // from the element itself rather than waiting for an event that already
+    // happened.
+    if (video?.error) {
+      setFailed(true)
+      return
+    }
+
+    setReady(Boolean(video && video.readyState >= video.HAVE_CURRENT_DATA))
 
     if (!videoProps.autoPlay) {
       return

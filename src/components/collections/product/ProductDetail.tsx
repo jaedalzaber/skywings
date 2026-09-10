@@ -9,6 +9,7 @@ import { ProductGallery, type GalleryImage } from './ProductGallery'
 import { ProductHowItWorks } from './ProductHowItWorks'
 import type { ProductModel } from './viewer/types'
 import { ProductOverview } from './ProductOverview'
+import { ProductAttributes } from './ProductAttributes'
 import { ProductSpecs } from './ProductSpecs'
 import { ProductTechnicalDrawing } from './ProductTechnicalDrawing'
 import { RelatedProducts } from './RelatedProducts'
@@ -96,6 +97,8 @@ export function ProductDetail(props: { product: Product; related?: Product[] }) 
         {product.sku ? <p className="pdp-id">ID: {product.sku}</p> : null}
 
         <ProductHowItWorks product={product} />
+
+        <ProductAttributes product={product} />
 
         <ProductSpecs product={product} />
 

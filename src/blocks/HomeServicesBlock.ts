@@ -8,40 +8,89 @@ export const HomeServicesBlock: Block = {
     plural: 'Home Services Blocks',
   },
   fields: [
+    /*
+     * The heading is authored as segments rather than one string so the
+     * two-tone treatment stays editable: muted text carries the sentence,
+     * emphasised text carries the claim. Rich text would allow the same thing
+     * but drags a whole editor in for one boolean per run.
+     */
     {
-      name: 'eyebrow',
-      type: 'text',
-      defaultValue: 'Manufacturing services',
+      name: 'headingSegments',
+      type: 'array',
+      label: 'Heading',
+      admin: {
+        description:
+          'The section headline, split into runs. Tick Emphasise to bring a run forward in white; untouched runs stay muted. Keep the spaces around each run — they are rendered as written.',
+      },
+      defaultValue: [
+        { text: 'Sky Wings provides ' },
+        { emphasis: true, text: 'End-to-End Metal Manufacturing.' },
+        { text: ' We take a ' },
+        { emphasis: true, text: 'Requirement' },
+        {
+          text: ' — a drawing, a sample, a concept, or a problem to solve — and convert it into a ',
+        },
+        { emphasis: true, text: 'Manufactured product' },
+        { text: '.' },
+      ],
+      fields: [
+        {
+          name: 'text',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'emphasis',
+          type: 'checkbox',
+          defaultValue: false,
+          label: 'Emphasise',
+        },
+      ],
     },
     {
       name: 'heading',
       type: 'text',
       required: true,
       defaultValue: 'One partner from design to delivery',
+      admin: {
+        description:
+          'Plain-text fallback, used when no heading runs are set above. Also the accessible name for the section.',
+      },
+    },
+    /*
+     * Retired by the grid redesign but kept so a schema push stays additive.
+     * Dropping them takes authored copy with it and makes drizzle ask whether
+     * each removal is a rename, which cannot be answered in a non-interactive
+     * run. Remove them in a written migration when the copy is confirmed dead.
+     */
+    {
+      name: 'eyebrow',
+      type: 'text',
+      admin: { hidden: true },
     },
     {
       name: 'description',
       type: 'textarea',
-      defaultValue:
-        'Send us a drawing, sample, concept, or production challenge. Our team turns it into engineered metal parts, assemblies, and finished products ready for site, shop floor, or fleet use.',
+      admin: { hidden: true },
     },
     {
       name: 'secondaryDescription',
       type: 'textarea',
-      defaultValue:
-        'CNC machining, sheet metal, pipe bending, fabrication, welding, assembly, finishing, and installation all managed under one roof.',
+      admin: { hidden: true },
     },
     {
       name: 'cards',
       type: 'array',
       required: true,
       minRows: 1,
+      label: 'Services',
       defaultValue: [
-        { title: 'Custom Equipment Manufacturing' },
+        { title: 'Ground Support Equipment' },
         { title: 'Structural Steel Fabrication' },
-        { title: 'Metal Product Fabrication' },
-        { title: 'Custom Equipment Manufacturing' },
-        { accentTitle: true, title: 'Erection' },
+        { title: 'Architectural & Interior Metalwork' },
+        { title: 'Heavy Machinery' },
+        { title: 'Sheet Metal Products' },
+        { title: 'Custom Manufacturing' },
       ],
       fields: [
         {
@@ -53,13 +102,24 @@ export const HomeServicesBlock: Block = {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
+          admin: {
+            description: 'Resting artwork. Shown at 3:2 and cropped to fill.',
+          },
         },
         {
+          // Retired with the card redesign; see the note above.
           name: 'accentTitle',
           type: 'checkbox',
-          defaultValue: false,
+          admin: { hidden: true },
+        },
+        {
+          name: 'hoverMedia',
+          type: 'upload',
+          relationTo: 'media',
+          label: 'Hover animation',
           admin: {
-            description: 'Use the light title treatment for dark service artwork.',
+            description:
+              'Optional GIF or short muted clip that replaces the image while the card is hovered. MP4 or WebM is far lighter than a GIF at the same quality. Leave empty and the card simply keeps its image.',
           },
         },
       ],

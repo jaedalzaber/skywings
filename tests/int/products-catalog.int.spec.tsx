@@ -6,6 +6,7 @@ import type { ProductLite } from '@/components/collections/catalog/ProductShopCa
 
 const products: ProductLite[] = [
   {
+    familySlug: 'aviation-ground-support-equipment',
     id: 1,
     image: { alt: 'Tow tractor thumbnail', url: '/tow-tractor.png' },
     industrySlugs: ['aviation'],
@@ -16,6 +17,7 @@ const products: ProductLite[] = [
     title: 'Tow Tractor',
   },
   {
+    familySlug: 'heavy-fabrication-and-structural-steel-works',
     id: 2,
     image: { alt: 'Pipe rack thumbnail', url: '/pipe-rack.png' },
     industrySlugs: ['construction'],

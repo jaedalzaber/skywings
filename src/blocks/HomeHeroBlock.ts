@@ -2,12 +2,17 @@ import type { Block, Field } from 'payload'
 
 function coverMediaFields(prefix: 'desktop' | 'laptop' | 'mobile', label: string): Field[] {
   const typeField = `${prefix}CoverType`
+  const screen = label.toLowerCase()
 
   return [
     {
       type: 'row',
       fields: [
         {
+          // Kept in the schema so the existing column and its data survive, but
+          // hidden from the editor: the hero always plays video, so an editable
+          // switch here only misleads. Drop the column in a migration if it is
+          // ever confirmed unused.
           name: typeField,
           label: `${label} cover type`,
           type: 'select',
@@ -16,15 +21,22 @@ function coverMediaFields(prefix: 'desktop' | 'laptop' | 'mobile', label: string
             { label: 'Image', value: 'image' },
             { label: 'Video', value: 'video' },
           ],
+          admin: {
+            hidden: true,
+          },
         },
         {
+          // Deliberately always editable, including in video mode: this image
+          // is the poster painted while the video buffers, and the still that
+          // stays put if the video fails or autoplay is blocked. Hiding it
+          // behind the type switch left video covers with no first frame.
           name: `${prefix}CoverImage`,
           label: `${label} cover image`,
           type: 'upload',
           relationTo: 'media',
           admin: {
-            condition: (_, siblingData) => siblingData?.[typeField] !== 'video',
-            description: `Shown on ${label.toLowerCase()} screens when cover type is image.`,
+            description: `Shown on ${screen} screens, and used as the poster while the video loads.`,
+            width: '50%',
           },
         },
         {
@@ -33,8 +45,8 @@ function coverMediaFields(prefix: 'desktop' | 'laptop' | 'mobile', label: string
           type: 'upload',
           relationTo: 'media',
           admin: {
-            condition: (_, siblingData) => siblingData?.[typeField] === 'video',
-            description: `Shown on ${label.toLowerCase()} screens when cover type is video.`,
+            description: `Plays on ${screen} screens, over the cover image.`,
+            width: '50%',
           },
         },
       ],

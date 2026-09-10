@@ -8,8 +8,16 @@ import type {
 } from '@/payload-types'
 
 import { cachedQuery } from './cache'
+import { getMediaImage } from './media'
 import { getPayloadClient } from './payload'
-import { relationArray, relationArrayIncludesSlug, relationId, relationSlug } from './relations'
+import {
+  relationArray,
+  relationArrayIncludesSlug,
+  relationId,
+  relationSlug,
+  relationTitle,
+} from './relations'
+import { industryRank } from './productTaxonomy'
 import { TAGS } from './tags'
 
 export type ProductFilters = {
@@ -96,6 +104,11 @@ function hasCardThumbnail(product: Product) {
   return hasImage(product.thumbnailImage)
 }
 
+/** Either image will carry a card; the thumbnail is only preferred. */
+function hasCardImage(product: Product) {
+  return hasImage(product.thumbnailImage) || hasImage(product.featuredImage)
+}
+
 function sortProductsForListing(products: Product[]) {
   return [...products].sort((a, b) => {
     const imageRank = Number(hasCardThumbnail(b)) - Number(hasCardThumbnail(a))
@@ -156,7 +169,8 @@ export const getIndustries = cachedQuery(
       sort: 'sortOrder',
     })
 
-    return docs
+    // Aviation first, the editor's order underneath it.
+    return [...docs].sort((a, b) => industryRank(a.slug) - industryRank(b.slug))
   },
   ['industries-v2'],
   [TAGS.industries, TAGS.media],
@@ -178,6 +192,44 @@ export const getProductFamilies = cachedQuery(
   },
   ['product-families'],
   [TAGS.products],
+)
+
+export type ProductNavigationItem = {
+  children: { href: string; label: string }[]
+  href: string
+  label: string
+}
+
+/**
+ * Products dropdown: industries at the top level, each expanding to the
+ * product families that name it in `industryFocus`.
+ *
+ * Industries with no families are dropped rather than rendered as an empty
+ * branch -- four of the nine currently have none, and a menu entry that opens
+ * into nothing reads as a broken link.
+ */
+/* The order comes from getIndustries now, which pins the same industries to
+   the front of every listing on the site rather than only this menu. */
+
+export const getProductNavigation = cachedQuery(
+  async function fetchProductNavigation(): Promise<ProductNavigationItem[]> {
+    const [industries, families] = await Promise.all([getIndustries(), getProductFamilies()])
+
+    return industries
+      .map((industry) => ({
+        children: families
+          .filter((family) => relationArrayIncludesSlug(family.industryFocus, industry.slug))
+          .map((family) => ({
+            href: `/products?industry=${industry.slug}&family=${family.slug}`,
+            label: family.title,
+          })),
+        href: `/products?industry=${industry.slug}`,
+        label: industry.title,
+      }))
+      .filter((item) => item.children.length > 0)
+  },
+  ['product-navigation'],
+  [TAGS.products, TAGS.industries],
 )
 
 export const getProducts = cachedQuery(
@@ -205,6 +257,199 @@ export const getProducts = cachedQuery(
     )
   },
   ['products'],
+  [TAGS.products, TAGS.industries, TAGS.media],
+)
+
+/** A card in the catalogue grid. */
+export type CatalogProduct = {
+  /** The family it is filed under, set under the name on the card. */
+  category: string | null
+  createdAt: string
+  familySlug: string | null
+  id: number
+  /**
+   * The second image, shown while the pointer is over the card. An editor's
+   * own pick when they have made one, otherwise the first gallery image that
+   * is not already the one on the card -- so a product with photographs gets
+   * the effect without anyone having to file a second copy of them.
+   */
+  hoverImage: { alt: string; url: string } | null
+  image: { alt: string; url: string } | null
+  /**
+   * How far the product sits in from the edge of its card, as a percentage.
+   * Null takes the site default: these are renders on no background, so they
+   * need room to read as objects rather than as a texture, and how much room
+   * depends on the product.
+   */
+  imagePadding: number | null
+  industrySlugs: string[]
+  /**
+   * Everything the search field matches on, folded down once here rather than
+   * on each keystroke in the browser: name, code, summary, family, industry,
+   * capability and application. Doing it server-side is what lets the field
+   * stay instant while still searching far more than the visible name.
+   */
+  search: string
+  slug: string
+  title: string
+}
+
+export type CatalogCategoryChild = { count: number; slug: string; title: string }
+
+/** A sidebar group: an industry and the families filed under it. */
+export type CatalogCategory = {
+  children: CatalogCategoryChild[]
+  count: number
+  slug: string
+  title: string
+}
+
+export type CatalogView = {
+  categories: CatalogCategory[]
+  products: CatalogProduct[]
+}
+
+/*
+ * Wider than the listing select: the catalogue searches across capabilities
+ * and applications, so those relationships have to come back with the cards.
+ * Everything a detail page needs and a card does not is still excluded.
+ */
+const catalogSelect = {
+  accessories: false,
+  breadcrumb: false,
+  brochure: false,
+  brochures: false,
+  configurationOptions: false,
+  description: false,
+  dimensions: false,
+  finishes: false,
+  howItWorks: false,
+  keySpecs: false,
+  layout: false,
+  loadCapacity: false,
+  materials: false,
+  mobileGallery: false,
+  model3D: false,
+  relatedCaseStudies: false,
+  relatedProducts: false,
+  specifications: false,
+  surfaceTreatment: false,
+  technicalDrawing: false,
+} as const
+
+function searchTextFor(product: Product): string {
+  const related = [product.industries, product.capabilities, product.applications].flatMap(
+    (value) => relationArray(value).map((item) => relationTitle(item, '')),
+  )
+
+  return [
+    product.title,
+    product.sku,
+    product.summary,
+    product.categoryLabel,
+    product.industryLabel,
+    relationTitle(product.productFamily, ''),
+    ...related,
+  ]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    .join(' ')
+    .toLowerCase()
+}
+
+/**
+ * Everything the catalogue page renders, in one pass: the cards and the
+ * sidebar tree they are grouped by.
+ *
+ * The tree is built from what the products actually carry rather than from
+ * the full taxonomy -- an industry or a family with nothing filed under it is
+ * dropped, because a category that opens onto an empty grid reads as a broken
+ * page rather than as an empty shelf.
+ */
+export const getCatalogView = cachedQuery(
+  async function fetchCatalogView(): Promise<CatalogView> {
+    const payload = await getPayloadClient()
+    const [{ docs }, industries, families] = await Promise.all([
+      payload.find({
+        collection: 'products',
+        depth: 1,
+        draft: false,
+        limit: 300,
+        overrideAccess: false,
+        select: catalogSelect,
+        sort: 'title',
+      }),
+      getIndustries(),
+      getProductFamilies(),
+    ])
+
+    /*
+     * A card needs a photograph, but not necessarily its own: only ten of the
+     * seventy-five products carry a dedicated thumbnail, so the detail page's
+     * featured image stands in. What is dropped is a product with no imagery
+     * at all, which would leave a hole in a grid whose whole subject is the
+     * product.
+     */
+    const products: CatalogProduct[] = sortProductsForListing(
+      docs.filter((product) => hasCardImage(product)),
+    ).map((product) => {
+      const image = getMediaImage(product.thumbnailImage) ?? getMediaImage(product.featuredImage)
+      const chosenHover = getMediaImage(product.cardHoverImage)
+      const galleryHover = (product.gallery ?? [])
+        .map((entry) => getMediaImage(entry.image))
+        .find((candidate) => candidate && candidate.url !== image?.url)
+      const hover = chosenHover ?? galleryHover ?? null
+
+      return {
+        category: relationTitle(product.productFamily, '') || null,
+        createdAt: product.createdAt,
+        familySlug: relationSlug(product.productFamily),
+        hoverImage: hover ? { alt: hover.alt, url: hover.url } : null,
+        imagePadding: product.cardImagePadding ?? null,
+        id: product.id,
+        image: image ? { alt: image.alt, url: image.url } : null,
+        industrySlugs: relationArray(product.industries)
+          .map((item) => relationSlug(item))
+          .filter((slug): slug is string => Boolean(slug)),
+        search: searchTextFor(product),
+        slug: product.slug,
+        title: product.title,
+      }
+    })
+
+    const perFamily = new Map<string, number>()
+    const perIndustry = new Map<string, number>()
+
+    for (const product of products) {
+      if (product.familySlug) {
+        perFamily.set(product.familySlug, (perFamily.get(product.familySlug) ?? 0) + 1)
+      }
+      for (const slug of product.industrySlugs) {
+        perIndustry.set(slug, (perIndustry.get(slug) ?? 0) + 1)
+      }
+    }
+
+    const categories: CatalogCategory[] = industries
+      .map((industry) => ({
+        children: families
+          .filter(
+            (family) =>
+              relationArrayIncludesSlug(family.industryFocus, industry.slug) &&
+              (perFamily.get(family.slug) ?? 0) > 0,
+          )
+          .map((family) => ({
+            count: perFamily.get(family.slug) ?? 0,
+            slug: family.slug,
+            title: family.title,
+          })),
+        count: perIndustry.get(industry.slug) ?? 0,
+        slug: industry.slug,
+        title: industry.title,
+      }))
+      .filter((category) => category.count > 0)
+
+    return { categories, products }
+  },
+  ['catalog-view'],
   [TAGS.products, TAGS.industries, TAGS.media],
 )
 

@@ -8,6 +8,7 @@ import sharp from 'sharp'
 import { getPayload } from 'payload'
 
 import config from '../src/payload.config'
+import { industriesForFamily } from '../src/data/productTaxonomy'
 
 const tmpDir = path.join(os.tmpdir(), 'skywings-dummy-catalog')
 
@@ -425,9 +426,7 @@ export async function seedDummyCatalog() {
     ['Custom Metal Fabrication', 'Customer-specific metal products from drawings, samples, concepts, and practical engineering problems.'],
     ['Heavy Equipment & Machinery', 'Machine frames, guards, access platforms, skids, support structures, and replacement assemblies.'],
     ['Industrial Manufacturing', 'Conveyors, workstations, storage racks, piping supports, safety cages, panels, and production-floor systems.'],
-    ['Oil & Gas', 'Heavy-duty supports, corrosion-resistant fabricated parts, skid frames, and maintenance-oriented steel assemblies.'],
     ['Aviation Ground Support Equipment', 'GSE products, aircraft maintenance access, cargo handling, bowsers, dollies, stands, ladders, and carts.'],
-    ['Marine & Offshore', 'Fabricated support structures, corrosion-resistant products, access systems, and custom marine assemblies.'],
     ['Maintenance & Repair Services', 'Repair, refurbishment, reverse engineering, replacement parts, and service-ready industrial components.'],
   ] as const
 
@@ -474,10 +473,15 @@ export async function seedDummyCatalog() {
 
   const familyMap = new Map<string, SeedDoc>()
   for (const [index, [title, summary]] of familySeeds.entries()) {
-    const industryFocus =
-      title.includes('Aviation') || title.includes('ULD')
-        ? [industryMap.get('aviation-ground-support-equipment')?.id].filter(Boolean)
-        : Array.from(industryMap.values()).slice(0, 4).map((item) => item.id)
+    /*
+     * Focus comes from the taxonomy, not from position in industryMap. The
+     * old 'first four industries' shortcut gave every non-aviation family an
+     * identical focus, which made five of the six Products menu columns
+     * duplicates of each other and hid Industrial Manufacturing entirely.
+     */
+    const industryFocus = industriesForFamily(slugify(title))
+      .map((industrySlug) => industryMap.get(industrySlug)?.id)
+      .filter(Boolean)
     const doc = await upsertBySlug(payload, 'product-families', {
       _status: 'published',
       industryFocus,
@@ -531,7 +535,7 @@ export async function seedDummyCatalog() {
     ['Equipment Panels And Enclosures', 'SW-SM-001', 'Sheet metal panels and enclosures for equipment, controls, and industrial installations.', 'Sheet Metal Products', ['industrial-manufacturing', 'custom-metal-fabrication'], ['laser-cutting', 'press-brake-forming'], 'custom'],
     ['Guards And Protective Covers', 'SW-SM-002', 'Protective covers, guards, and perforated panels for machines and equipment.', 'Sheet Metal Products', ['industrial-manufacturing', 'heavy-equipment-and-machinery'], ['laser-cutting', 'press-brake-forming'], 'custom'],
     ['Platforms And Walkways', 'SW-HF-001', 'Platforms, walkways, handrails, and access systems for industrial and infrastructure sites.', 'Heavy Fabrication & Structural Steel Works', ['construction-and-infrastructure', 'industrial-manufacturing'], ['welding-and-assembly', 'surface-treatment-and-finishing'], 'custom'],
-    ['Tanks And Cylindrical Structures', 'SW-HF-002', 'Rolled tanks, cylindrical structures, and pressure-vessel support shells.', 'Heavy Fabrication & Structural Steel Works', ['oil-and-gas', 'industrial-manufacturing'], ['plate-and-sheet-rolling', 'welding-and-assembly'], 'custom'],
+    ['Tanks And Cylindrical Structures', 'SW-HF-002', 'Rolled tanks, cylindrical structures, and pressure-vessel support shells.', 'Heavy Fabrication & Structural Steel Works', ['industrial-manufacturing'], ['plate-and-sheet-rolling', 'welding-and-assembly'], 'custom'],
     ['Stainless Steel Railings', 'SW-AM-001', 'Stainless steel railings and architectural guard systems for interior and exterior spaces.', 'Architectural & Interior Metal Works', ['architectural-and-interior-metalwork'], ['tubular-products', 'surface-treatment-and-finishing'], 'custom'],
     ['Pergolas And Canopies', 'SW-AM-002', 'Fabricated pergolas, parking canopies, and architectural shade structures.', 'Architectural & Interior Metal Works', ['architectural-and-interior-metalwork', 'construction-and-infrastructure'], ['fabrication', 'surface-treatment-and-finishing'], 'custom'],
     ['Handrails And Safety Barriers', 'SW-TB-001', 'Tubular handrails, safety barriers, and industrial protection rails.', 'Tubular Products', ['construction-and-infrastructure', 'industrial-manufacturing'], ['welding-and-assembly', 'surface-treatment-and-finishing'], 'standard'],

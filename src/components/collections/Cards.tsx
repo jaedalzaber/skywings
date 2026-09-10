@@ -65,8 +65,8 @@ export function CapabilityCard(props: { capability: Capability; index: number })
   )
 }
 
-export function IndustryCard(props: { industry: Industry; index: number }) {
-  const { industry, index } = props
+export function IndustryCard(props: { href?: string; industry: Industry; index: number }) {
+  const { href, industry, index } = props
   const image = getMediaImage(industry.heroImage)
 
   return (
@@ -81,9 +81,15 @@ export function IndustryCard(props: { industry: Industry; index: number }) {
       <NumberLabel value={index + 1} />
       <h3>{industry.title}</h3>
       <p>{industry.summary}</p>
-      <ButtonLink href={`/products?industry=${industry.slug}`} variant="secondary">
-        View products
-      </ButtonLink>
+      {href ? (
+        <ButtonLink href={href} variant="secondary">
+          Explore industry
+        </ButtonLink>
+      ) : (
+        <ButtonLink href={`/products?industry=${industry.slug}`} variant="secondary">
+          View products
+        </ButtonLink>
+      )}
     </article>
   )
 }

@@ -1,0 +1,1325 @@
+/* Industry landing pages — every section is a CMS block rendered by
+   src/components/industry/*. Mobile-first; `min-width: 48rem` unlocks the
+   laptop/desktop composition. Scoped under `.industry-section` so nothing
+   here leaks into the rest of the site. */
+
+.industry-page {
+  --ind-ink: #232323;
+  --ind-body: #4a4a4a;
+  --ind-muted: #6b6b6b;
+  --ind-light: #8b8b8b;
+  --ind-line: #e7e7e7;
+  --ind-blue: #2b4cf2;
+  --ind-blue-deep: #1f42e3;
+  --ind-dark: #2b2b2b;
+  --ind-darker: #1a1a1a;
+  /* Inner padding of panels and rails that sit inside the container. The
+     container's own edges come from the site-wide --page-inset in styles.css,
+     so the sections line up with the header and with every other page. */
+  --ind-pad: clamp(1rem, 4vw, 2.625rem);
+  /* Header height incl. its spacer (measured); HeroMotion overrides this with
+     the live measurement once hydrated, so zoom and logo size cannot leave a
+     gap. */
+  --ind-nav-overlap: 3.6rem;
+
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.industry-section {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.industry-section :where(h1, h2, h3, p, dl, dd, dt, ul, ol, figure) {
+  margin: 0;
+}
+
+.industry-section ul {
+  padding: 0;
+  list-style: none;
+}
+
+.industry-section.is-light {
+  background: #ffffff;
+  color: var(--ind-ink);
+}
+
+.industry-section.is-dark {
+  background: var(--ind-dark);
+  color: #ffffff;
+}
+
+.industry-section.is-brand {
+  background: var(--ind-blue);
+  color: #ffffff;
+}
+
+.industry-container {
+  width: min(100%, var(--page-content));
+  margin-inline: auto;
+}
+
+.industry-heading-line {
+  display: block;
+}
+
+.industry-heading-light {
+  font-weight: 300;
+}
+
+.industry-eyebrow {
+  margin-bottom: 1rem;
+  color: var(--ind-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.is-dark .industry-eyebrow,
+.is-brand .industry-eyebrow {
+  color: #b9c6ff;
+}
+
+.industry-prose p {
+  color: var(--ind-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.industry-prose p + p {
+  margin-top: 0.75rem;
+}
+
+.industry-prose strong {
+  color: var(--ind-ink);
+  font-weight: 700;
+}
+
+.is-dark .industry-prose p {
+  color: #bdbdbd;
+}
+
+.is-dark .industry-prose strong,
+.is-brand .industry-prose strong {
+  color: #ffffff;
+}
+
+.is-brand .industry-prose p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.industry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.25rem;
+  align-items: center;
+  margin-top: 1.75rem;
+}
+
+.industry-section .button {
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.industry-section .button-text {
+  padding-inline: 0;
+  color: inherit;
+}
+
+.industry-intro .button-primary,
+.industry-brochure .button-primary {
+  min-width: 11.5rem;
+  border-color: var(--ind-blue);
+  background: var(--ind-blue);
+  color: #ffffff;
+}
+
+.industry-intro .button-primary:hover,
+.industry-brochure .button-primary:hover {
+  background: var(--ind-blue-deep);
+}
+
+.industry-section .button-secondary {
+  border-color: #cfcfcf;
+  color: var(--ind-ink);
+}
+
+.is-brand .button-primary,
+.is-dark .button-primary {
+  min-width: 13.5rem;
+  min-height: 3rem;
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.is-brand .button-primary:hover,
+.is-dark .button-primary:hover {
+  background: #2a2a2a;
+}
+
+.is-brand .button-secondary,
+.is-dark .button-secondary {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: #ffffff;
+}
+
+/* Inner layer used by clip reveals; fills the observed box so `fill` images
+   inside it keep their frame. */
+.industry-reveal-clip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.industry-logo-missing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------------------------------------------------------------- Hero --- */
+
+.industry-hero {
+  position: relative;
+  margin-block-start: calc(-1 * var(--ind-nav-overlap));
+  padding: 0;
+  overflow: hidden;
+  background: #1c1c1c;
+  color: #ffffff;
+}
+
+/* The animated layers: `canvas` takes the entrance zoom, `media` inside it
+   takes the scroll parallax, so the two tweens never fight over one
+   transform. */
+.industry-hero-canvas {
+  position: relative;
+  overflow: hidden;
+  transform-origin: 50% 40%;
+  will-change: transform;
+}
+
+.industry-hero-media {
+  position: relative;
+  width: 100%;
+  /* Tall enough on phones that the caption panel and stats do not swallow
+     the whole picture; capped below the viewport so the intro always peeks
+     in underneath. */
+  min-height: 34rem;
+  max-height: 82svh;
+  aspect-ratio: 16 / 9;
+  background: #2a2a2a;
+  transform-origin: 50% 30%;
+  will-change: transform;
+}
+
+.industry-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.32) 0%,
+    rgba(0, 0, 0, 0) 32%,
+    rgba(0, 0, 0, 0) 60%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  pointer-events: none;
+}
+
+.industry-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: #0d0d0d;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 48rem) {
+  .industry-hero-media {
+    min-height: 35rem;
+    max-height: 78svh;
+  }
+}
+
+.industry-hero--21-9 .industry-hero-media {
+  aspect-ratio: 21 / 9;
+}
+
+.industry-hero--4-3 .industry-hero-media {
+  aspect-ratio: 4 / 3;
+}
+
+.industry-hero--viewport .industry-hero-media {
+  height: 100svh;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+.industry-hero-media.is-empty {
+  background: linear-gradient(180deg, #3a3a3a, #1c1c1c);
+}
+
+.industry-hero-poster,
+.industry-hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.industry-hero-video {
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.industry-hero-video[data-ready='true'] {
+  opacity: 1;
+}
+
+.industry-hero-foot {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.industry-hero-panel {
+  width: 100%;
+  padding: 1.25rem var(--ind-pad) 1.5rem;
+  background: rgba(58, 58, 58, 0.92);
+  backdrop-filter: blur(6px);
+  will-change: transform;
+}
+
+.industry-hero-panel[data-text-align='center'] {
+  text-align: center;
+}
+
+.industry-hero-headline {
+  font-family: var(--font-title), Inter, sans-serif;
+  /* Sized against the viewport so each authored line stays on one row from
+     phones up: the tagline never runs past two lines. */
+  font-size: clamp(1.05rem, 2.3vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.industry-hero-line {
+  display: block;
+}
+
+.industry-hero-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  vertical-align: top;
+}
+
+.industry-hero-word-mask + .industry-hero-word-mask {
+  margin-left: 0.28em;
+}
+
+.industry-hero-word {
+  display: inline-block;
+  transform-origin: 0 100%;
+  will-change: transform;
+}
+
+.industry-hero-panel[data-text-align='center'] .industry-hero-headline {
+  margin-inline: auto;
+}
+
+.industry-hero-supporting {
+  margin-top: 0.6rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.industry-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  padding: 0 var(--ind-pad) 1.25rem;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.industry-hero-stat dd {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.industry-hero-stat dt {
+  margin-top: 0.15rem;
+  font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+  font-weight: 400;
+}
+
+@media (min-width: 48rem) {
+  .industry-page {
+    --ind-nav-overlap: 5rem;
+  }
+
+  .industry-hero-foot {
+    display: grid;
+    /* The panel hugs its two lines of text; the statistics take the rest.
+       Sized with max-content and a vw cap (not %) so the track never
+       resolves against its own width and collapses. */
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: end;
+  }
+
+  .industry-hero-line {
+    white-space: nowrap;
+  }
+
+  .industry-hero-panel {
+    width: auto;
+    min-width: 46vw;
+    max-width: 70vw;
+  }
+
+  .industry-hero[data-overlay-align='center'] .industry-hero-foot {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 60%) minmax(0, 1fr);
+  }
+
+  .industry-hero[data-overlay-align='center'] .industry-hero-panel {
+    grid-column: 2;
+  }
+
+  .industry-hero[data-overlay-align='right'] .industry-hero-foot {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 52%);
+  }
+
+  .industry-hero[data-overlay-align='right'] .industry-hero-panel {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .industry-hero[data-overlay-align='right'] .industry-hero-stats {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* The panel bleeds off the left edge, so its own left padding is what puts
+     the hero copy on the page container. */
+  .industry-hero-panel {
+    padding: clamp(1.5rem, 2.8vw, 2.25rem) clamp(1.5rem, 3vw, 2.75rem)
+      clamp(1.5rem, 2.8vw, 2.25rem) var(--page-inset);
+    border-top-right-radius: 1rem;
+  }
+
+  .industry-hero[data-overlay-align='center'] .industry-hero-panel {
+    padding-left: clamp(1.5rem, 3vw, 2.75rem);
+    border-top-left-radius: 1rem;
+  }
+
+  .industry-hero-stats {
+    gap: 1rem clamp(2.5rem, 6vw, 5.5rem);
+    padding: 0 var(--ind-pad) clamp(1.5rem, 3vw, 2.75rem) clamp(2rem, 6vw, 5.5rem);
+  }
+}
+
+/* --------------------------------------------------------------- Intro --- */
+
+.industry-intro-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.industry-intro-heading {
+  display: flex;
+  max-width: none;
+  flex-direction: column;
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(2.2rem, 4.8vw, 3.6rem);
+  letter-spacing: -0.025em;
+  line-height: 0.98;
+}
+
+.industry-intro-line {
+  width: fit-content;
+}
+
+.industry-intro-line.is-strong {
+  background: linear-gradient(90deg, #262626 0%, #2c2c2c 40%, #a8a8a8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 600;
+}
+
+.industry-intro-line.is-light {
+  color: var(--ind-light);
+  font-weight: 300;
+}
+
+.is-dark .industry-intro-line.is-strong,
+.is-brand .industry-intro-line.is-strong {
+  background: linear-gradient(90deg, #ffffff 0%, #ffffff 40%, rgba(255, 255, 255, 0.55) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.is-dark .industry-intro-line.is-light,
+.is-brand .industry-intro-line.is-light {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.industry-intro-copy {
+  max-width: 34rem;
+}
+
+.industry-intro.is-centered .industry-intro-grid {
+  justify-items: center;
+  text-align: center;
+}
+
+.industry-intro.is-centered .industry-intro-heading {
+  align-items: center;
+}
+
+.industry-intro.is-centered .industry-actions {
+  justify-content: center;
+}
+
+/* An intro introduces whatever follows it, so it sits close to the next
+   section rather than floating in the middle of its own band. */
+.industry-intro {
+  padding-block-end: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+@media (min-width: 48rem) {
+  .industry-intro.is-split .industry-intro-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(2rem, 6vw, 5rem);
+  }
+
+  .industry-intro.is-split .industry-intro-copy {
+    padding-top: 0.75rem;
+  }
+}
+
+/* ------------------------------------------------------------ Carousel --- */
+
+.industry-carousel-section {
+  padding-block-start: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.industry-carousel-head {
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.industry-carousel-head .industry-eyebrow {
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.industry-carousel-heading {
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+}
+
+/* The rail spans the full viewport; `--carousel-edge` is the distance from
+   the viewport edge to the text column, so the first card starts under the
+   heading and cards exit at the true screen edges. */
+.industry-carousel {
+  --carousel-gap: clamp(1rem, 2vw, 1.5rem);
+  --carousel-edge: var(--page-inset);
+
+  position: relative;
+  width: 100%;
+}
+
+.industry-carousel-viewport {
+  overflow: hidden;
+}
+
+/* Qualified with the section so it outranks the `.industry-section ul` reset. */
+.industry-section .industry-carousel-track {
+  display: flex;
+  width: max-content;
+  column-gap: var(--carousel-gap);
+  padding: 0 var(--carousel-edge) 0.5rem;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+
+.industry-carousel-item {
+  flex: 0 0 min(74vw, 18rem);
+}
+
+.industry-card-number {
+  display: block;
+  margin-bottom: 0.85rem;
+  color: #9a9a9a;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.industry-card {
+  position: relative;
+  display: block;
+  aspect-ratio: 0.78;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: #d9d9d9;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.industry-card-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The picture never receives the pointer: presses land on the card link, so
+   a drag started over the image reaches the rail instead of triggering the
+   browser's native image drag. */
+.industry-card-media,
+.industry-card-media img {
+  pointer-events: none;
+}
+
+.industry-card-media img {
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-user-drag: none;
+}
+
+a.industry-card:hover .industry-card-media img {
+  transform: scale(1.05);
+}
+
+/* Frosted band across the top of the card: a flat rectangle with a hard
+   bottom edge, tinted and blurred so the white title stays legible over any
+   picture. Its top corners are clipped by the card's own radius. */
+.industry-card-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  display: block;
+  padding: 1.15rem 1.35rem 1.2rem;
+  background: rgba(18, 18, 18, 0.42);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.industry-card-desc {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: block;
+  padding: 2rem 1.25rem 1rem;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.industry-carousel-control {
+  position: absolute;
+  top: 55%;
+  z-index: 2;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #2b2b2b;
+  box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    opacity 180ms ease,
+    background-color 180ms ease;
+}
+
+.industry-carousel-control:hover:not(:disabled) {
+  background: #111111;
+}
+
+.industry-carousel-control:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.industry-carousel-control svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Controls sit in the gutter between the screen edge and the first card. */
+.industry-carousel-control.is-prev {
+  left: max(0.5rem, calc(var(--carousel-edge) / 2 - 1.375rem));
+}
+
+.industry-carousel-control.is-prev svg {
+  transform: rotate(180deg);
+}
+
+.industry-carousel-control.is-next {
+  right: max(0.5rem, calc(var(--carousel-edge) / 2 - 1.375rem));
+}
+
+.is-dark .industry-card-number,
+.is-brand .industry-card-number {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (min-width: 48rem) {
+  /* Cards are sized against the text column, slightly wider than an exact
+     fit so the last visible card peeks past its edge and reads as "there is
+     more". */
+  .industry-carousel-item {
+    flex-basis: calc(
+      (var(--page-content) - (var(--cards-per-view, 4) - 1) * var(--carousel-gap)) /
+        (var(--cards-per-view, 4) - 0.4)
+    );
+  }
+}
+
+/* --------------------------------------------------------------- Value --- */
+
+.industry-value {
+  padding-block: 0;
+}
+
+.industry-value-grid {
+  display: grid;
+  gap: 2rem;
+  padding-block: clamp(2.5rem, 5vw, 3.75rem);
+}
+
+.industry-value-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.industry-value-heading {
+  font-size: clamp(1.6rem, 5.7vw, 3.65rem);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  /* Airier than the other headings: the reference sets these three lines
+     well apart so the emphasised words read as separate statements. */
+  line-height: 1.0;
+}
+
+.industry-value-heading strong {
+  font-weight: 700;
+}
+
+.industry-value .industry-prose {
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+.industry-value .industry-prose p {
+  max-width: 22rem;
+  font-size: 0.95rem;
+  line-height: 1.62;
+}
+
+.industry-value-logos-label {
+  margin-top: auto;
+  padding-top: clamp(1.5rem, 4vw, 2rem);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  letter-spacing: 0.005em;
+}
+
+.industry-value-media {
+  position: relative;
+  /* Stacked, the picture leads: that keeps the clients label at the foot of
+     the copy, directly above the logo strip it introduces. */
+  order: -1;
+  min-height: 16rem;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  aspect-ratio: 1.05;
+  background: #3a3a3a;
+}
+
+.industry-value-media img {
+  object-fit: cover;
+}
+
+/* One continuous dark surface: the strip is separated by a rule rather than
+   a second background, as in the design. */
+.industry-logo-strip {
+  padding-block: clamp(1.1rem, 2.2vw, 1.6rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.is-brand .industry-logo-strip {
+  border-top-color: rgba(255, 255, 255, 0.28);
+}
+
+.industry-logo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem clamp(1.5rem, 4vw, 3.25rem);
+  align-items: center;
+  justify-content: center;
+}
+
+.industry-logo {
+  position: relative;
+  display: block;
+  width: clamp(5.5rem, 9vw, 7.25rem);
+  height: 2rem;
+}
+
+.industry-logo img {
+  object-fit: contain;
+  filter: grayscale(1) brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+.industry-logo-cloud .industry-logo img {
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+
+@media (min-width: 48rem) {
+  .industry-value-grid {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    align-items: stretch;
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  /* The picture runs the height of the band; the copy is inset from it so
+     the heading starts below the top of the image. */
+  .industry-value-copy {
+    padding-block: clamp(1rem, 3.5vw, 3.5rem) 0;
+  }
+
+  .industry-value-media {
+    order: 0;
+    min-height: min(30rem, 62vh);
+    aspect-ratio: auto;
+  }
+
+  .industry-value-logos-label {
+    padding-top: clamp(2rem, 5vw, 4rem);
+  }
+
+  /* Stays wrapped: a long client list must fall to a second row rather than
+     overflow the page. A row that fits is spread edge to edge. */
+  .industry-logo-list {
+    justify-content: space-between;
+  }
+}
+
+/* ------------------------------------------------------------- Gallery --- */
+
+.industry-gallery {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.industry-gallery::before {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: min(44rem, 90vw);
+  height: 28rem;
+  background: radial-gradient(closest-side, rgba(43, 76, 242, 0.14), rgba(43, 76, 242, 0));
+  content: '';
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.industry-gallery > .industry-container {
+  position: relative;
+}
+
+.industry-gallery-heading {
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.industry-gallery-heading .industry-heading-line + .industry-heading-line {
+  font-weight: 300;
+}
+
+.industry-gallery-description {
+  max-width: 40rem;
+  margin: 1rem auto 0;
+  color: var(--ind-body);
+}
+
+.industry-gallery-filters {
+  margin: 1.75rem 0 2rem;
+}
+
+.industry-gallery-filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.industry-gallery-filters button {
+  padding: 0.55rem 1.4rem;
+  border: 1px solid #cfcfcf;
+  border-radius: 0.3rem;
+  background: #ffffff;
+  color: var(--ind-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.industry-gallery-filters button:hover {
+  border-color: #9a9a9a;
+}
+
+.industry-gallery-filters button[aria-pressed='true'] {
+  border-color: #d9d9d9;
+  background: #d9d9d9;
+}
+
+/* Qualified with the section so it outranks the `.industry-section ul` reset. */
+.industry-section .industry-gallery-rail {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-inline: calc(-1 * var(--ind-pad));
+  padding: 1.5rem var(--ind-pad);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.industry-gallery-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.industry-gallery-card {
+  flex: 0 0 min(13rem, 62vw);
+  scroll-snap-align: center;
+  text-align: left;
+}
+
+.industry-gallery-card:first-child {
+  margin-left: auto;
+}
+
+.industry-gallery-card:last-child {
+  margin-right: auto;
+}
+
+.industry-gallery-card-link {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #ededed;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.04);
+  color: var(--ind-ink);
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.industry-gallery-card-link:hover {
+  border-color: #b9c6ff;
+  box-shadow: 0 0.75rem 2rem rgba(43, 76, 242, 0.12);
+}
+
+.industry-gallery-card.is-featured {
+  flex-basis: min(24rem, 84vw);
+}
+
+.industry-gallery-card.is-featured .industry-gallery-card-link {
+  padding: 1.25rem 1.5rem 1.5rem;
+  border-color: #9fb1ff;
+  box-shadow: 0 1rem 2.5rem rgba(43, 76, 242, 0.14);
+}
+
+.industry-gallery-card-title {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.industry-gallery-card.is-featured .industry-gallery-card-title {
+  font-size: 1.1rem;
+}
+
+.industry-gallery-card-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1.2;
+}
+
+.industry-gallery-card-media img {
+  object-fit: contain;
+}
+
+.industry-gallery-card-desc {
+  color: #5a5a5a;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.industry-gallery-card.is-featured .industry-gallery-card-desc {
+  font-size: 0.85rem;
+}
+
+.industry-gallery-card-sku {
+  margin-top: auto;
+  color: #c8d400;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.industry-gallery-empty {
+  padding: 2rem 0;
+  color: var(--ind-muted);
+}
+
+.industry-gallery-action {
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.industry-gallery .button-primary {
+  min-width: 19rem;
+  min-height: 3.25rem;
+  border-color: #2b2b2b;
+  border-radius: 0.4rem;
+  background: #2b2b2b;
+  font-size: 1.1rem;
+}
+
+.industry-gallery .button-primary:hover {
+  background: #111111;
+}
+
+/* ------------------------------------------------------------ Brochure --- */
+
+.industry-brochure-grid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.industry-brochure-heading {
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.industry-brochure .industry-prose {
+  max-width: 30rem;
+  margin-top: 1.5rem;
+}
+
+.industry-brochure .industry-prose p {
+  font-size: 1.05rem;
+}
+
+.industry-brochure-meta {
+  display: grid;
+  gap: 0.35rem;
+  margin: 2rem 0 0;
+  font-size: 0.9rem;
+}
+
+.industry-brochure-meta div {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.industry-brochure-meta dt {
+  font-weight: 700;
+}
+
+.industry-brochure .industry-actions {
+  gap: 1rem;
+}
+
+.industry-brochure .button-secondary {
+  min-width: 11.5rem;
+  border-radius: 0.5rem;
+}
+
+.industry-brochure-cover {
+  position: relative;
+  width: min(100%, 22rem);
+  overflow: hidden;
+  border: 2px solid #1a1a1a;
+  aspect-ratio: 0.78;
+  background: #f2f2f2;
+}
+
+.industry-brochure-cover img {
+  object-fit: cover;
+}
+
+.industry-brochure-cover .media-wireframe {
+  position: absolute;
+  inset: 0;
+}
+
+@media (min-width: 48rem) {
+  .industry-brochure-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    gap: clamp(2rem, 6vw, 5rem);
+  }
+
+  .industry-brochure-cover {
+    justify-self: center;
+  }
+}
+
+/* ----------------------------------------------------------------- CTA --- */
+
+.industry-cta {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.industry-cta-backdrop {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.industry-cta-backdrop img {
+  object-fit: cover;
+}
+
+.industry-cta-grid {
+  position: relative;
+  display: grid;
+  gap: 2rem;
+}
+
+.industry-cta-media {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0.75rem;
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.industry-cta-media img {
+  object-fit: cover;
+}
+
+.industry-cta-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.industry-cta-heading {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.industry-cta-heading strong {
+  font-weight: 700;
+}
+
+.industry-cta-description {
+  max-width: 21rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.industry-cta .industry-actions {
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 48rem) {
+  .industry-cta-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: clamp(2rem, 6vw, 6rem);
+  }
+}
+
+/* ----------------------------------------------------------------- FAQ --- */
+
+.industry-faq > .industry-container {
+  max-width: 64rem;
+}
+
+.industry-faq-head {
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  text-align: center;
+}
+
+.industry-faq-heading {
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.industry-faq-group + .industry-faq-group {
+  margin-top: 2.5rem;
+}
+
+.industry-faq-group-label {
+  margin-bottom: 1rem;
+  color: var(--ind-blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.industry-faq-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.industry-faq-item {
+  border: 1px solid var(--ind-line);
+  border-radius: 0.2rem;
+  background: #ffffff;
+}
+
+.industry-faq-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.industry-faq-question {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.industry-faq-icon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #9a9a9a;
+  border-radius: 50%;
+}
+
+.industry-faq-icon svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.industry-faq-answer-clip {
+  overflow: hidden;
+}
+
+.industry-faq-answer {
+  padding: 0 1.5rem 1.5rem;
+  color: var(--ind-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.industry-faq-answer p + p {
+  margin-top: 0.5rem;
+}
+
+.is-dark .industry-faq-item,
+.is-brand .industry-faq-item {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.is-dark .industry-faq-answer,
+.is-brand .industry-faq-answer {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.is-dark .industry-faq-group-label,
+.is-brand .industry-faq-group-label {
+  color: #b9c6ff;
+}
+
+/* ------------------------------------------------- Logo cloud / prose --- */
+
+.industry-logo-cloud-heading {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.industry-richtext .industry-prose {
+  max-width: 46rem;
+  margin-inline: auto;
+}
+
+.industry-richtext .industry-prose :where(h2, h3) {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.industry-richtext .industry-prose :where(ul, ol) {
+  padding-left: 1.25rem;
+  list-style: revert;
+}

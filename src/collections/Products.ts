@@ -25,7 +25,8 @@ export const Products: CollectionConfig = {
   admin: {
     group: 'Manufacturing',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'sku', 'productFamily', 'isConfigurable', 'updatedAt'],
+    // The thumbnail leads, so a row is recognisable before its code is read.
+    defaultColumns: ['cardPreview', 'title', 'sku', 'productFamily', 'isConfigurable', 'updatedAt'],
   },
   versions: {
     drafts: true,
@@ -35,6 +36,16 @@ export const Products: CollectionConfig = {
     ...(doc.slug ? [TAGS.product(doc.slug)] : []),
   ]),
   fields: [
+    {
+      name: 'cardPreview',
+      label: ' ',
+      type: 'ui',
+      admin: {
+        components: {
+          Cell: '/components/admin/ProductThumbnailCell#ProductThumbnailCell',
+        },
+      },
+    },
     {
       name: 'title',
       type: 'text',
@@ -146,6 +157,27 @@ export const Products: CollectionConfig = {
       admin: {
         description:
           'Optional image used only in small product cards. Leave empty to use the featured image.',
+      },
+    },
+    {
+      name: 'cardHoverImage',
+      label: 'Card hover image',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Optional second image, shown when the pointer is over this product in the catalogue — a different angle, or the product in use. Leave empty to use the second image from the gallery below.',
+      },
+    },
+    {
+      name: 'cardImagePadding',
+      label: 'Card image padding (%)',
+      type: 'number',
+      min: 0,
+      max: 40,
+      admin: {
+        description:
+          'How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost.',
       },
     },
     {

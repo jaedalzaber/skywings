@@ -10,8 +10,11 @@ import { CTABlock } from './CTABlock'
 import { FAQBlock } from './FAQBlock'
 import { FeatureGridBlock } from './FeatureGridBlock'
 import { HeroBlock } from './HeroBlock'
+import { HomeEngineeringBlock } from './HomeEngineeringBlock'
 import { HomeHeroBlock } from './HomeHeroBlock'
 import { HomeIndustriesBlock } from './HomeIndustriesBlock'
+import { HomeLocationsBlock } from './HomeLocationsBlock'
+import { HomeMachiningBlock } from './HomeMachiningBlock'
 import { HomeProcessBlock } from './HomeProcessBlock'
 import { HomeServicesBlock } from './HomeServicesBlock'
 import { LeadFormBlock } from './LeadFormBlock'
@@ -28,7 +31,11 @@ export const pageBuilderBlocks: Block[] = [
   HomeHeroBlock,
   HomeServicesBlock,
   HomeIndustriesBlock,
+  // Listed in the order they render on the landing page.
+  HomeMachiningBlock,
+  HomeEngineeringBlock,
   HomeProcessBlock,
+  HomeLocationsBlock,
   PageHeroBlock,
   CapabilityListingBlock,
   IndustryListingBlock,

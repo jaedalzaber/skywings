@@ -56,6 +56,7 @@ export function ProductsCatalog(props: {
 }) {
   const { eyebrow, heading, industries, initialIndustry, products } = props
   const [industry, setIndustry] = useState<string | null>(initialIndustry ?? null)
+  const [family, setFamily] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
   const [suggestionsOpen, setSuggestionsOpen] = useState(false)
@@ -65,10 +66,21 @@ export function ProductsCatalog(props: {
       return
     }
 
-    const industryParam = new URLSearchParams(window.location.search).get('industry')
+    const params = new URLSearchParams(window.location.search)
+    const industryParam = params.get('industry')
+    const familyParam = params.get('family')
 
     if (industryParam) {
       setIndustry(industryParam)
+    }
+
+    // Header product menu deep-links carry both, e.g.
+    // /products?industry=aviation-ground-support-equipment&family=uld-containers-and-pallets
+    if (familyParam) {
+      setFamily(familyParam)
+    }
+
+    if (industryParam || familyParam) {
       setPage(0)
     }
   }, [initialIndustry])
@@ -78,9 +90,10 @@ export function ProductsCatalog(props: {
       products.filter(
         (product) =>
           (!industry || product.industrySlugs.includes(industry)) &&
+          (!family || product.familySlug === family) &&
           productMatchesSearch(product, search),
       ),
-    [industry, products, search],
+    [family, industry, products, search],
   )
 
   const suggestions = useMemo(() => {
@@ -101,6 +114,9 @@ export function ProductsCatalog(props: {
 
   const select = (slug: string | null) => {
     setIndustry(slug)
+    // The family filter only ever arrives by deep link, so pressing a chip is
+    // the clearest signal the visitor wants out of that narrower slice.
+    setFamily(null)
     setPage(0)
   }
 

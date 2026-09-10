@@ -316,6 +316,14 @@ export interface Product {
    * Optional image used only in small product cards. Leave empty to use the featured image.
    */
   thumbnailImage?: (number | null) | Media;
+  /**
+   * Optional second image, shown when the pointer is over this product in the catalogue — a different angle, or the product in use. Leave empty to use the second image from the gallery below.
+   */
+  cardHoverImage?: (number | null) | Media;
+  /**
+   * How far the product sits in from the edge of its card, as a percentage. Leave empty for the site default. Raise it for a wide product that crowds the card, lower it for a small one that looks lost.
+   */
+  cardImagePadding?: number | null;
   gallery?:
     | {
         image: number | Media;
@@ -411,7 +419,10 @@ export interface Product {
         | HomeHeroBlock
         | HomeServicesBlock
         | HomeIndustriesBlock
+        | HomeMachiningBlock
+        | HomeEngineeringBlock
         | HomeProcessBlock
+        | HomeLocationsBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -669,7 +680,10 @@ export interface CaseStudy {
         | HomeHeroBlock
         | HomeServicesBlock
         | HomeIndustriesBlock
+        | HomeMachiningBlock
+        | HomeEngineeringBlock
         | HomeProcessBlock
+        | HomeLocationsBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -711,29 +725,29 @@ export interface HomeHeroBlock {
   description?: string | null;
   desktopCoverType?: ('image' | 'video') | null;
   /**
-   * Shown on desktop screens when cover type is image.
+   * Shown on desktop screens, and used as the poster while the video loads.
    */
   desktopCoverImage?: (number | null) | Media;
   /**
-   * Shown on desktop screens when cover type is video.
+   * Plays on desktop screens, over the cover image.
    */
   desktopCoverVideo?: (number | null) | Media;
   laptopCoverType?: ('image' | 'video') | null;
   /**
-   * Shown on laptop screens when cover type is image.
+   * Shown on laptop screens, and used as the poster while the video loads.
    */
   laptopCoverImage?: (number | null) | Media;
   /**
-   * Shown on laptop screens when cover type is video.
+   * Plays on laptop screens, over the cover image.
    */
   laptopCoverVideo?: (number | null) | Media;
   mobileCoverType?: ('image' | 'video') | null;
   /**
-   * Shown on mobile screens when cover type is image.
+   * Shown on mobile screens, and used as the poster while the video loads.
    */
   mobileCoverImage?: (number | null) | Media;
   /**
-   * Shown on mobile screens when cover type is video.
+   * Plays on mobile screens, over the cover image.
    */
   mobileCoverVideo?: (number | null) | Media;
   primaryLabel?: string | null;
@@ -756,17 +770,34 @@ export interface HomeHeroBlock {
  * via the `definition` "HomeServicesBlock".
  */
 export interface HomeServicesBlock {
-  eyebrow?: string | null;
+  /**
+   * The section headline, split into runs. Tick Emphasise to bring a run forward in white; untouched runs stay muted. Keep the spaces around each run — they are rendered as written.
+   */
+  headingSegments?:
+    | {
+        text: string;
+        emphasis?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Plain-text fallback, used when no heading runs are set above. Also the accessible name for the section.
+   */
   heading: string;
+  eyebrow?: string | null;
   description?: string | null;
   secondaryDescription?: string | null;
   cards: {
     title: string;
-    image?: (number | null) | Media;
     /**
-     * Use the light title treatment for dark service artwork.
+     * Resting artwork. Shown at 3:2 and cropped to fill.
      */
+    image?: (number | null) | Media;
     accentTitle?: boolean | null;
+    /**
+     * Optional GIF or short muted clip that replaces the image while the card is hovered. MP4 or WebM is far lighter than a GIF at the same quality. Leave empty and the card simply keeps its image.
+     */
+    hoverMedia?: (number | null) | Media;
     id?: string | null;
   }[];
   id?: string | null;
@@ -792,44 +823,179 @@ export interface HomeIndustriesBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeMachiningBlock".
+ */
+export interface HomeMachiningBlock {
+  eyebrow?: string | null;
+  /**
+   * Each line break starts a new line in the heading.
+   */
+  heading?: string | null;
+  /**
+   * Set beside the heading, e.g. "Machines / 30+". Two read best.
+   */
+  stats?:
+    | {
+        label: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * One row per cell. The first is open on arrival; the rest open one at a time when clicked.
+   */
+  groups?:
+    | {
+        title: string;
+        /**
+         * Set one per line in mono, written as on the shop floor asset list.
+         */
+        machines?:
+          | {
+              name: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Stepped through with the arrows while the group is open.
+         */
+        images?:
+          | {
+              image: number | Media;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'homeMachining';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeEngineeringBlock".
+ */
+export interface HomeEngineeringBlock {
+  heading?: string | null;
+  /**
+   * Set in the corner of the heading cell, e.g. "5.0".
+   */
+  code?: string | null;
+  /**
+   * Held on the left, alongside the heading and the band.
+   */
+  image?: (number | null) | Media;
+  /**
+   * Set side by side in the accent band -- two read best. Each carries a mono line, a large title and a list.
+   */
+  disciplines?:
+    | {
+        /**
+         * Large in the band, e.g. "CAD".
+         */
+        title: string;
+        /**
+         * Mono line above the title.
+         */
+        eyebrow?: string | null;
+        /**
+         * Optional paragraph above the list. One paragraph per line break.
+         */
+        copy?: string | null;
+        listLead?: string | null;
+        items?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Framed under the band, in the copy column only.
+   */
+  note?: {
+    /**
+     * One paragraph per line break.
+     */
+    copy?: string | null;
+    listLead?: string | null;
+    items?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'homeEngineering';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeProcessBlock".
  */
 export interface HomeProcessBlock {
-  eyebrow?: string | null;
   heading: string;
   /**
-   * Upload/select the GLB or GLTF model shown in the center process viewer.
+   * Short line shown top-right, opposite the heading. Tick Emphasise to bring a run forward; keep the spaces around each run.
    */
-  model3D?: (number | null) | ThreeDAsset;
+  intro?:
+    | {
+        text: string;
+        emphasis?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Tune the process viewer wireframe, fade, and floor grid.
+   * Paragraph shown bottom-left, under the row.
    */
-  modelAppearance?: {
-    /**
-     * Higher values make the model wire lines stronger.
-     */
-    lineOpacity?: number | null;
-    /**
-     * Controls wireframe line width where the browser supports it.
-     */
-    lineThickness?: number | null;
-    /**
-     * Distance from the camera where model fade begins.
-     */
-    fadeStart?: number | null;
-    /**
-     * Distance from the camera where model fade reaches the background.
-     */
-    fadeEnd?: number | null;
-  };
+  summary?:
+    | {
+        text: string;
+        emphasis?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Shown as a pinned accordion on desktop: each step expands in turn and collapses into a narrow rail showing its number, label and icon.
+   */
   steps: {
     title: string;
     /**
-     * Optional visual shown when this process step is active.
+     * One or two words for the collapsed rail, e.g. "Brief". Falls back to the title.
+     */
+    label?: string | null;
+    /**
+     * One sentence shown while the step is expanded.
+     */
+    description?: string | null;
+    /**
+     * Line icon for the step. Stays visible in the collapsed rail.
      */
     infographicImage?: (number | null) | Media;
     id?: string | null;
   }[];
+  /**
+   * The panel that fills the row once every step has collapsed.
+   */
+  cta?: {
+    label?: string | null;
+    heading?: string | null;
+    copy?: string | null;
+    ctaLabel?: string | null;
+    ctaHref?: string | null;
+  };
+  eyebrow?: string | null;
+  model3D?: (number | null) | ThreeDAsset;
+  modelAppearance?: {
+    lineOpacity?: number | null;
+    lineThickness?: number | null;
+    fadeStart?: number | null;
+    fadeEnd?: number | null;
+  };
   id?: string | null;
   blockName?: string | null;
   blockType: 'homeProcess';
@@ -964,6 +1130,54 @@ export interface LightingPreset {
   };
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeLocationsBlock".
+ */
+export interface HomeLocationsBlock {
+  lead?: string | null;
+  /**
+   * Set lighter under the headline.
+   */
+  reach?: string | null;
+  /**
+   * Listed under the headline, separated by dots.
+   */
+  regions?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Falls back to the image set on the Footer (Locations image).
+   */
+  image?: (number | null) | Media;
+  /**
+   * Leave empty to use the addresses set on the Footer. Filling this in overrides them for the home page only.
+   */
+  locations?:
+    | {
+        /**
+         * Set bold, e.g. "Sharjah".
+         */
+        name: string;
+        /**
+         * Set beside the name, e.g. "Head office" or "Branch".
+         */
+        kind?: string | null;
+        /**
+         * One address, written with commas as on the Footer. Broken into lines for the page.
+         */
+        address?: string | null;
+        phone?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'homeLocations';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1444,7 +1658,10 @@ export interface Page {
         | HomeHeroBlock
         | HomeServicesBlock
         | HomeIndustriesBlock
+        | HomeMachiningBlock
+        | HomeEngineeringBlock
         | HomeProcessBlock
+        | HomeLocationsBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -1491,7 +1708,10 @@ export interface LandingPage {
         | HomeHeroBlock
         | HomeServicesBlock
         | HomeIndustriesBlock
+        | HomeMachiningBlock
+        | HomeEngineeringBlock
         | HomeProcessBlock
+        | HomeLocationsBlock
         | PageHeroBlock
         | CapabilityListingBlock
         | IndustryListingBlock
@@ -2582,7 +2802,10 @@ export interface PagesSelect<T extends boolean = true> {
         homeHero?: T | HomeHeroBlockSelect<T>;
         homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
+        homeMachining?: T | HomeMachiningBlockSelect<T>;
+        homeEngineering?: T | HomeEngineeringBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
+        homeLocations?: T | HomeLocationsBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -2651,8 +2874,15 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
  * via the `definition` "HomeServicesBlock_select".
  */
 export interface HomeServicesBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
+  headingSegments?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        id?: T;
+      };
   heading?: T;
+  eyebrow?: T;
   description?: T;
   secondaryDescription?: T;
   cards?:
@@ -2661,6 +2891,7 @@ export interface HomeServicesBlockSelect<T extends boolean = true> {
         title?: T;
         image?: T;
         accentTitle?: T;
+        hoverMedia?: T;
         id?: T;
       };
   id?: T;
@@ -2686,11 +2917,116 @@ export interface HomeIndustriesBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeMachiningBlock_select".
+ */
+export interface HomeMachiningBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  stats?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
+  groups?:
+    | T
+    | {
+        title?: T;
+        machines?:
+          | T
+          | {
+              name?: T;
+              id?: T;
+            };
+        images?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeEngineeringBlock_select".
+ */
+export interface HomeEngineeringBlockSelect<T extends boolean = true> {
+  heading?: T;
+  code?: T;
+  image?: T;
+  disciplines?:
+    | T
+    | {
+        title?: T;
+        eyebrow?: T;
+        copy?: T;
+        listLead?: T;
+        items?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  note?:
+    | T
+    | {
+        copy?: T;
+        listLead?: T;
+        items?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "HomeProcessBlock_select".
  */
 export interface HomeProcessBlockSelect<T extends boolean = true> {
-  eyebrow?: T;
   heading?: T;
+  intro?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        id?: T;
+      };
+  summary?:
+    | T
+    | {
+        text?: T;
+        emphasis?: T;
+        id?: T;
+      };
+  steps?:
+    | T
+    | {
+        title?: T;
+        label?: T;
+        description?: T;
+        infographicImage?: T;
+        id?: T;
+      };
+  cta?:
+    | T
+    | {
+        label?: T;
+        heading?: T;
+        copy?: T;
+        ctaLabel?: T;
+        ctaHref?: T;
+      };
+  eyebrow?: T;
   model3D?: T;
   modelAppearance?:
     | T
@@ -2700,11 +3036,30 @@ export interface HomeProcessBlockSelect<T extends boolean = true> {
         fadeStart?: T;
         fadeEnd?: T;
       };
-  steps?:
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HomeLocationsBlock_select".
+ */
+export interface HomeLocationsBlockSelect<T extends boolean = true> {
+  lead?: T;
+  reach?: T;
+  regions?:
     | T
     | {
-        title?: T;
-        infographicImage?: T;
+        text?: T;
+        id?: T;
+      };
+  image?: T;
+  locations?:
+    | T
+    | {
+        name?: T;
+        kind?: T;
+        address?: T;
+        phone?: T;
         id?: T;
       };
   id?: T;
@@ -3033,7 +3388,10 @@ export interface LandingPagesSelect<T extends boolean = true> {
         homeHero?: T | HomeHeroBlockSelect<T>;
         homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
+        homeMachining?: T | HomeMachiningBlockSelect<T>;
+        homeEngineering?: T | HomeEngineeringBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
+        homeLocations?: T | HomeLocationsBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -3382,7 +3740,10 @@ export interface CaseStudiesSelect<T extends boolean = true> {
         homeHero?: T | HomeHeroBlockSelect<T>;
         homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
+        homeMachining?: T | HomeMachiningBlockSelect<T>;
+        homeEngineering?: T | HomeEngineeringBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
+        homeLocations?: T | HomeLocationsBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -3582,6 +3943,8 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   featuredImage?: T;
   thumbnailImage?: T;
+  cardHoverImage?: T;
+  cardImagePadding?: T;
   gallery?:
     | T
     | {
@@ -3661,7 +4024,10 @@ export interface ProductsSelect<T extends boolean = true> {
         homeHero?: T | HomeHeroBlockSelect<T>;
         homeServices?: T | HomeServicesBlockSelect<T>;
         homeIndustries?: T | HomeIndustriesBlockSelect<T>;
+        homeMachining?: T | HomeMachiningBlockSelect<T>;
+        homeEngineering?: T | HomeEngineeringBlockSelect<T>;
         homeProcess?: T | HomeProcessBlockSelect<T>;
+        homeLocations?: T | HomeLocationsBlockSelect<T>;
         pageHero?: T | PageHeroBlockSelect<T>;
         capabilityListing?: T | CapabilityListingBlockSelect<T>;
         industryListing?: T | IndustryListingBlockSelect<T>;
@@ -3937,6 +4303,10 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Tall portrait photograph beside the facility addresses on the home page. The page crops it to fill.
+   */
+  deliveryImage?: (number | null) | Media;
   addresses?:
     | {
         address: string;
@@ -3967,6 +4337,10 @@ export interface SiteSetting {
    * Used only in the website navigation. SVG is recommended.
    */
   logo?: (number | null) | Media;
+  /**
+   * Compact mark shown in the navigation once the page is scrolled and the bar tightens. Optional — the full logo is scaled down instead when this is empty. SVG is recommended.
+   */
+  logoSymbol?: (number | null) | Media;
   /**
    * Used only for browser tabs and bookmarks. Upload a separate square image.
    */
@@ -4081,6 +4455,7 @@ export interface FooterSelect<T extends boolean = true> {
         href?: T;
         id?: T;
       };
+  deliveryImage?: T;
   addresses?:
     | T
     | {
@@ -4108,6 +4483,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   siteName?: T;
   tagline?: T;
   logo?: T;
+  logoSymbol?: T;
   favicon?: T;
   contact?:
     | T

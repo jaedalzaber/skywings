@@ -1,28 +1,26 @@
 import { render, screen, within } from '@testing-library/react'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { HomeBlockRenderer } from '@/components/home/HomeBlocks'
 import { IndustryProductRail } from '@/components/home/IndustryProductRail'
 import { defaultHomeLayout } from '@/data/home'
 
-vi.mock('@/components/home/HomeProcessModel', () => ({
-  HomeProcessModel: () => <div data-testid="process-model-canvas" />,
-}))
-
-vi.mock('@/components/home/HomeGlobeScene', () => ({
-  HomeGlobeScene: () => <div data-testid="globe-scene-fallback" />,
-}))
-
 const homeSourcePath = resolve(process.cwd(), 'src/data/home.ts')
 const homeSource = existsSync(homeSourcePath) ? readFileSync(homeSourcePath, 'utf8') : ''
 
 describe('HomeIndustriesAccordion', () => {
-  test('renders the industries accordion directly after the services section with six cards', () => {
+  /*
+   * Five cards, not six: Custom Metal Fabrication is excluded from the landing
+   * page -- it names a way of working rather than a sector. getHomeIndustryItems
+   * filters it out of the live query and defaultHomeLayout matches, so the
+   * fallback and the CMS data agree.
+   */
+  test('renders the industries accordion directly after the services section with five cards', () => {
     const { container } = render(<HomeBlockRenderer blocks={defaultHomeLayout} />)
 
-    const servicesSection = container.querySelector('.services-showcase')
+    const servicesSection = container.querySelector('.services-grid')
     const industriesSection = container.querySelector('#industries')
     const industriesQueries = within(industriesSection as HTMLElement)
 
@@ -37,17 +35,17 @@ describe('HomeIndustriesAccordion', () => {
     expect(industriesQueries.getByText('Construction & Infrastructure')).toBeTruthy()
     expect(industriesQueries.getByText('01')).toBeTruthy()
     expect(industriesQueries.getByText('Architectural & Interior Metalwork')).toBeTruthy()
-    expect(industriesQueries.getByText('Marine & Offshore')).toBeTruthy()
+    expect(industriesQueries.queryByText('Custom Metal Fabrication')).toBeNull()
     expect(
       industriesQueries.getAllByRole('link', { name: 'Browse Related Products' }),
-    ).toHaveLength(6)
+    ).toHaveLength(5)
     expect(
       industriesQueries
         .getAllByRole('link', { name: 'Browse Related Products' })[0]
         ?.getAttribute('href'),
     ).toBe('#products')
     expect(container.querySelector('#products')).not.toBeNull()
-    expect(container.querySelectorAll('.industries-showcase-card')).toHaveLength(6)
+    expect(container.querySelectorAll('.industries-showcase-card')).toHaveLength(5)
   })
 
   test('uses product card thumbnails in industry product cards', () => {

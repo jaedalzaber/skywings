@@ -8,6 +8,7 @@ import {
   getProducts,
   type ProductFilters,
 } from '@/data/catalog'
+import { getIndustryPageSlugs } from '@/data/industryPages'
 import { getMediaImage } from '@/data/media'
 import { relationArray, relationSlug } from '@/data/relations'
 
@@ -46,7 +47,10 @@ export async function CapabilityListingSection(props: ListingCopy) {
 }
 
 export async function IndustryListingSection(props: ListingCopy) {
-  const industries = await getIndustries()
+  const [industries, pageSlugs] = await Promise.all([getIndustries(), getIndustryPageSlugs()])
+  // Industries with a published landing page link there; the rest keep the
+  // catalog filter so no card ever leads to a 404.
+  const pages = new Set(pageSlugs)
 
   return (
     <section className="section-block">
@@ -54,7 +58,12 @@ export async function IndustryListingSection(props: ListingCopy) {
       {industries.length ? (
         <div className="catalog-grid">
           {industries.map((industry, index) => (
-            <IndustryCard industry={industry} index={index} key={industry.id} />
+            <IndustryCard
+              href={pages.has(industry.slug) ? `/industries/${industry.slug}` : undefined}
+              industry={industry}
+              index={index}
+              key={industry.id}
+            />
           ))}
         </div>
       ) : (
@@ -91,6 +100,7 @@ export async function ProductListingSection(
     const image = getMediaImage(product.thumbnailImage)
 
     return {
+      familySlug: relationSlug(product.productFamily),
       id: product.id,
       image: image ? { alt: image.alt, url: image.url } : null,
       industrySlugs: relationArray(product.industries)
@@ -104,10 +114,19 @@ export async function ProductListingSection(
     }
   })
 
-  const industryOptions: IndustryOption[] = industries.map((industry) => ({
-    slug: industry.slug,
-    title: industry.title,
-  }))
+  /*
+   * Only industries some listed product actually belongs to. Offering every
+   * industry meant filters that return nothing -- including sectors served as
+   * a service rather than a catalogue, which are not product categories.
+   */
+  const listedIndustrySlugs = new Set(productsLite.flatMap((product) => product.industrySlugs))
+
+  const industryOptions: IndustryOption[] = industries
+    .filter((industry) => listedIndustrySlugs.has(industry.slug))
+    .map((industry) => ({
+      slug: industry.slug,
+      title: industry.title,
+    }))
 
   return (
     <ProductsCatalog

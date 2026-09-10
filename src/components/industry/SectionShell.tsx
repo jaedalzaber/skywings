@@ -19,12 +19,14 @@ export function SectionShell(props: {
 }) {
   const { anchorId, bleed, children, className, labelledBy, theme } = props
 
+  const resolvedTheme = theme ?? 'light'
+
   return (
     <section
       aria-labelledby={labelledBy}
-      className={['industry-section', `is-${theme ?? 'light'}`, className]
-        .filter(Boolean)
-        .join(' ')}
+      className={['industry-section', `is-${resolvedTheme}`, className].filter(Boolean).join(' ')}
+      // Light sections tell the sticky header to switch to its solid surface.
+      data-nav-surface={resolvedTheme === 'light' ? 'white' : undefined}
       id={anchorId || undefined}
     >
       {bleed ? children : <div className="industry-container">{children}</div>}

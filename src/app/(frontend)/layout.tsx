@@ -9,10 +9,10 @@ import { SmoothScroll } from '@/components/layout/SmoothScroll'
 import { getSiteFooter, getSiteHeader, getSiteMetadata } from '@/data/site'
 
 import './styles.css'
-import './home-responsive.css'
 import './product-detail.css'
 import './products-catalog.css'
 import './contact.css'
+import './industry.css'
 
 const bodyFont = Roboto({
   display: 'swap',
@@ -47,6 +47,17 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={`${bodyFont.variable} ${titleFont.variable}`} suppressHydrationWarning>
+        {/*
+         * Entrance motion renders its first frame server-side, so with
+         * scripting off there would be nothing to play it back and the page
+         * would stay on that frame. This puts every revealed element back to
+         * its resting state in that one case, and costs nothing otherwise.
+         */}
+        <noscript>
+          <style>{
+            '[data-reveal]{opacity:1!important;transform:none!important;clip-path:none!important}'
+          }</style>
+        </noscript>
         <SmoothScroll />
         <SectionSnapController />
         <div className="site-shell">

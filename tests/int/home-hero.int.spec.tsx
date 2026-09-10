@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 import { HomeBlockRenderer } from '@/components/home/HomeBlocks'
-import { defaultHomeLayout, type HomeLayout } from '@/data/home'
+import { DEFAULT_HERO_VIDEO_URL, defaultHomeLayout, type HomeLayout } from '@/data/home'
 import type { MediaFile, MediaImage } from '@/data/media'
 
 const heroBlockSourcePath = resolve(process.cwd(), 'src/blocks/HomeHeroBlock.ts')
@@ -118,21 +118,18 @@ describe('HomeHero', () => {
     )
   })
 
-  test('renders the supplied YouTube video as a control-free hero background', () => {
+  test('renders the hosted Cloudinary intro video as the default hero background', () => {
     const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
     const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
-    const iframe = container.querySelector<HTMLIFrameElement>('.hero-youtube-video')
-    const url = new URL(iframe?.src ?? '')
 
-    expect(url.hostname).toBe('www.youtube-nocookie.com')
-    expect(url.pathname).toBe('/embed/i7gcbK-aOi4')
-    expect(url.searchParams.get('autoplay')).toBe('1')
-    expect(url.searchParams.get('mute')).toBe('1')
-    expect(url.searchParams.get('controls')).toBe('0')
-    expect(url.searchParams.get('loop')).toBe('1')
-    expect(url.searchParams.get('playlist')).toBe('i7gcbK-aOi4')
-    expect(iframe?.getAttribute('tabindex')).toBe('-1')
-    expect(container.querySelector('.hero-cover-video')).toBeNull()
+    expect(container.querySelector('.hero-youtube-video')).toBeNull()
+
+    for (const breakpoint of ['desktop', 'laptop', 'mobile']) {
+      const source = container.querySelector(`.hero-cover-video--${breakpoint} source`)
+
+      expect(source?.getAttribute('src')).toBe(DEFAULT_HERO_VIDEO_URL)
+      expect(source?.getAttribute('type')).toBe('video/mp4')
+    }
   })
 
   test('exposes hero cover media fields and migration for Payload admin', () => {

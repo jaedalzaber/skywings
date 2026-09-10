@@ -134,6 +134,20 @@ export const Footer: GlobalConfig = {
         {
           label: 'Locations & legal',
           fields: [
+            /*
+             * The home locations photograph. The field keeps the column name the
+             * earlier delivery section created, so the schema stays as pushed.
+             */
+            {
+              name: 'deliveryImage',
+              type: 'upload',
+              label: 'Locations image',
+              relationTo: 'media',
+              admin: {
+                description:
+                  'Tall portrait photograph beside the facility addresses on the home page. The page crops it to fill.',
+              },
+            },
             {
               name: 'addresses',
               type: 'array',

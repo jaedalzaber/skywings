@@ -66,6 +66,50 @@ export async function getIndustryPageSlugs(): Promise<string[]> {
   }
 }
 
+export type IndustryNavigationItem = {
+  href: string
+  label: string
+  slug: string
+}
+
+async function fetchIndustryNavigation(): Promise<IndustryNavigationItem[]> {
+  const payload = await getPayloadClient()
+
+  const { docs } = await payload.find({
+    collection: 'industry-pages',
+    depth: 0,
+    draft: false,
+    limit: 50,
+    overrideAccess: false,
+    pagination: false,
+    select: { navLabel: true, slug: true, title: true },
+    sort: 'sortOrder',
+  })
+
+  return docs
+    .filter((doc) => Boolean(doc.slug))
+    .map((doc) => ({
+      href: `/industries/${doc.slug}`,
+      label: doc.navLabel?.trim() || doc.title,
+      slug: doc.slug,
+    }))
+}
+
+/**
+ * Published industry pages in menu order. Feeds the header dropdown so a new
+ * page appears in navigation the moment it is published, without a code
+ * change.
+ */
+export async function getIndustryNavigation(): Promise<IndustryNavigationItem[]> {
+  try {
+    return await cachedQuery(fetchIndustryNavigation, ['industry-navigation'], [TAGS.industryPages])()
+  } catch (error) {
+    console.error('Unable to load industry navigation', error)
+
+    return []
+  }
+}
+
 /**
  * Sections an editor has hidden never reach the renderer, so a hidden block
  * cannot leak markup, spacing or a stray heading into the page.

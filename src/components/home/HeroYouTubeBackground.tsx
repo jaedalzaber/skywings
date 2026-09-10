@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { div } from 'three/src/nodes/math/OperatorNode.js'
 
 function youtubeEmbedUrl(videoId: string) {
   const params = new URLSearchParams({

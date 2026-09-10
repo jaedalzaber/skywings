@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, within } from '@testing-library/react'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
@@ -17,7 +17,20 @@ const packageJson = existsSync(packageJsonPath)
     })
   : {}
 
-describe('HomeServicesScroller', () => {
+const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
+
+/*
+ * The hero runs its own marquee of service labels, so every query here is
+ * scoped to the grid — an unscoped getByText matches the marquee copy too.
+ */
+function servicesIn(container: HTMLElement) {
+  const section = container.querySelector<HTMLElement>('.services-grid')
+  if (!section) throw new Error('services grid did not render')
+
+  return within(section)
+}
+
+describe('HomeServicesGrid', () => {
   test('loads home services from page layouts after running migrations in Vercel builds', () => {
     expect(homeSource).not.toMatch(/homeLayoutWithoutServicesSelect/)
     expect(pagesSource).not.toMatch(/pageLayoutWithoutHomeServicesSelect/)
@@ -25,69 +38,106 @@ describe('HomeServicesScroller', () => {
     expect(packageJson.scripts?.['vercel-build']).toMatch(/pnpm (run )?build/)
   })
 
-  test('renders the service container directly after the hero with five service cards', () => {
-    const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
+  // A lookup table used to swap known strings for newer wording on the way out
+  // of the data layer, which meant the services copy could not be edited from
+  // the admin at all — whatever was saved came back as the hard-coded version.
+  test('renders home copy as authored rather than rewriting known strings', () => {
+    expect(homeSource).not.toMatch(/legacyHomeCopy/)
+  })
+
+  test('renders the service grid directly after the hero with six services', () => {
     const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
 
     const hero = container.querySelector('#top')
-    const servicesSection = container.querySelector('.services-showcase')
+    const servicesSection = container.querySelector('.services-grid')
 
     expect(hero?.nextElementSibling).toBe(servicesSection)
+    expect(container.querySelectorAll('.services-grid-card')).toHaveLength(6)
+
     expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'One partner from design to delivery',
-      }),
-    ).toBeTruthy()
-    expect(screen.getByText('Manufacturing services')).toBeTruthy()
-    expect(screen.getAllByText('Custom Equipment Manufacturing')).toHaveLength(2)
-    expect(screen.getByText('Structural Steel Fabrication')).toBeTruthy()
-    expect(screen.getByText('Metal Product Fabrication')).toBeTruthy()
-    expect(screen.getByText('Erection')).toBeTruthy()
-    expect(container.querySelectorAll('.services-showcase-card')).toHaveLength(5)
+      Array.from(container.querySelectorAll('.services-grid-card-label')).map(
+        (label) => label.textContent,
+      ),
+    ).toEqual([
+      'Ground Support Equipment',
+      'Structural Steel Fabrication',
+      'Architectural & Interior Metalwork',
+      'Heavy Machinery',
+      'Sheet Metal Products',
+      'Custom Manufacturing',
+    ])
+  })
+
+  /*
+   * The headline reads as one sentence but is authored as runs, so the joined
+   * text has to come back intact — a missing space between runs is the failure
+   * this guards.
+   */
+  test('renders the heading as one sentence with the emphasised runs marked', () => {
+    const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
+
+    const heading = servicesIn(container).getByRole('heading', { level: 2 })
+
+    expect(heading.textContent).toBe(
+      'Sky Wings provides End-to-End Metal Manufacturing. We take a Requirement — a drawing, ' +
+        'a sample, a concept, or a problem to solve — and convert it into a Manufactured product.',
+    )
+    expect(
+      Array.from(container.querySelectorAll('.services-grid-heading-strong')).map(
+        (span) => span.textContent,
+      ),
+    ).toEqual(['End-to-End Metal Manufacturing.', 'Requirement', 'Manufactured product'])
   })
 
   test('renders editable home service block content from the CMS layout', () => {
-    const heroOnlyLayout = defaultHomeLayout.filter((block) => block.blockType === 'homeHero')
     const layout: HomeLayout = [
       ...heroOnlyLayout,
       {
         blockType: 'homeServices',
         cards: [
           {
-            accentTitle: false,
             fallbackImage: '/images/home/service-01.png',
+            hoverMedia: null,
             image: null,
             title: 'Editable Cutting Service',
           },
           {
-            accentTitle: true,
             fallbackImage: '/images/home/service-02.png',
+            hoverMedia: null,
             image: null,
             title: 'Editable Installation Service',
           },
         ],
-        description: 'Editable intro copy from Payload.',
-        eyebrow: 'Editable Services',
         heading: 'Editable What We Do',
-        secondaryDescription: 'Editable secondary copy from Payload.',
+        headingSegments: [
+          { text: 'Editable muted run ' },
+          { emphasis: true, text: 'and an emphasised one.' },
+        ],
       },
     ]
 
     const { container } = render(<HomeBlockRenderer blocks={layout} />)
 
-    expect(container.querySelectorAll('.services-showcase')).toHaveLength(1)
-    expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'Editable What We Do',
-      }),
-    ).toBeTruthy()
-    expect(screen.getByText('Editable Services')).toBeTruthy()
-    expect(screen.getByText('Editable intro copy from Payload.')).toBeTruthy()
-    expect(screen.getByText('Editable secondary copy from Payload.')).toBeTruthy()
-    expect(screen.getByText('Editable Cutting Service')).toBeTruthy()
-    expect(screen.getByText('Editable Installation Service')).toBeTruthy()
-    expect(container.querySelectorAll('.services-showcase-card')).toHaveLength(2)
+    const services = servicesIn(container)
+
+    expect(container.querySelectorAll('.services-grid')).toHaveLength(1)
+    expect(services.getByRole('heading', { level: 2 }).textContent).toBe(
+      'Editable muted run and an emphasised one.',
+    )
+    expect(services.getByText('Editable Cutting Service')).toBeTruthy()
+    expect(services.getByText('Editable Installation Service')).toBeTruthy()
+    expect(container.querySelectorAll('.services-grid-card')).toHaveLength(2)
+  })
+
+  /*
+   * Hover artwork is mounted on demand, so nothing animated should be in the
+   * document before a visitor touches a card — six autoplaying clips on load is
+   * exactly what the on-hover mount exists to avoid.
+   */
+  test('ships no hover artwork until a card is hovered', () => {
+    const { container } = render(<HomeBlockRenderer blocks={heroOnlyLayout} />)
+
+    expect(container.querySelectorAll('.services-grid-card-motion')).toHaveLength(0)
+    expect(container.querySelectorAll('.services-grid-card-image')).toHaveLength(6)
   })
 })

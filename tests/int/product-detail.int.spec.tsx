@@ -174,6 +174,46 @@ describe('ProductDetail', () => {
     expect(productDetailPageSource).toMatch(/getAllProductSlugs\(\)/)
   })
 
+  /*
+   * What the product is made of, finished with, made by and used for. These
+   * are relationships on the product that the page carried nowhere: a buyer
+   * could read a size but not the material or the process.
+   */
+  test('surfaces materials, finishes, applications and processes', () => {
+    render(
+      <ProductDetail
+        product={
+          {
+            ...fullProduct,
+            applications: [{ id: 1, slug: 'ramp', title: 'Ramp operations' }],
+            capabilities: [{ id: 2, slug: 'welding', title: 'Welding & Assembly' }],
+            dimensions: { height: '2m', length: '3m', notes: null, width: '1m' },
+            finishes: [{ id: 3, slug: 'powder', title: 'Powder coating' }],
+            materials: [{ id: 4, slug: 'steel', title: 'Mild steel' }],
+          } as unknown as Product
+        }
+        related={[]}
+      />,
+    )
+
+    const block = document.querySelector('.pdp-attributes') as HTMLElement
+    expect(
+      Array.from(block.querySelectorAll('.pdp-attribute-title')).map((h) => h.textContent),
+    ).toEqual(['Applications', 'Materials', 'Finishes', 'Manufacturing processes', 'Dimensions'])
+    for (const label of ['Ramp operations', 'Mild steel', 'Powder coating', 'Welding & Assembly']) {
+      expect(within(block).getByText(label), label).toBeTruthy()
+    }
+    expect(within(block).getByText('3m')).toBeTruthy()
+  })
+
+  /* A catalogue of seventy-five is not filled in evenly, so an empty group is
+     dropped rather than rendered as a heading with nothing under it. */
+  test('drops the attribute block entirely when the product carries none', () => {
+    render(<ProductDetail product={fullProduct as unknown as Product} related={[]} />)
+
+    expect(document.querySelector('.pdp-attributes')).toBeNull()
+  })
+
   test('product card thumbnails are editable and migrated', () => {
     expect(productsCollectionSource).toMatch(/name:\s*'thumbnailImage'[\s\S]*relationTo:\s*'media'/)
     expect(listingSectionsSource).toMatch(/const image = getMediaImage\(product\.thumbnailImage\)/)

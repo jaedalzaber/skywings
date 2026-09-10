@@ -66,6 +66,16 @@ export const SiteSettings: GlobalConfig = {
       validate: validateLogo,
     },
     {
+      name: 'logoSymbol',
+      type: 'upload',
+      label: 'Navigation symbol',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Compact mark shown in the navigation once the page is scrolled and the bar tightens. Optional — the full logo is scaled down instead when this is empty. SVG is recommended.',
+      },
+    },
+    {
       name: 'favicon',
       type: 'upload',
       label: 'Browser favicon',

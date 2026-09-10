@@ -27,7 +27,16 @@ export function IndustryHeroMedia(props: {
       const progress = (rect.top + rect.height / 2 - viewportHeight / 2) / viewportHeight
       const clamped = Math.max(-1, Math.min(1, progress))
 
-      frame.style.setProperty('--industry-media-y', `${clamped * -8}rem`)
+      /*
+       * A percentage, not a rem: percentage translates resolve against the
+       * image's own height, so the offset scales with the frame. These frames
+       * range from a full-height hero to a 40px strip in the collapsed card
+       * stack, and a fixed offset that looks right on the former shoves the
+       * strip clean out of frame, leaving the placeholder grey showing. The
+       * figure is paired with the scale() overscan in styles.css -- keep the
+       * overscan the larger of the two or the edges show through.
+       */
+      frame.style.setProperty('--industry-media-y', `${clamped * -6}%`)
     }
 
     const requestUpdate = () => {

@@ -2,6 +2,9 @@ import type { CSSProperties } from 'react'
 
 import type { HomeIndustriesLayoutBlock, HomeIndustryItem } from '@/data/home'
 
+import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
+
+import { IndustriesStackController } from './IndustriesStackController'
 import { IndustryHeroMedia } from './IndustryHeroMedia'
 import { IndustryProductRail } from './IndustryProductRail'
 
@@ -44,10 +47,16 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
       data-responsive-layout="industries"
       style={sectionStyle}
     >
-      <div className="industries-showcase-intro">
-        <p className="industries-showcase-eyebrow">{block.eyebrow}</p>
-        <h2 id="industries-showcase-title">{block.heading}</h2>
-      </div>
+      <IndustriesStackController />
+
+      <RevealGroup className="industries-showcase-intro">
+        <RevealItem as="p" className="industries-showcase-eyebrow">
+          {block.eyebrow}
+        </RevealItem>
+        <RevealItem as="h2" id="industries-showcase-title">
+          {block.heading}
+        </RevealItem>
+      </RevealGroup>
 
       <div className="industries-showcase-stack">
         {block.items.map((industry, itemIndex) => {
@@ -67,8 +76,20 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
           const ctaHref = industry.ctaHref || '#products'
 
           return (
-            <div className="industries-showcase-card-stage" key={industry.id ?? industry.title}>
-              <article className="industries-showcase-card" style={style}>
+            /*
+             * Each card gets its own stage. Every stage ends at the same point
+             * in the document (see the overlapping height/margin in the
+             * stylesheet), which is what makes the collected cards release
+             * together: a sticky element unpins when its own containing block
+             * runs out, so sharing one container made the lower cards unpin
+             * first and slide up onto the pinned ones.
+             */
+            <div
+              className="industries-showcase-card-stage"
+              key={industry.id ?? industry.title}
+              style={style}
+            >
+              <article className="industries-showcase-card">
                 <div className="industries-showcase-card-inner">
                   <p className="industries-showcase-card-code">
                     {String(itemIndex + 1).padStart(2, '0')}
@@ -80,9 +101,6 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
                       className="industries-showcase-card-media--compact"
                       image={industry.heroImage}
                     />
-                    <div className="industries-showcase-card-summary">
-                      <IndustryCardSummary industry={industry} />
-                    </div>
                   </div>
 
                   <IndustryProductRail
@@ -91,15 +109,23 @@ export function HomeIndustriesAccordion(props: { block: HomeIndustriesLayoutBloc
                     products={productCards}
                   />
 
+                  {/* After the rail, not inside the body: the description reads
+                      below the product carousel, and keeping the DOM in that
+                      order means the reading order matches the visual one. */}
+                  <div className="industries-showcase-card-summary">
+                    <IndustryCardSummary industry={industry} />
+                  </div>
+                </div>
+
+                <div className="industries-showcase-card-media-frame">
+                  <IndustryHeroMedia
+                    className="industries-showcase-card-media--wide"
+                    image={industry.heroImage}
+                  />
                   <a className="industries-showcase-cta" href={ctaHref}>
                     Browse Related Products
                   </a>
                 </div>
-
-                <IndustryHeroMedia
-                  className="industries-showcase-card-media--wide"
-                  image={industry.heroImage}
-                />
               </article>
             </div>
           )
