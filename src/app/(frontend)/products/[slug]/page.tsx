@@ -6,7 +6,6 @@ import { PageBlocks } from '@/components/page-builder/PageBlocks'
 import {
   getCatalogView,
   getProductBySlug,
-  getProductPageSlugs,
   getRelatedProductsFor,
   type CatalogView,
 } from '@/data/catalog'
@@ -15,11 +14,16 @@ import { hasProductPage } from '@/data/productReadiness'
 import { relationSlug } from '@/data/relations'
 import type { RouteSearchParams } from '@/data/searchParams'
 
-export async function generateStaticParams() {
-  const slugs = await getProductPageSlugs()
-
-  return slugs.map((slug) => ({ slug }))
-}
+/*
+ * Rendered per request, as /products is. A category page reads the query
+ * string -- search, sort, page -- and a route that is prerendered cannot: in
+ * production Next refuses the read with DYNAMIC_SERVER_USAGE, so while
+ * generateStaticParams prerendered the product pages, every category page
+ * (/products/aviation-ground-support-equipment and the rest) returned a 500.
+ * Dev mode never showed it. Product pages lose little: their data comes from
+ * the cached reads either way.
+ */
+export const dynamic = 'force-dynamic'
 
 /**
  * A category filed under this slug, if there is one: an industry group in the
@@ -52,10 +56,8 @@ function findCategory(view: CatalogView, slug: string) {
  * "ULD Containers" range product and the ULD Containers family share a slug,
  * and redirecting one to the other would send the address to itself.
  *
- * The query string is read only on the category branch. Reading it makes a
- * render dynamic, and a product page has no use for it -- so product pages
- * stay prerendered, and only a category page renders per request, for the
- * search, sort and page its address names.
+ * The query string is read only on the category branch: a product page has
+ * no use for it.
  */
 export default async function ProductDetailPage(props: {
   params: Promise<{ slug: string }>

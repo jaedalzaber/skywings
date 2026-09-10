@@ -626,31 +626,6 @@ export function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   )(slug)
 }
 
-/**
- * The products that have a page to prerender. The rest have nothing to show
- * there yet -- their address sends a visitor on to the catalogue instead.
- */
-export const getProductPageSlugs = cachedQuery(
-  async function fetchProductPageSlugs(): Promise<string[]> {
-    const payload = await getPayloadClient()
-    const { docs } = await payload.find({
-      collection: 'products',
-      depth: 0,
-      draft: false,
-      limit: 1000,
-      overrideAccess: false,
-      pagination: false,
-      select: { description: true, gallery: true, slug: true },
-    })
-    return docs
-      .filter((doc) => hasProductPage(doc))
-      .map((doc) => doc.slug)
-      .filter((slug): slug is string => Boolean(slug))
-  },
-  ['product-page-slugs'],
-  [TAGS.products],
-)
-
 export const getAllBlogSlugs = cachedQuery(
   async function fetchAllBlogSlugs(): Promise<string[]> {
     const payload = await getPayloadClient()

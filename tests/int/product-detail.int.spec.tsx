@@ -191,21 +191,24 @@ describe('ProductDetail', () => {
   })
 
   /*
-   * Product pages are prerendered. The listing renders per request, for the
-   * page its address names -- that is what gives every catalogue page a real
-   * address and real HTML -- but from the same cached read of the collection,
-   * so a request costs filtering a cached list, not a database query. Neither
-   * forces dynamic rendering wholesale.
+   * The listing renders per request, for the page its address names -- that
+   * is what gives every catalogue page a real address and real HTML -- from
+   * one cached read of the collection, so a request costs filtering a cached
+   * list, not a database query.
+   *
+   * /products/[slug] serves category pages too, and they read the query
+   * string. A prerendered route cannot: in production Next refused the read
+   * with DYNAMIC_SERVER_USAGE, and every category page was a 500 while dev
+   * showed nothing. So the route renders per request, and must not come back
+   * with generateStaticParams.
    */
-  test('product pages are prerendered; the listing renders its address from cached data', () => {
+  test('the listing and the slug route render per request from cached data', () => {
     expect(productsPageSource).not.toContain("dynamic = 'force-dynamic'")
     expect(productsPageSource).not.toContain('getProductFilters')
     expect(productsPageSource).toMatch(/getCatalogView\(\)/)
     expect(productsPageSource).toMatch(/props\.searchParams/)
-    expect(productDetailPageSource).not.toContain("dynamic = 'force-dynamic'")
-    expect(productDetailPageSource).toMatch(/export async function generateStaticParams\(\)/)
-    // Only products with a page are prerendered; the rest go on to their shelf.
-    expect(productDetailPageSource).toMatch(/getProductPageSlugs\(\)/)
+    expect(productDetailPageSource).toMatch(/export const dynamic = 'force-dynamic'/)
+    expect(productDetailPageSource).not.toMatch(/export (async )?function generateStaticParams/)
     expect(productDetailPageSource).toMatch(/if \(product && hasProductPage\(product\)\)/)
   })
 
