@@ -96,10 +96,24 @@ const localContentTypes: Record<string, string> = {
 /**
  * Reads `<cwd>/<collection>/<filename>`, or returns null if it isn't there --
  * e.g. a deployment whose bundle left the folder out.
+ *
+ * The turbopackIgnore marker is load-bearing, and it has to sit on
+ * process.cwd() inside path.join. Without it, Turbopack cannot tell which
+ * files a runtime path under the project root might reach, so it traces the
+ * whole project into every route's function -- this adapter is part of the
+ * Payload config, so that is every route. That swept in src, tests and 160 MB
+ * of public media, and with them package.json, whose "type": "module" made
+ * Node read the compiled CommonJS pages as ES modules: every server-rendered
+ * route on Vercel failed with ERR_REQUIRE_ESM.
+ *
+ * The upload folders are therefore not in the bundle on Vercel, and this
+ * returns null there; the handler then serves the file from Cloudinary.
  */
 async function readUploadDirFile(collectionSlug: string, filename: string) {
   try {
-    return await readFile(path.join(process.cwd(), collectionSlug, path.basename(filename)))
+    return await readFile(
+      path.join(/* turbopackIgnore: true */ process.cwd(), collectionSlug, path.basename(filename)),
+    )
   } catch {
     return null
   }
