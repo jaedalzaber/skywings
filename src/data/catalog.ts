@@ -224,44 +224,6 @@ export const getProductFamilies = cachedQuery(
   [TAGS.products],
 )
 
-export type ProductNavigationItem = {
-  children: { href: string; label: string }[]
-  href: string
-  label: string
-}
-
-/**
- * Products dropdown: industries at the top level, each expanding to the
- * product families that name it in `industryFocus`.
- *
- * Industries with no families are dropped rather than rendered as an empty
- * branch -- four of the nine currently have none, and a menu entry that opens
- * into nothing reads as a broken link.
- */
-/* The order comes from getIndustries now, which pins the same industries to
-   the front of every listing on the site rather than only this menu. */
-
-export const getProductNavigation = cachedQuery(
-  async function fetchProductNavigation(): Promise<ProductNavigationItem[]> {
-    const [industries, families] = await Promise.all([getIndustries(), getProductFamilies()])
-
-    return industries
-      .map((industry) => ({
-        children: families
-          .filter((family) => relationArrayIncludesSlug(family.industryFocus, industry.slug))
-          .map((family) => ({
-            href: `/products?industry=${industry.slug}&family=${family.slug}`,
-            label: family.title,
-          })),
-        href: `/products?industry=${industry.slug}`,
-        label: industry.title,
-      }))
-      .filter((item) => item.children.length > 0)
-  },
-  ['product-navigation'],
-  [TAGS.products, TAGS.industries],
-)
-
 export const getProducts = cachedQuery(
   async function fetchProducts(filters: ProductFilters = {}): Promise<Product[]> {
     const payload = await getPayloadClient()

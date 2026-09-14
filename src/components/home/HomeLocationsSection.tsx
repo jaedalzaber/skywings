@@ -32,7 +32,8 @@ type Props = {
  * Where Sky Wings ships from and to, closing the home page.
  *
  * A portrait aerial of the UAE with the country set large across its foot, and
- * beside it the reach -- "We deliver all over Middle-East, Europe & Africa" --
+ * beside it the reach -- "Made in the UAE, delivered across the Middle East,
+ * Europe & Africa" --
  * over the two branches. The branches step down and to the right, each under a
  * blue rule that runs back to the edge of the copy, so the pair read as two
  * stops on one line out from the picture.
@@ -144,7 +145,7 @@ export function HomeLocationsSection({ addresses, block, image, tone = 'light' }
 }
 
 /**
- * The regions as the headline's heavy line: "Middle-East, Europe & Africa".
+ * The regions as the headline's heavy line: "Middle East, Europe & Africa".
  * The commas stay with the words; the ampersand is set light, as in the lead,
  * so the line reads as one list rather than three shouted names.
  */

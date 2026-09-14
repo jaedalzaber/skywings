@@ -215,9 +215,12 @@ function HomeHero(props: {
 
   return (
     <>
+      {/* The bar floats over the footage here and carries no ground of its
+          own; see html[data-nav-surface='hero'] in styles.css. */}
       <section
         aria-label="Sky Wings hero"
         className="hero-section hero-container"
+        data-nav-surface="hero"
         data-responsive-layout="hero"
         id="top"
       >

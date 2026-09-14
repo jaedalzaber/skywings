@@ -56,6 +56,17 @@ export function HeaderSurfaceController() {
 
     if (!header) return
 
+    /*
+     * Says the bar is themed from here on. Until this runs there is no value
+     * on <html> at all, and the stylesheet reads the page's own opening
+     * section instead, so a hero page is not drawn with a white bar over its
+     * footage while it hydrates. That fallback has no idea where the page is
+     * scrolled to, though, so it has to stop the moment this can answer
+     * properly -- otherwise scrolling the home page down to a section that
+     * asks for no treatment left the bar clear over white cards.
+     */
+    root.dataset.navReady = 'true'
+
     const sections = Array.from(document.querySelectorAll<HTMLElement>(surfaceSelector))
     let frame = 0
 

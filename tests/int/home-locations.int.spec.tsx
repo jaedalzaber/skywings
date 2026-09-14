@@ -29,7 +29,8 @@ function renderLocations(locations?: Parameters<typeof HomeBlockRenderer>[0]['lo
 
 /*
  * The close of the home page: a portrait aerial with "UAE" across its foot,
- * and beside it "We deliver all over Middle-East, Europe & Africa" over the
+ * and beside it "Made in the UAE, delivered across the Middle East, Europe
+ * & Africa" over the
  * two branches, stepping down and to the right under blue rules.
  */
 describe('HomeLocationsSection', () => {
@@ -59,10 +60,14 @@ describe('HomeLocationsSection', () => {
     const { queries, section } = renderLocations()
 
     const heading = queries.getByRole('heading', { level: 2 })
-    expect(heading.textContent).toBe('We deliver all over Middle-East, Europe & Africa')
-    expect(section.querySelector('.locations-title-lead')?.textContent).toBe('We deliver all over')
+    expect(heading.textContent).toBe(
+      'Made in the UAE, delivered across the Middle East, Europe & Africa',
+    )
+    expect(section.querySelector('.locations-title-lead')?.textContent).toBe(
+      'Made in the UAE, delivered across the',
+    )
     expect(section.querySelector('.locations-title-regions')?.textContent).toBe(
-      'Middle-East, Europe & Africa',
+      'Middle East, Europe & Africa',
     )
     expect(section.querySelector('.locations-title-amp')?.textContent).toBe('&')
     expect(css).toMatch(

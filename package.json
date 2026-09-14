@@ -21,6 +21,7 @@
     "refresh:cache": "node scripts/clear-next-cache.mjs",
     "retire:industries": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/retire-industries.ts",
     "seed:aviation-catalog": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-aviation-catalog.ts",
+    "seed:header-menus": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-header-menus.ts",
     "seed:home-process": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-home-process.ts",
     "seed:home-sections": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-home-sections.ts",
     "seed:home-services": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-home-services.ts",

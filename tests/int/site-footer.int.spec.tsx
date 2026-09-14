@@ -26,11 +26,59 @@ describe('SiteFooter', () => {
     expect(footerQueries.getByRole('link', { name: '+971 54 242 9624' }).getAttribute('href')).toBe(
       'tel:+971542429624',
     )
-    expect(footerQueries.getByRole('heading', { level: 2 }).textContent).toContain(
+    expect(footer.querySelector('.figma-footer-newsletter h2')?.textContent).toContain(
       'Subscribe to get the latest news',
     )
     expect(footerQueries.getByRole('navigation', { name: 'Legal' })).toBeTruthy()
     expect(screen.getByText(/Skywings\. All rights reserved\./)).toBeTruthy()
+  })
+
+  /*
+   * Three bands under the wordmark: the site's sections, then the newsletter
+   * beside how to reach the company, then the small print. Each column of
+   * sections is headed by the part of the site it covers -- the headings were
+   * in the CMS all along and shown nowhere -- and each address is headed by
+   * the place it is in, read off the address itself.
+   */
+  test('sets the footer out in three bands, each column headed', () => {
+    const { container } = render(<SiteFooter footer={defaultFooterData} />)
+    const footer = container.querySelector('footer.site-footer') as HTMLElement
+
+    const headings = [...footer.querySelectorAll('.figma-footer-group-heading')].map(
+      (heading) => heading.textContent,
+    )
+    expect(headings).toEqual(defaultFooterData.linkGroups.map((group) => group.heading))
+
+    const bands = ['.figma-footer-top', '.figma-footer-main', '.figma-footer-bottom']
+    for (const band of bands) {
+      expect(footer.querySelector(band), band).not.toBeNull()
+    }
+    // The form fills the room the two columns of links leave to their right.
+    const top = footer.querySelector('.figma-footer-top') as HTMLElement
+    expect(top.querySelector('.figma-footer-groups')).not.toBeNull()
+    expect(top.querySelector('.figma-footer-newsletter')).not.toBeNull()
+
+    // The ways in share the middle band.
+    const main = footer.querySelector('.figma-footer-main') as HTMLElement
+    expect(main.querySelector('.figma-footer-contact-list')).not.toBeNull()
+    expect(main.querySelector('.figma-footer-addresses')).not.toBeNull()
+
+    /*
+     * The notice under the form is gone with it. It told every visitor the
+     * site was protected by reCAPTCHA, which it is not -- nothing here loads
+     * it -- so it was a claim as well as a crowd.
+     */
+    expect(footer.querySelector('.figma-footer-privacy')).toBeNull()
+
+    // And the copyright sits with the legal links rather than off on its own.
+    const bottom = footer.querySelector('.figma-footer-bottom') as HTMLElement
+    expect(bottom.querySelector('.figma-footer-copyright')).not.toBeNull()
+    expect(bottom.querySelector('.figma-footer-legal-links')).not.toBeNull()
+
+    const places = [...footer.querySelectorAll('.figma-footer-addresses strong')].map(
+      (place) => place.textContent,
+    )
+    expect(places).toEqual(['Sharjah', 'Fujairah'])
   })
 
   test('defines the mobile, tablet, and desktop Figma layouts', () => {

@@ -204,6 +204,14 @@ export function RevealGroup<T extends Tag = 'div'>(props: GroupProps<T>) {
 }
 
 /**
+ * An acronym: two or more letters, all of them capital, whatever punctuation
+ * is holding on to it. Marked so a headline can set its own initialisms --
+ * UAE, GSE -- apart from the words around them, which a stylesheet alone
+ * cannot do: there is no selecting one word of a sentence in CSS.
+ */
+const ACRONYM = /^[^\p{L}\p{N}]*\p{Lu}{2,}[^\p{L}\p{N}]*$/u
+
+/**
  * Splits a line of copy so its words arrive one after another, as part of a
  * surrounding `RevealGroup`.
  *
@@ -220,7 +228,11 @@ export function RevealWords(props: { text: string }) {
       {words.map((word, index) => (
         <Fragment key={`${word}-${index}`}>
           {index > 0 ? ' ' : null}
-          <RevealItem as="span" className="reveal-word" motion="word">
+          <RevealItem
+            as="span"
+            className={ACRONYM.test(word) ? 'reveal-word reveal-word--acronym' : 'reveal-word'}
+            motion="word"
+          >
             {word}
           </RevealItem>
         </Fragment>

@@ -12,14 +12,15 @@ export type HomeLocation = {
 }
 
 /*
- * "We deliver all over / Middle-East, Europe & Africa": the lead is set light,
- * the regions heavy, joined as a list. `reach` is no longer shown -- it stays
- * so content saved against the earlier design still reads.
+ * "Made in the UAE, delivered across the / Middle East, Europe & Africa": the
+ * lead is set light, the regions heavy, and the two are one sentence -- where
+ * the work is made, and how far it goes. `reach` is no longer shown -- it
+ * stays so content saved against the earlier design still reads.
  */
 export const defaultLocationsTitle = {
-  lead: 'We deliver all over',
+  lead: 'Made in the UAE, delivered across the',
   reach: '',
-  regions: ['Middle-East', 'Europe', 'Africa'],
+  regions: ['Middle East', 'Europe', 'Africa'],
 }
 
 export const defaultLocations: HomeLocation[] = [

@@ -1143,7 +1143,7 @@ export interface HomeLocationsBlock {
   lead?: string | null;
   reach?: string | null;
   /**
-   * Set heavy under the headline and joined as a list: "Middle-East, Europe & Africa".
+   * Set heavy under the headline and joined as a list: "Middle East, Europe & Africa". The headline runs straight into it, so the two read as one sentence.
    */
   regions?:
     | {
@@ -4269,17 +4269,91 @@ export interface Header {
   navigation?:
     | {
         label: string;
-        href: string;
+        /**
+         * A path on this site, such as /capabilities, or a full web address.
+         */
+        href?: string | null;
+        linkType?: ('custom' | 'productCategory') | null;
+        /**
+         * The catalogue opens filtered to this industry.
+         */
+        industry?: (number | null) | Industry;
+        /**
+         * Optional. Narrows it further to one family within that industry.
+         */
+        family?: (number | null) | ProductFamily;
+        /**
+         * Stays in the menu, reading as it always did, but goes nowhere when clicked.
+         */
+        disabled?: boolean | null;
+        /**
+         * Left out of the site altogether, and kept here for later.
+         */
+        hidden?: boolean | null;
+        /**
+         * Leave empty for a plain link in the bar. Entries given links of their own become the columns of a mega menu.
+         */
         children?:
           | {
               label: string;
-              href: string;
+              /**
+               * A path on this site, such as /capabilities, or a full web address.
+               */
+              href?: string | null;
+              linkType?: ('custom' | 'productCategory') | null;
+              /**
+               * The catalogue opens filtered to this industry.
+               */
+              industry?: (number | null) | Industry;
+              /**
+               * Optional. Narrows it further to one family within that industry.
+               */
+              family?: (number | null) | ProductFamily;
+              /**
+               * Stays in the menu, reading as it always did, but goes nowhere when clicked.
+               */
+              disabled?: boolean | null;
+              /**
+               * Left out of the site altogether, and kept here for later.
+               */
+              hidden?: boolean | null;
+              links?:
+                | {
+                    label: string;
+                    /**
+                     * A path on this site, such as /capabilities, or a full web address.
+                     */
+                    href?: string | null;
+                    linkType?: ('custom' | 'productCategory') | null;
+                    /**
+                     * The catalogue opens filtered to this industry.
+                     */
+                    industry?: (number | null) | Industry;
+                    /**
+                     * Optional. Narrows it further to one family within that industry.
+                     */
+                    family?: (number | null) | ProductFamily;
+                    /**
+                     * Stays in the menu, reading as it always did, but goes nowhere when clicked.
+                     */
+                    disabled?: boolean | null;
+                    /**
+                     * Left out of the site altogether, and kept here for later.
+                     */
+                    hidden?: boolean | null;
+                    id?: string | null;
+                  }[]
+                | null;
               id?: string | null;
             }[]
           | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Sits in the bar just before the call to action, on wide screens.
+   */
+  showProudBadge?: boolean | null;
   cta?:
     | {
         label: string;
@@ -4377,6 +4451,28 @@ export interface SiteSetting {
    */
   logoSymbol?: (number | null) | Media;
   /**
+   * The logo turns on its axis in the navigation bar, waits, and turns again. Applies to the full logo and to the compact symbol alike. Visitors who ask for reduced motion never see it.
+   */
+  logoMotion?: {
+    enabled?: boolean | null;
+    /**
+     * How long one full turn takes. It eases in and out.
+     */
+    durationSeconds?: number | null;
+    /**
+     * How much the turn slows at each end. 0 turns at one steady speed; 1 creeps in, sweeps through the middle and settles.
+     */
+    easeAmount?: number | null;
+    /**
+     * How near the viewer the logo appears to be while it turns. Small numbers exaggerate the perspective -- the near edge swells and the far edge shrinks; large numbers flatten it.
+     */
+    perspectiveRem?: number | null;
+    /**
+     * How long the logo sits still before it turns again.
+     */
+    restSeconds?: number | null;
+  };
+  /**
    * Used only for browser tabs and bookmarks. Upload a separate square image.
    */
   favicon?: (number | null) | Media;
@@ -4429,15 +4525,38 @@ export interface HeaderSelect<T extends boolean = true> {
     | {
         label?: T;
         href?: T;
+        linkType?: T;
+        industry?: T;
+        family?: T;
+        disabled?: T;
+        hidden?: T;
         children?:
           | T
           | {
               label?: T;
               href?: T;
+              linkType?: T;
+              industry?: T;
+              family?: T;
+              disabled?: T;
+              hidden?: T;
+              links?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    linkType?: T;
+                    industry?: T;
+                    family?: T;
+                    disabled?: T;
+                    hidden?: T;
+                    id?: T;
+                  };
               id?: T;
             };
         id?: T;
       };
+  showProudBadge?: T;
   cta?:
     | T
     | {
@@ -4519,6 +4638,15 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   tagline?: T;
   logo?: T;
   logoSymbol?: T;
+  logoMotion?:
+    | T
+    | {
+        enabled?: T;
+        durationSeconds?: T;
+        easeAmount?: T;
+        perspectiveRem?: T;
+        restSeconds?: T;
+      };
   favicon?: T;
   contact?:
     | T

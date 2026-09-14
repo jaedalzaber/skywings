@@ -2,26 +2,37 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
 import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import type { SiteHeaderData } from '@/data/site'
 
+import { BrandLogoSpin } from './BrandLogoSpin'
 import { HeaderSurfaceController } from './HeaderSurfaceController'
 
 type SiteHeaderProps = {
   header: SiteHeaderData
 }
 
-function isDisabledNavigationItem(item: SiteHeaderData['navigation'][number]) {
-  const href = item.href.trim()
-
+/**
+ * A menu entry that is shown but leads nowhere: either an editor switched it
+ * off in the Header global while the page behind it is written, or it was
+ * never given an address. It is still announced, so the shape of the range
+ * reads whole, and it is still reachable by keyboard -- it simply says it is
+ * unavailable rather than pretending to be missing.
+ */
+function DeadLink(props: { children: ReactNode; className?: string }) {
+  /*
+   * An anchor with no address, which is not a link at all: it is read out as
+   * plain text rather than as something broken, and it takes the menu's own
+   * styling without a second set of rules to keep in step.
+   */
   return (
-    href === '#' ||
-    href === '' ||
-    (href === '/' && item.label.trim().toLowerCase() === 'industries')
+    <a aria-disabled="true" className={props.className}>
+      {props.children}
+    </a>
   )
 }
 
@@ -128,10 +139,21 @@ export function SiteHeader(props: SiteHeaderProps) {
    */
   const symbolAspect = symbol?.width && symbol?.height ? symbol.width / symbol.height : null
 
+  /*
+   * The turn is seen in depth, and depth is a property of the box the mark
+   * turns inside -- so it is set on the link, not on the mark. Set on the mark
+   * itself it would be read by nothing: a custom property reaches downwards.
+   */
+  const brandStyle = {
+    '--brand-perspective': `${header.logoMotion.perspectiveRem}rem`,
+  } as CSSProperties
+
   const logoStyle = {
     '--brand-logo-src': `url("${logoUrl}")`,
     ...(symbol?.url ? { '--brand-symbol-src': `url("${symbol.url}")` } : {}),
-    ...(symbolAspect ? { '--brand-symbol-width': `calc(2.25rem * ${symbolAspect.toFixed(4)})` } : {}),
+    ...(symbolAspect
+      ? { '--brand-symbol-width': `calc(2.25rem * ${symbolAspect.toFixed(4)})` }
+      : {}),
   } as CSSProperties
 
   const logoImage = (
@@ -148,6 +170,7 @@ export function SiteHeader(props: SiteHeaderProps) {
   return (
     <header aria-label="Primary navigation" className="nav-container">
       <HeaderSurfaceController />
+      <BrandLogoSpin motion={header.logoMotion} />
       <div aria-hidden="true" className="nav-spacer" />
       {/*
        * The bar sets itself out on load: the mark, then the sections one at a
@@ -157,15 +180,23 @@ export function SiteHeader(props: SiteHeaderProps) {
        * is the one part of the page that is always on screen.
        */}
       <RevealGroup amount={0} className="topbar" delay={0.12} stagger={0.06}>
-        <Link aria-label={`${header.brandName} home`} className="brand" href="/">
-          <RevealItem as="span" className="brand-logo" style={logoStyle}>
-            {logoImage}
-          </RevealItem>
-        </Link>
+        {/* The mark takes only the room it needs, inside a half of the bar
+            that takes the rest; see .nav-start. */}
+        <div className="nav-start">
+          <Link
+            aria-label={`${header.brandName} home`}
+            className="brand"
+            href="/"
+            style={brandStyle}
+          >
+            <RevealItem as="span" className="brand-logo" style={logoStyle}>
+              {logoImage}
+            </RevealItem>
+          </Link>
+        </div>
 
         <nav aria-label="Site sections" className="nav-links">
           {header.navigation.map((item) => {
-            const itemDisabled = isDisabledNavigationItem(item)
             const hasGroups = Boolean(item.children?.some((child) => child.children?.length))
 
             return (
@@ -173,7 +204,7 @@ export function SiteHeader(props: SiteHeaderProps) {
                 className={hasGroups ? 'nav-item nav-item--mega' : 'nav-item'}
                 key={item.id ?? item.href}
               >
-                {itemDisabled ? (
+                {item.disabled ? (
                   <button aria-disabled="true" className="nav-link-control" type="button">
                     <span>{item.label}</span>
                     {item.children?.length ? (
@@ -197,18 +228,28 @@ export function SiteHeader(props: SiteHeaderProps) {
                       // (industry -> product families) instead of a flat link.
                       return child.children?.length ? (
                         <div className="nav-submenu-group" key={childKey}>
-                          <a className="nav-submenu-heading" href={child.href}>
-                            {child.label}
-                          </a>
-                          {child.children.map((grandchild, grandchildIndex) => (
-                            <a
-                              href={grandchild.href}
-                              key={grandchild.id ?? `${grandchild.href}-${grandchildIndex}`}
-                            >
-                              {grandchild.label}
+                          {child.disabled ? (
+                            <DeadLink className="nav-submenu-heading">{child.label}</DeadLink>
+                          ) : (
+                            <a className="nav-submenu-heading" href={child.href}>
+                              {child.label}
                             </a>
-                          ))}
+                          )}
+                          {child.children.map((grandchild, grandchildIndex) => {
+                            const grandchildKey =
+                              grandchild.id ?? `${grandchild.href}-${grandchildIndex}`
+
+                            return grandchild.disabled ? (
+                              <DeadLink key={grandchildKey}>{grandchild.label}</DeadLink>
+                            ) : (
+                              <a href={grandchild.href} key={grandchildKey}>
+                                {grandchild.label}
+                              </a>
+                            )
+                          })}
                         </div>
+                      ) : child.disabled ? (
+                        <DeadLink key={childKey}>{child.label}</DeadLink>
                       ) : (
                         <a href={child.href} key={childKey}>
                           {child.label}
@@ -222,18 +263,50 @@ export function SiteHeader(props: SiteHeaderProps) {
           })}
         </nav>
 
-        <RevealItem className="nav-actions">
-          {header.cta ? (
-            <a
-              className="nav-cta"
-              href={header.cta.href}
-              rel={header.cta.openInNewTab ? 'noreferrer' : undefined}
-              target={header.cta.openInNewTab ? '_blank' : undefined}
-            >
-              {header.cta.label}
-            </a>
+        {/* The badge and the button travel together, so the sections
+            between them and the mark stay centred in the bar. */}
+        <div className="nav-end">
+          {/*
+           * Two copies of the same badge, one drawn for a dark bar and one for
+           * a light one, and the stylesheet shows whichever suits the surface:
+           * the lettering is white in the artwork, so on the white bar it would
+           * otherwise disappear. The wrapper carries the name; the pictures are
+           * decoration either way.
+           */}
+          {header.proudBadge ? (
+            <RevealItem as="span" aria-label="Proud of UAE" className="nav-proud" role="img">
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="nav-proud-art nav-proud-art--light"
+                height={96}
+                src="/images/header/proud-of-uae.png"
+                width={512}
+              />
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="nav-proud-art nav-proud-art--dark"
+                height={96}
+                src="/images/header/proud-of-uae-dark.png"
+                width={512}
+              />
+            </RevealItem>
           ) : null}
-        </RevealItem>
+
+          <RevealItem className="nav-actions">
+            {header.cta ? (
+              <a
+                className="nav-cta"
+                href={header.cta.href}
+                rel={header.cta.openInNewTab ? 'noreferrer' : undefined}
+                target={header.cta.openInNewTab ? '_blank' : undefined}
+              >
+                {header.cta.label}
+              </a>
+            ) : null}
+          </RevealItem>
+        </div>
 
         <RevealItem
           as="button"
@@ -288,8 +361,6 @@ export function SiteHeader(props: SiteHeaderProps) {
 
           <nav aria-label="Mobile site sections" className="mobile-nav-content">
             {mobileNavigation.map((item) => {
-              const itemDisabled = isDisabledNavigationItem(item)
-
               return item.children?.length ? (
                 <section className="mobile-nav-section" key={item.key}>
                   <button
@@ -309,7 +380,7 @@ export function SiteHeader(props: SiteHeaderProps) {
                   </button>
                   {(expanded[item.key] ?? true) ? (
                     <div className="mobile-nav-sublist" id={`mobile-${item.key}-links`}>
-                      {itemDisabled ? null : (
+                      {item.disabled ? null : (
                         <Link href={item.href} onClick={() => closeMenu()}>
                           {item.label}
                         </Link>
@@ -319,23 +390,38 @@ export function SiteHeader(props: SiteHeaderProps) {
 
                         return child.children?.length ? (
                           <div className="mobile-nav-product-group" key={childKey}>
-                            <Link
-                              className="mobile-nav-product-heading"
-                              href={child.href}
-                              onClick={() => closeMenu()}
-                            >
-                              {child.label}
-                            </Link>
-                            {child.children.map((grandchild, grandchildIndex) => (
+                            {child.disabled ? (
+                              <DeadLink className="mobile-nav-product-heading">
+                                {child.label}
+                              </DeadLink>
+                            ) : (
                               <Link
-                                href={grandchild.href}
-                                key={grandchild.id ?? `${grandchild.href}-${grandchildIndex}`}
+                                className="mobile-nav-product-heading"
+                                href={child.href}
                                 onClick={() => closeMenu()}
                               >
-                                {grandchild.label}
+                                {child.label}
                               </Link>
-                            ))}
+                            )}
+                            {child.children.map((grandchild, grandchildIndex) => {
+                              const grandchildKey =
+                                grandchild.id ?? `${grandchild.href}-${grandchildIndex}`
+
+                              return grandchild.disabled ? (
+                                <DeadLink key={grandchildKey}>{grandchild.label}</DeadLink>
+                              ) : (
+                                <Link
+                                  href={grandchild.href}
+                                  key={grandchildKey}
+                                  onClick={() => closeMenu()}
+                                >
+                                  {grandchild.label}
+                                </Link>
+                              )
+                            })}
                           </div>
+                        ) : child.disabled ? (
+                          <DeadLink key={childKey}>{child.label}</DeadLink>
                         ) : (
                           <Link href={child.href} key={childKey} onClick={() => closeMenu()}>
                             {child.label}
@@ -345,7 +431,7 @@ export function SiteHeader(props: SiteHeaderProps) {
                     </div>
                   ) : null}
                 </section>
-              ) : itemDisabled ? (
+              ) : item.disabled ? (
                 <span
                   aria-disabled="true"
                   className="mobile-nav-primary-link mobile-nav-disabled-link"

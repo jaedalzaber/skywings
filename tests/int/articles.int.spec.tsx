@@ -14,6 +14,7 @@ import {
 } from '@/data/articleQuery'
 import { ARTICLE_MEDIA, articleSeeds } from '@/data/articleSeeds'
 import { DEFAULT_BYLINE, type Article, type ArticleCard } from '@/data/articles'
+import { defaultHeaderData } from '@/data/site'
 import { markdownToLexical, parseInline } from '@/lib/articles/markdown'
 import { articleOutline, headingIds, headingSlug, readingMinutes } from '@/lib/articles/outline'
 import type { BlogPost } from '@/payload-types'
@@ -278,12 +279,19 @@ describe('resources pages', () => {
     ).toBe('/contact')
   })
 
+  /*
+   * Where the bar's Resources entry points is the Header global's business
+   * now -- it used to be rewritten to the hub in code, whatever the CMS said.
+   * What is left here is the fallback the site falls back to when Payload
+   * cannot be reached, which must still lead to the hub rather than the old
+   * blog.
+   */
   test('moves the blog to the hub and points Resources at it', () => {
     expect(read('next.config.ts')).toMatch(
       /source: '\/blog\/:slug', destination: '\/resources\/:slug', permanent: true/,
     )
-    expect(read('src/data/site.ts')).toMatch(
-      /label === 'resources' && !\(item\.children\?\.length \?\? 0\)\) \{\s*return \{ \.\.\.item, href: '\/resources' \}/,
+    expect(defaultHeaderData.navigation.find((item) => item.label === 'Resources')?.href).toBe(
+      '/resources',
     )
   })
 })

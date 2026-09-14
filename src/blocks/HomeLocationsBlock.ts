@@ -21,7 +21,7 @@ export const HomeLocationsBlock: Block = {
       name: 'lead',
       label: 'Headline',
       type: 'text',
-      defaultValue: 'We deliver all over',
+      defaultValue: 'Made in the UAE, delivered across the',
       admin: { description: 'Set light, above the regions.' },
     },
     {
@@ -39,9 +39,9 @@ export const HomeLocationsBlock: Block = {
       type: 'array',
       admin: {
         description:
-          'Set heavy under the headline and joined as a list: "Middle-East, Europe & Africa".',
+          'Set heavy under the headline and joined as a list: "Middle East, Europe & Africa". The headline runs straight into it, so the two read as one sentence.',
       },
-      defaultValue: [{ text: 'Middle-East' }, { text: 'Europe' }, { text: 'Africa' }],
+      defaultValue: [{ text: 'Middle East' }, { text: 'Europe' }, { text: 'Africa' }],
       fields: [{ name: 'text', type: 'text', required: true }],
     },
     {

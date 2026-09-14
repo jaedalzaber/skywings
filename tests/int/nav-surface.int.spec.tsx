@@ -93,6 +93,35 @@ describe('header surface theming', () => {
   })
 
   /*
+   * The mirroring is done by a script, and a script only runs once the page
+   * is hydrated -- so the hero theme cannot wait on it, or the bar is drawn
+   * white across the top of the footage on every load. Every hero rule reads
+   * the page's own markup as well as the mirrored value, so the bar is clear
+   * from the first frame.
+   *
+   * And only until the controller starts, which is the second guard. Markup
+   * cannot say where a page has been scrolled to: with the fallback keyed on
+   * the surface value alone, scrolling the home page down to a section that
+   * asks for no treatment -- the industries cards, say -- dropped the value,
+   * matched the fallback again and left white type on a clear bar over white
+   * cards.
+   */
+  test('themes the hero bar from the markup, before any script has run', () => {
+    const heroRules = stylesheet.match(/html:is\(\s*\[data-nav-surface='hero'\][^{]*\{/gs) ?? []
+    expect(heroRules.length).toBeGreaterThan(0)
+    expect(stylesheet).not.toMatch(/html\[data-nav-surface='hero'\]/)
+
+    for (const rule of heroRules) {
+      expect(rule).toContain(
+        ":not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)",
+      )
+    }
+
+    // The other half of that guard: the controller closes the door behind it.
+    expect(controller).toMatch(/root\.dataset\.navReady = 'true'/)
+  })
+
+  /*
    * Smooth scrolling keeps firing scroll events long after the page has come
    * to rest. Re-assigning an identical attribute still produces a mutation
    * record, and the scroll scenes listen for those to re-measure -- so a
@@ -160,7 +189,10 @@ describe('header surface theming', () => {
     // A navigation: the old page's section leaves the DOM, a new one with a
     // different surface takes its place, and the route changes underneath.
     document.querySelector('#a')?.remove()
-    document.body.insertAdjacentHTML('beforeend', '<section id="b" data-nav-surface="white"></section>')
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<section id="b" data-nav-surface="white"></section>',
+    )
     pathname.current = '/products'
     rerender(<HeaderSurfaceController />)
     await settle()

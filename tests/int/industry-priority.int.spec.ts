@@ -64,17 +64,17 @@ describe('industry priority', () => {
    * layout preference, so it settles that order too -- for the curated list as
    * well as the generated one, keyed on the slug rather than the position.
    */
-  test('orders the Industries menu whether it is curated or generated', () => {
+  test('orders the Industries menu, wherever its entries were written', () => {
     const site = read('src/data/site.ts')
 
     expect(site).toMatch(/function sortIndustryChildren\(children: HeaderNavigationChild\[\]\)/)
     expect(site).toMatch(/href\.split\('\/industries\/'\)\[1\]/)
-    // The curated branch used to return untouched; it now keeps its content
-    // and gives up only its order.
+    // One path now that the menu is the CMS's own: whatever an editor has put
+    // in it keeps its content and gives up only its order.
     expect(site).toMatch(
-      /if \(\(item\.children\?\.length \?\? 0\) > 1\) \{\s*return label === 'industries'\s*\? \{ \.\.\.item, children: sortIndustryChildren\(item\.children \?\? \[\]\) \}\s*: item/,
+      /item\.label\.trim\(\)\.toLowerCase\(\) === 'industries'\s*\? \{ \.\.\.item, children: sortIndustryChildren\(item\.children \?\? \[\]\) \}/,
     )
-    // And the generated branch sorts the same way.
-    expect(site).toMatch(/children: sortIndustryChildren\(\s*industryPages\.length/)
+    // And the seed that fills that menu writes the same order into the CMS.
+    expect(read('scripts/seed-header-menus.ts')).toMatch(/industryRank\(a\.slug as string\)/)
   })
 })

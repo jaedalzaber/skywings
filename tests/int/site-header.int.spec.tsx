@@ -2,32 +2,32 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { SiteHeader } from '@/components/layout/SiteHeader'
-import type { SiteHeaderData } from '@/data/site'
+import { defaultBrandLogoMotion, renderableNavigation, type SiteHeaderData } from '@/data/site'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/products/folding-stand' }))
+
+/** A row of the bar as the data layer hands it over: shown, and working. */
+const nav = (label: string, href: string) => ({ disabled: false, href, label })
 
 const header: SiteHeaderData = {
   brandName: 'Sky Wings',
   brandTagline: 'Engineering Industries LLC',
+  logoMotion: defaultBrandLogoMotion,
   navigation: [
     {
-      href: '/industries',
-      label: 'Industries',
+      ...nav('Industries', '/industries'),
       children: [
-        {
-          href: '/industries/aviation-ground-support-equipment',
-          label: 'Aviation Ground Support Equipment',
-        },
+        nav('Aviation Ground Support Equipment', '/industries/aviation-ground-support-equipment'),
       ],
     },
     {
-      href: '/products',
-      label: 'Products',
-      children: [{ href: '/products/folding-stand', label: 'Folding Stand' }],
+      ...nav('Products', '/products'),
+      children: [nav('Folding Stand', '/products/folding-stand')],
     },
-    { href: '/capabilities', label: 'Capabilities' },
-    { href: '/blog', label: 'Resources' },
+    nav('Capabilities', '/capabilities'),
+    nav('Resources', '/blog'),
   ],
+  proudBadge: true,
   cta: { href: '/contact', label: 'Contact', openInNewTab: false, style: 'primary' },
 }
 
@@ -116,16 +116,18 @@ describe('SiteHeader mobile navigation', () => {
     const disabledIndustriesHeader: SiteHeaderData = {
       ...header,
       navigation: [
-        {
-          href: '/',
-          label: 'Industries',
-          children: [
-            {
-              href: '/industries/aviation-ground-support-equipment',
-              label: 'Aviation Ground Support Equipment',
-            },
-          ],
-        },
+        ...renderableNavigation([
+          {
+            href: '/',
+            label: 'Industries',
+            children: [
+              {
+                href: '/industries/aviation-ground-support-equipment',
+                label: 'Aviation Ground Support Equipment',
+              },
+            ],
+          },
+        ]),
         ...header.navigation.slice(1),
       ],
     }
@@ -157,17 +159,18 @@ describe('SiteHeader product categories', () => {
     navigation: [
       header.navigation[0],
       {
-        href: '/products',
-        label: 'Products',
+        ...nav('Products', '/products'),
         children: [
           {
-            href: '/products?industry=aviation-ground-support-equipment',
-            label: 'Aviation Ground Support Equipment',
+            ...nav(
+              'Aviation Ground Support Equipment',
+              '/products?industry=aviation-ground-support-equipment',
+            ),
             children: [
-              {
-                href: '/products?industry=aviation-ground-support-equipment&family=uld-containers-and-pallets',
-                label: 'ULD Containers & Pallets',
-              },
+              nav(
+                'ULD Containers & Pallets',
+                '/products?industry=aviation-ground-support-equipment&family=uld-containers-and-pallets',
+              ),
             ],
           },
         ],
@@ -208,5 +211,125 @@ describe('SiteHeader product categories', () => {
     }
 
     expect(within(drawer).getByRole('link', { name: 'ULD Containers & Pallets' })).toBeDefined()
+  })
+})
+
+describe('SiteHeader entries an editor has switched off', () => {
+  afterEach(() => {
+    cleanup()
+    document.body.style.overflow = ''
+  })
+
+  /*
+   * Two different intentions, and they read differently on the page. A row
+   * switched off is still in the menu, announced as a link and reachable by
+   * keyboard, saying the page is not ready; a row hidden never arrives here
+   * at all, because the data layer drops it.
+   */
+  test('shows a menu entry that does not link, without an address on it', () => {
+    const withDisabled: SiteHeaderData = {
+      ...header,
+      navigation: [
+        {
+          ...nav('Products', '/products'),
+          children: [
+            { ...nav('Folding Stand', '/products/folding-stand'), disabled: true },
+            nav('Work Platform', '/products/work-platform'),
+          ],
+        },
+      ],
+    }
+
+    render(<SiteHeader header={withDisabled} />)
+
+    const stand = screen.getByText('Folding Stand')
+    expect(stand.getAttribute('aria-disabled')).toBe('true')
+    expect(stand.hasAttribute('href')).toBe(false)
+    expect(screen.getByText('Work Platform').getAttribute('href')).toBe('/products/work-platform')
+  })
+
+  test('leaves a hidden row out of the bar entirely', () => {
+    const navigation = renderableNavigation([
+      { href: '/products', label: 'Products', hidden: true },
+      {
+        href: '/capabilities',
+        label: 'Capabilities',
+        children: [
+          { href: '/capabilities/welding', label: 'Welding', hidden: true },
+          { href: '/capabilities/forming', label: 'Forming' },
+        ],
+      },
+    ])
+
+    render(<SiteHeader header={{ ...header, navigation }} />)
+
+    expect(screen.queryByText('Products')).toBeNull()
+    expect(screen.queryByText('Welding')).toBeNull()
+    expect(screen.getByText('Forming')).toBeDefined()
+  })
+
+  test('puts the Proud of UAE badge away when the header says to', () => {
+    const { container } = render(<SiteHeader header={{ ...header, proudBadge: false }} />)
+    expect(container.querySelector('.nav-proud')).toBeNull()
+
+    cleanup()
+
+    const shown = render(<SiteHeader header={header} />)
+    expect(shown.container.querySelector('.nav-proud')).not.toBeNull()
+  })
+})
+
+describe('header navigation read from the CMS', () => {
+  /*
+   * The catalogue's own addresses are a query string, which is not something
+   * to ask an editor to type: they pick the industry, and the family within
+   * it, and this spells it out the same way the generated Products menu does.
+   */
+  test('builds a catalogue address from the category chosen', () => {
+    const [industryOnly, withFamily, unset] = renderableNavigation([
+      {
+        label: 'Aviation',
+        linkType: 'productCategory',
+        industry: { id: 1, slug: 'aviation-ground-support-equipment' } as never,
+      },
+      {
+        label: 'ULD Containers',
+        linkType: 'productCategory',
+        industry: { id: 1, slug: 'aviation-ground-support-equipment' } as never,
+        family: { id: 2, slug: 'uld-containers-and-pallets' } as never,
+      },
+      { label: 'Nothing chosen yet', linkType: 'productCategory' },
+    ])
+
+    expect(industryOnly.href).toBe('/products?industry=aviation-ground-support-equipment')
+    expect(withFamily.href).toBe(
+      '/products?industry=aviation-ground-support-equipment&family=uld-containers-and-pallets',
+    )
+    // Nothing to point at yet, so it is shown but does not pretend to lead on.
+    expect(unset.href).toBe('#')
+    expect(unset.disabled).toBe(true)
+  })
+
+  test("carries an editor's switch down to every level", () => {
+    const [products] = renderableNavigation([
+      {
+        href: '/products',
+        label: 'Products',
+        children: [
+          {
+            href: '/products?industry=aviation',
+            label: 'Aviation',
+            disabled: true,
+            // A column's own links are stored under 'links', not a second
+            // 'children': two arrays of one name confuse the database layer.
+            links: [{ href: '/products?family=uld', label: 'ULD', disabled: true }],
+          },
+        ],
+      },
+    ])
+
+    expect(products.disabled).toBe(false)
+    expect(products.children?.[0].disabled).toBe(true)
+    expect(products.children?.[0].children?.[0].disabled).toBe(true)
   })
 })
