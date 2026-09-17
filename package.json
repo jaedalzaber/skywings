@@ -39,6 +39,8 @@
     "seed:capabilities": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-capabilities.ts",
     "newsletter:import": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/import-newsletter-subscribers.ts",
     "newsletter:import:dry-run": "cross-env NODE_OPTIONS=--no-deprecation DRY_RUN=1 payload run scripts/import-newsletter-subscribers.ts",
+    "media:upload-cloudinary": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/upload-media-to-cloudinary.ts",
+    "media:upload-cloudinary:dry-run": "cross-env NODE_OPTIONS=--no-deprecation DRY_RUN=1 payload run scripts/upload-media-to-cloudinary.ts",
     "mirror:media": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/mirror-media.ts",
     "mirror:media:dry-run": "cross-env NODE_OPTIONS=--no-deprecation DRY_RUN=1 payload run scripts/mirror-media.ts",
     "sync:cloudinary": "node scripts/sync-cloudinary.mjs",

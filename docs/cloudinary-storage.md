@@ -18,9 +18,11 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-Without them, development warns and falls back to local disk; **production
-refuses to boot**. That is deliberate — a storage plugin that disables itself
-quietly is what made the previous outage hard to spot.
+Without them the app **refuses to start, in development as well as
+production**. There is no local-disk fallback: the database is shared with the
+live site, so a file saved only on one computer is a broken image for everyone
+else. A fallback that did exactly that briefly existed in September 2026, and
+the uploads made through it never reached the live site.
 
 ## Layout
 
@@ -69,12 +71,15 @@ cloudinaryStorage({
 })
 ```
 
-## Local delivery (saving credits)
+## Local delivery (off by default)
 
-The free plan also meters **delivery bandwidth** against a monthly credit quota,
-and in September 2026 the account got close to it. Since then, files the
-deployment already carries are served from it by default. Uploads still go to
-Cloudinary.
+Every file is served from Cloudinary. Setting `MEDIA_DELIVERY=local` switches
+on the fallback below, which serves copies the deployment already carries to
+save CDN credits. It was the default until September 2026, when it was turned
+off: pages looked right wherever a local copy existed, which hid files that had
+never reached Cloudinary until they 404'd on the live site.
+
+With `MEDIA_DELIVERY=local`:
 
 - **Media** is copied into `public/media/` and handed out as `/media/<file>`.
   If a file is identical to one already in `public/` (like `public/images/` or
@@ -101,7 +106,21 @@ before, so nothing breaks in the meantime.
 Every `cachedQuery` key includes a fingerprint of the manifest, so cached pages
 pick up new URLs without a manual cache purge.
 
-To serve everything from Cloudinary again, set `MEDIA_DELIVERY=cloudinary`.
+Leave `MEDIA_DELIVERY` unset to serve everything from Cloudinary.
+
+## Moving to a new account
+
+To fill a new Cloudinary account, or push up files that only exist on one
+computer, run the migration. It works from the database, uploads each file
+under the public ID the adapter expects, skips what is already there, and lists
+anything it cannot find locally:
+
+```bash
+pnpm run media:upload-cloudinary:dry-run
+pnpm run media:upload-cloudinary
+```
+
+Re-run it on any other computer that holds originals this one does not.
 
 ## Uploading local files
 

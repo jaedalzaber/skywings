@@ -1,8 +1,7 @@
 import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
-import type { Adapter, CollectionOptions } from '@payloadcms/plugin-cloud-storage/types'
+import type { CollectionOptions } from '@payloadcms/plugin-cloud-storage/types'
 import type { Config, Plugin, UploadCollectionSlug } from 'payload'
 
-import { localStorageAdapter } from '../localStorage'
 import type { CloudinaryAdapterArgs } from './adapter'
 import { cloudinaryAdapter, configureCloudinary } from './adapter'
 
@@ -27,67 +26,50 @@ const missingCredentialsMessage = [
  * Payload has no first-party Cloudinary adapter, so this wires our own onto
  * the official `@payloadcms/plugin-cloud-storage` extension point.
  *
- * Unlike the Vercel Blob plugin it replaces, missing credentials are never
- * swallowed: production refuses to boot and development prints a banner. A
- * silently disabled storage plugin falls back to local disk, which looks fine
- * until deploy time.
+ * Cloudinary is the only storage, in every environment. Without credentials
+ * the app refuses to start rather than falling back to local disk: the
+ * database is shared with the live site, so a file saved only on one
+ * computer is a broken image for everyone else. That fallback existed for a
+ * while, and uploads made through it never reached the live site.
  */
 export const cloudinaryStorage =
   (options: CloudinaryStorageOptions): Plugin =>
   (incomingConfig: Config): Config => {
-    const apiKey = options.apiKey ?? process.env.CLOUDINARY_API_KEY
-    const apiSecret = options.apiSecret ?? process.env.CLOUDINARY_API_SECRET
-    const cloudName = options.cloudName ?? process.env.CLOUDINARY_CLOUD_NAME
-    const hasCredentials = Boolean(apiKey && apiSecret && cloudName)
-
     if (options.enabled === false) {
       return incomingConfig
     }
 
-    if (!hasCredentials) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(missingCredentialsMessage)
-      }
+    const apiKey = options.apiKey ?? process.env.CLOUDINARY_API_KEY
+    const apiSecret = options.apiSecret ?? process.env.CLOUDINARY_API_SECRET
+    const cloudName = options.cloudName ?? process.env.CLOUDINARY_CLOUD_NAME
 
-      console.error(
-        `\n[cloudinary] ${missingCredentialsMessage}\n[cloudinary] Serving mirrored files from public/ and uploads from local disk until this is fixed.\n`,
-      )
-
-      /*
-       * Still install an adapter, or the mirrored copies under public/ are
-       * never served: Payload's own disk storage would point every URL at
-       * ./media, which a fresh checkout does not have.
-       */
-      return withAdapter(localStorageAdapter({ localDelivery: options.localDelivery }))
+    if (!apiKey || !apiSecret || !cloudName) {
+      throw new Error(missingCredentialsMessage)
     }
 
-    configureCloudinary({ apiKey: apiKey!, apiSecret: apiSecret!, cloudName: cloudName! })
+    configureCloudinary({ apiKey, apiSecret, cloudName })
 
     const adapter = cloudinaryAdapter({
-      apiKey: apiKey!,
-      apiSecret: apiSecret!,
-      cloudName: cloudName!,
+      apiKey,
+      apiSecret,
+      cloudName,
       localDelivery: options.localDelivery,
       maxBytes: options.maxBytes,
       rootFolder: options.rootFolder,
     })
 
-    return withAdapter(adapter)
+    const collections = Object.entries(options.collections).reduce<
+      Record<string, CollectionOptions>
+    >(
+      (acc, [slug, collectionOptions]) => ({
+        ...acc,
+        [slug]: {
+          ...(collectionOptions === true ? {} : collectionOptions),
+          adapter,
+        },
+      }),
+      {},
+    )
 
-    function withAdapter(storage: Adapter): Config {
-      const collections = Object.entries(options.collections).reduce<
-        Record<string, CollectionOptions>
-      >(
-        (acc, [slug, collectionOptions]) => ({
-          ...acc,
-          [slug]: {
-            ...(collectionOptions === true ? {} : collectionOptions),
-            adapter: storage,
-          },
-        }),
-        {},
-      )
-
-      return cloudStoragePlugin({ collections })(incomingConfig)
-    }
+    return cloudStoragePlugin({ collections })(incomingConfig)
   }

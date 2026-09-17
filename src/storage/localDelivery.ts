@@ -15,11 +15,16 @@ export type LocalDeliveryManifest = {
 export const localDeliveryManifest: LocalDeliveryManifest = manifest
 
 /**
- * Cloudinary's free plan was nearing its monthly credit quota, so by default
- * files in the manifest are served from the deployment instead. Set
- * MEDIA_DELIVERY=cloudinary to serve everything from the CDN again.
+ * Every file is served from Cloudinary. The copies committed under public/
+ * (and the brochure / 3D asset upload folders) are only used when
+ * MEDIA_DELIVERY=local is set explicitly -- a fallback for saving CDN credits,
+ * not the normal path.
+ *
+ * It used to be the default, and that hid a real problem: a page looked right
+ * wherever a local copy existed, so files that had never reached Cloudinary
+ * went unnoticed until they 404'd on the live site.
  */
-export const serveLocalCopies = process.env.MEDIA_DELIVERY !== 'cloudinary'
+export const serveLocalCopies = process.env.MEDIA_DELIVERY === 'local'
 
 /**
  * Media URLs are baked into every cached query result, and `unstable_cache`
