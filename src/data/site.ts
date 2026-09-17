@@ -235,7 +235,9 @@ function hasLocalMediaFile(url: string): boolean {
   }
 
   const filename = decodeURIComponent(url.slice(localMediaPrefix.length))
-  const localFilePath = path.join(process.cwd(), 'media', filename)
+  // The marker stops Turbopack tracing ./media into every route that shows
+  // the logo; see readUploadDirFile in the Cloudinary adapter.
+  const localFilePath = path.join(/* turbopackIgnore: true */ process.cwd(), 'media', filename)
 
   return existsSync(localFilePath)
 }

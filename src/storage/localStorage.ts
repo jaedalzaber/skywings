@@ -29,18 +29,13 @@ function contentTypeFor(filename: string) {
 }
 
 /*
- * The turbopackIgnore marker keeps Turbopack from tracing the whole project
- * into every route; see readUploadDirFile in the Cloudinary adapter.
+ * Every file-system call below builds its own path, with the turbopackIgnore
+ * marker on process.cwd() inside that very call. It must not move into a
+ * helper: a path passed through a function reached Turbopack without the
+ * marker, it traced the whole project into every route -- package.json
+ * included -- and every server-rendered page on Vercel failed with
+ * ERR_REQUIRE_ESM. See readUploadDirFile in the Cloudinary adapter.
  */
-const uploadDir = (slug: string) => path.join(/* turbopackIgnore: true */ process.cwd(), slug)
-
-async function readIfPresent(filePath: string) {
-  try {
-    return await readFile(filePath)
-  } catch {
-    return null
-  }
-}
 
 /**
  * Storage for a machine without Cloudinary credentials.
@@ -64,18 +59,20 @@ export function localStorageAdapter(args: LocalStorageAdapterArgs = {}): Adapter
     /** The upload folder first, then the mirrored copy under public/. */
     const readLocal = async (filename: string) => {
       const base = path.basename(filename)
-      const fromUploadDir = await readIfPresent(path.join(uploadDir(slug), base))
+      const fromUploadDir = await readFile(
+        path.join(/* turbopackIgnore: true */ process.cwd(), slug, base),
+      ).catch(() => null)
       if (fromUploadDir) return fromUploadDir
 
       const publicUrl = publicFiles?.[base]
       if (!publicUrl) return null
-      return readIfPresent(
+      return readFile(
         path.join(
           /* turbopackIgnore: true */ process.cwd(),
           'public',
           ...publicUrl.split('/').filter(Boolean).map(decodeURIComponent),
         ),
-      )
+      ).catch(() => null)
     }
 
     return {
@@ -87,22 +84,26 @@ export function localStorageAdapter(args: LocalStorageAdapterArgs = {}): Adapter
       },
       handleDelete: async ({ filename }) => {
         try {
-          await unlink(path.join(uploadDir(slug), path.basename(filename)))
+          await unlink(
+            path.join(/* turbopackIgnore: true */ process.cwd(), slug, path.basename(filename)),
+          )
         } catch {
           // Already gone, or never written here: nothing to remove.
         }
       },
       handleUpload: async ({ data, file }) => {
-        const dir = uploadDir(slug)
-        await mkdir(dir, { recursive: true })
-        await writeFile(path.join(dir, path.basename(file.filename)), file.buffer)
+        await mkdir(path.join(/* turbopackIgnore: true */ process.cwd(), slug), { recursive: true })
+        await writeFile(
+          path.join(/* turbopackIgnore: true */ process.cwd(), slug, path.basename(file.filename)),
+          file.buffer,
+        )
         return data
       },
       staticHandler: async (req, { headers, params: { filename } }) => {
         const local = await readLocal(filename)
         if (!local) {
           req.payload.logger.error(
-            `File ${filename} for collection ${slug} is not on this machine: not in ${uploadDir(slug)} and not mirrored under public/. ` +
+            `File ${filename} for collection ${slug} is not on this machine: not in ./${slug} and not mirrored under public/. ` +
               'Run `pnpm run mirror:media` with Cloudinary keys set, or copy the file into that folder.',
           )
           return new Response(null, { status: 404, statusText: 'Not Found' })
