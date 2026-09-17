@@ -1,7 +1,8 @@
 import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
-import type { CollectionOptions } from '@payloadcms/plugin-cloud-storage/types'
+import type { Adapter, CollectionOptions } from '@payloadcms/plugin-cloud-storage/types'
 import type { Config, Plugin, UploadCollectionSlug } from 'payload'
 
+import { localStorageAdapter } from '../localStorage'
 import type { CloudinaryAdapterArgs } from './adapter'
 import { cloudinaryAdapter, configureCloudinary } from './adapter'
 
@@ -48,9 +49,16 @@ export const cloudinaryStorage =
         throw new Error(missingCredentialsMessage)
       }
 
-      console.error(`\n[cloudinary] ${missingCredentialsMessage}\n[cloudinary] Uploads will use local disk until this is fixed.\n`)
+      console.error(
+        `\n[cloudinary] ${missingCredentialsMessage}\n[cloudinary] Serving mirrored files from public/ and uploads from local disk until this is fixed.\n`,
+      )
 
-      return incomingConfig
+      /*
+       * Still install an adapter, or the mirrored copies under public/ are
+       * never served: Payload's own disk storage would point every URL at
+       * ./media, which a fresh checkout does not have.
+       */
+      return withAdapter(localStorageAdapter({ localDelivery: options.localDelivery }))
     }
 
     configureCloudinary({ apiKey: apiKey!, apiSecret: apiSecret!, cloudName: cloudName! })
@@ -64,18 +72,22 @@ export const cloudinaryStorage =
       rootFolder: options.rootFolder,
     })
 
-    const collections = Object.entries(options.collections).reduce<
-      Record<string, CollectionOptions>
-    >(
-      (acc, [slug, collectionOptions]) => ({
-        ...acc,
-        [slug]: {
-          ...(collectionOptions === true ? {} : collectionOptions),
-          adapter,
-        },
-      }),
-      {},
-    )
+    return withAdapter(adapter)
 
-    return cloudStoragePlugin({ collections })(incomingConfig)
+    function withAdapter(storage: Adapter): Config {
+      const collections = Object.entries(options.collections).reduce<
+        Record<string, CollectionOptions>
+      >(
+        (acc, [slug, collectionOptions]) => ({
+          ...acc,
+          [slug]: {
+            ...(collectionOptions === true ? {} : collectionOptions),
+            adapter: storage,
+          },
+        }),
+        {},
+      )
+
+      return cloudStoragePlugin({ collections })(incomingConfig)
+    }
   }

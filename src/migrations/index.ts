@@ -6,6 +6,7 @@ import * as migration_20260723_120000_product_card_thumbnail from './20260723_12
 import * as migration_20260723_122000_home_process_media_uploads from './20260723_122000_home_process_media_uploads'
 import * as migration_20260723_123000_home_hero_cover_media from './20260723_123000_home_hero_cover_media'
 import * as migration_20260723_124000_home_process_appearance_controls from './20260723_124000_home_process_appearance_controls'
+import * as migration_20260917_000000_newsletter from './20260917_000000_newsletter'
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260723_124000_home_process_appearance_controls.up,
     down: migration_20260723_124000_home_process_appearance_controls.down,
     name: '20260723_124000_home_process_appearance_controls',
+  },
+  {
+    up: migration_20260917_000000_newsletter.up,
+    down: migration_20260917_000000_newsletter.down,
+    name: '20260917_000000_newsletter',
   },
 ]

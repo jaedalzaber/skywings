@@ -38,7 +38,6 @@ export function ProductGallerySection(props: { block: ProductGalleryBlock }) {
       hasPage: hasProductPage(product),
       id: item.id ?? `${product.id}-${index}`,
       image,
-      sku: product.sku ?? null,
       slug: product.slug,
       summary: product.summary ?? null,
       title: product.title,

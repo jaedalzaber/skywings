@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { anyone, authenticated } from '../access'
+import { authenticated } from '../access'
 
 export const RFQs: CollectionConfig = {
   slug: 'rfqs',
@@ -8,8 +8,10 @@ export const RFQs: CollectionConfig = {
     singular: 'RFQ',
     plural: 'RFQs',
   },
+  // Public create is closed: the site's forms write through server actions that
+  // run the bot checks first (src/actions). A public REST create would skip them.
   access: {
-    create: anyone,
+    create: authenticated,
     read: authenticated,
     update: authenticated,
     delete: authenticated,

@@ -423,7 +423,9 @@ export async function seedDummyCatalog() {
   const industrySeeds = [
     ['Construction & Infrastructure', 'Structural steel, platforms, canopies, safety barriers, connection plates, and fabricated infrastructure metalwork.'],
     ['Architectural & Interior Metalwork', 'Decorative partitions, railings, stairs, pergolas, canopies, furniture frames, and premium interior metal elements.'],
-    ['Custom Metal Fabrication', 'Customer-specific metal products from drawings, samples, concepts, and practical engineering problems.'],
+    // Slug stays 'custom-metal-fabrication': the industry was renamed after
+    // launch and its URL is already indexed and linked.
+    ['Sheet Metal Fabrication', 'Customer-specific metal products from drawings, samples, concepts, and practical engineering problems.'],
     ['Heavy Equipment & Machinery', 'Machine frames, guards, access platforms, skids, support structures, and replacement assemblies.'],
     ['Industrial Manufacturing', 'Conveyors, workstations, storage racks, piping supports, safety cages, panels, and production-floor systems.'],
     ['Aviation Ground Support Equipment', 'GSE products, aircraft maintenance access, cargo handling, bowsers, dollies, stands, ladders, and carts.'],

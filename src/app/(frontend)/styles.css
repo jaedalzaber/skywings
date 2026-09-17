@@ -748,7 +748,10 @@ html[data-nav-surface='dark'] .mobile-nav-toggle {
  */
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) {
   --nav-surface: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
   /* --nav-surface: rgba(0, 0, 0, 0); */
@@ -760,22 +763,34 @@ html:is(
 
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .topbar {
   border-bottom-color: var(--nav-line);
 }
 
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .nav-item > a,
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .nav-link-control,
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .brand-wordmark {
   color: var(--nav-ink);
 }
@@ -783,14 +798,20 @@ html:is(
 /* The mark is painted through a mask, so its colour is the wrapper's fill. */
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .brand-logo:not(:has(.safe-image-fallback)) {
   background: var(--nav-ink);
 }
 
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .nav-cta {
   border-color: var(--nav-ink);
   color: #1c1c1c;
@@ -799,7 +820,10 @@ html:is(
 
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .mobile-nav-toggle {
   color: var(--nav-ink);
 }
@@ -970,7 +994,10 @@ html[data-nav-stuck='true'] .brand-logo {
 html[data-nav-surface='dark'] .nav-proud-art--light,
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .nav-proud-art--light {
   display: block;
 }
@@ -978,7 +1005,10 @@ html:is(
 html[data-nav-surface='dark'] .nav-proud-art--dark,
 html:is(
   [data-nav-surface='hero'],
-  :not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)
+  :not([data-nav-ready]):has(
+    main > [data-nav-surface='hero']:first-child,
+    main > :first-child > [data-nav-surface='hero']:first-child
+  )
 ) .nav-proud-art--dark {
   display: none;
 }
@@ -4988,6 +5018,102 @@ footer.site-footer .figma-footer-copyright {
 }
 
 /*
+ * Tablet up: the top two bands share one four-column grid. Each band is two
+ * halves, and each half splits in two again with the same gap, so the four
+ * columns line up across the rule -- Products over the email, Company over
+ * the phones, the newsletter across the two address columns.
+ *
+ * Kept after every breakpoint above so it settles the layout at all widths
+ * without restating those rules' sizes.
+ */
+@media (min-width: 40rem) {
+  .figma-footer-content {
+    --figma-footer-column-gap: clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .figma-footer-top,
+  .figma-footer-main,
+  .figma-footer-groups,
+  .figma-footer-contact-list,
+  .figma-footer-addresses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    column-gap: var(--figma-footer-column-gap);
+    justify-content: stretch;
+  }
+
+  .figma-footer-groups,
+  .figma-footer-contact-list,
+  .figma-footer-addresses {
+    row-gap: 1.5rem;
+  }
+
+  /* The form fills its two columns, flush with the addresses beneath it. */
+  .figma-footer-newsletter {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .figma-footer-newsletter h2 {
+    max-width: 22em;
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
+  }
+
+  /* One control: the field runs straight into the button, no gap. */
+  .figma-footer-newsletter-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0;
+    row-gap: 0.5rem;
+  }
+
+  .figma-footer-newsletter-form input[type='email'],
+  .figma-footer-newsletter-form button {
+    min-height: 3.25rem;
+    font-size: 1rem;
+  }
+
+  .figma-footer-newsletter-form input[type='email'] {
+    padding-inline: 1rem;
+    border-width: 1px;
+    border-right: 0;
+  }
+
+  .figma-footer-newsletter-form button {
+    padding-inline: clamp(1.25rem, 2vw, 2rem);
+    border-color: #252424;
+    background: #252424;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  /*
+   * Focus is drawn as an inset ring that runs to the very edge of the box.
+   * An outline set inside the edge left a strip of white between the field
+   * and the button, since the field has no right border to fill it.
+   */
+  .figma-footer-newsletter-form input[type='email']:focus,
+  .figma-footer-newsletter-form input[type='email']:focus-visible,
+  .figma-footer-newsletter-form button:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px #252424;
+  }
+
+  .figma-footer-newsletter-form button:focus-visible {
+    box-shadow: inset 0 0 0 2px #ffffff;
+  }
+}
+
+@media (min-width: 120rem) {
+  .figma-footer-newsletter-form input[type='email'],
+  .figma-footer-newsletter-form button {
+    min-height: 3.75rem;
+    font-size: 1.125rem;
+  }
+}
+
+/*
  * A dark page carries the dark through to the end: the page marks itself
  * `data-page-tone="dark"` and the shared footer follows, along with the
  * body's own ground, which shows where .site-shell pads around <main>. The
@@ -5041,8 +5167,10 @@ body:has([data-page-tone='dark']) .figma-footer-newsletter-form button {
   background: var(--blue);
 }
 
-body:has([data-page-tone='dark']) .figma-footer-newsletter-form :is(input, button):focus-visible {
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form :is(input, button):focus-visible,
+body:has([data-page-tone='dark']) .figma-footer-newsletter-form input[type='email']:focus {
   outline-color: #ffffff;
+  box-shadow: inset 0 0 0 2px #ffffff;
 }
 
 body:has([data-page-tone='dark']) .figma-footer-privacy {
@@ -6931,62 +7059,70 @@ button.machining-machine:focus-visible {
  * choreography, so the composition is the same at every viewport and nothing
  * is dropped under a reduced-motion preference.
  */
+/*
+ * Engineering.
+ *
+ * The white counterpart to the machining section above it, in the hairline
+ * language the insights section shares: one frame at the page's width, cells
+ * drawn as 1px gaps over the line colour so no rule is ever doubled. The
+ * photograph holds the left column; the heading cell, the two disciplines and
+ * the simulation note stack on the right. Mono labels in the brand blue, and
+ * nothing filled -- no band, no card, no shadow.
+ */
 .engineering {
   --engineering-line: var(--line-strong);
   --engineering-accent: var(--blue);
   --engineering-muted: var(--muted);
-  --engineering-pad: clamp(1.25rem, 3vw, 2.5rem);
-  /*
-   * Softened corners, 10px at the smallest and a little wider on a big
-   * screen. Only corners on the outside of the composition are rounded: the
-   * heading cell, the band and the note are flush, so their joins stay
-   * square, and so does the inside corner where the photograph meets the
-   * heading cell.
-   */
-  --engineering-radius: clamp(0.625rem, 0.8vw, 1rem);
-  /*
-   * The photograph starts above the heading cell, as in the design: it spans
-   * an empty first row that the copy column leaves open.
-   */
-  --engineering-lift: clamp(1.5rem, 5vw, 6rem);
+  --engineering-mono: 'SF Mono', 'Consolas', monospace;
+  --engineering-pad: clamp(1.25rem, 2.6vw, 2.25rem);
   position: relative;
   z-index: 29;
   isolation: isolate;
   width: var(--bleed-width);
   margin: 0 var(--bleed-margin);
+  padding-block: clamp(3rem, 7vw, 6rem) clamp(3.5rem, 8vw, 7rem);
   color: var(--ink);
   background: #ffffff;
 }
 
+/* Full bleed, so its rules reach both edges of the screen. */
 .engineering-inner {
-  display: grid;
-  align-items: start;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  grid-template-rows: var(--engineering-lift) auto auto auto;
-  padding: clamp(3rem, 7vw, 6rem) var(--page-inset) clamp(3.5rem, 8vw, 7rem);
+  border-block: 1px solid var(--engineering-line);
 }
 
-/* Spans the lift, the heading cell and the band, ending where the band does. */
+/* The page's width, closed at the sides only: square corners, since the top
+   and bottom rules carry on past them. The ground is the page's white, so
+   nothing dark shows while the cells are still arriving; each cell draws the
+   rule on its own edge instead. */
+.engineering-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: auto auto 1fr;
+  width: min(100%, var(--page-content));
+  margin-inline: auto;
+  overflow: hidden;
+  border-inline: 1px solid var(--engineering-line);
+  background: #ffffff;
+}
+
+.engineering-head,
+.engineering-note {
+  min-width: 0;
+  background: #ffffff;
+}
+
+/* The photograph runs the full height of the copy column beside it. */
 .engineering-media {
   display: block;
-  height: 100%;
   min-height: clamp(18rem, 40vw, 34rem);
   margin: 0;
   grid-column: 1;
   grid-row: 1 / 4;
-  /*
-   * Square where the two meet: the photograph's bottom-right and the heading
-   * cell's top-left are the inside corner of the composition, so they run
-   * straight into each other instead of curving apart.
-   */
-  border-radius: var(--engineering-radius) var(--engineering-radius) 0 var(--engineering-radius);
-  /* Clips the photograph to the rounded frame; no radius on the image itself. */
-  overflow: hidden;
+  border-right: 1px solid var(--engineering-line);
   /*
    * Placeholder tone under the photograph, the same grey SafeImg falls back
-   * to. An upload that is slow, blocked or broken then reads as a picture
-   * that has not arrived rather than as an empty column: an image whose load
-   * fails before hydration never fires onError, so nothing swaps in for it.
+   * to, so a slow or missing upload reads as a picture that has not arrived
+   * rather than as an empty column.
    */
   background: #d9d9d9;
 }
@@ -6998,64 +7134,60 @@ button.machining-machine:focus-visible {
   object-fit: cover;
 }
 
-/* Heading cell: hairline frame, title left, section number in the corner. */
+/* Heading cell: section number in mono over the title. */
 .engineering-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
   padding: var(--engineering-pad);
-  border: 1px solid var(--engineering-line);
-  border-bottom: 0;
-  border-radius: 0 var(--engineering-radius) 0 0;
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
+  border-bottom: 1px solid var(--engineering-line);
+}
+
+.engineering-code,
+.engineering-discipline-eyebrow {
+  margin: 0;
+  color: var(--engineering-accent);
+  font-family: var(--engineering-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.engineering-discipline-eyebrow {
+  color: #ffffff;
 }
 
 .engineering-title {
   margin: 0;
-  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-size: clamp(2.25rem, 4vw, 3rem);
   font-weight: 400;
   line-height: 1.02;
   letter-spacing: -0.02em;
 }
 
-.engineering-code {
-  flex: none;
-  margin: 0;
-  color: var(--engineering-accent);
-  font-family: 'SF Mono', 'Consolas', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-}
-
+/* The disciplines side by side in the brand-blue band, one shared line
+   between them, as in the design. */
 .engineering-disciplines {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
+  border-bottom: 1px solid var(--engineering-line);
   color: #ffffff;
-  background: var(--engineering-accent);
+}
+
+.engineering-discipline + .engineering-discipline {
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .engineering-discipline {
   display: flex;
   flex-direction: column;
-  min-height: clamp(20rem, 34vw, 30rem);
+  min-width: 0;
+  min-height: clamp(18rem, 30vw, 26rem);
   padding: var(--engineering-pad);
-  border-left: 1px solid rgba(255, 255, 255, 0.35);
-}
-
-.engineering-discipline:first-child {
-  border-left: 0;
-}
-
-.engineering-discipline-eyebrow {
-  margin: 0;
-  font-family: 'SF Mono', 'Consolas', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  background: var(--engineering-accent);
 }
 
 .engineering-discipline-title {
@@ -7066,79 +7198,79 @@ button.machining-machine:focus-visible {
   letter-spacing: -0.02em;
 }
 
-/*
- * Bottom-aligned, so the two lists start on the same line even though only
- * one discipline carries a leading paragraph.
- */
+/* Bottom-aligned, so the two lists start on the same line even though only
+   one discipline carries a leading paragraph. */
 .engineering-discipline-copy {
   margin-top: auto;
   padding-top: clamp(2rem, 5vw, 4rem);
 }
 
-.engineering-discipline-copy p {
-  margin: 0 0 1.25rem;
-  max-width: 26ch;
+.engineering-discipline .engineering-list-lead {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.engineering-discipline .engineering-list li {
+  border-top-color: rgba(255, 255, 255, 0.35);
+}
+
+.engineering-discipline-copy p,
+.engineering-note p {
+  margin: 0 0 1rem;
+  max-width: 52ch;
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 .engineering-list-lead {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
+  color: var(--engineering-muted);
+  font-size: 0.875rem;
 }
 
+/* Plain lines, each under a hairline, in place of bullets. */
 .engineering-list {
   margin: 0;
-  padding-left: 1.25rem;
-  list-style: disc;
+  padding: 0;
+  list-style: none;
 }
 
 .engineering-list li {
-  margin-top: 0.35rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
-/* The note continues the frame under the band, in the copy column only. */
+/* The note closes the copy column under the disciplines. */
 .engineering-note {
   padding: var(--engineering-pad);
-  border: 1px solid var(--engineering-line);
-  border-top: 0;
-  border-radius: 0 0 var(--engineering-radius) var(--engineering-radius);
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 3;
 }
 
-.engineering-note p {
-  margin: 0 0 1.25rem;
-  max-width: 52ch;
-}
-
-.engineering-note .engineering-list-lead {
-  margin-bottom: 0.75rem;
-}
-
-.engineering-note .engineering-list {
-  color: var(--engineering-muted);
+/* The checks read as two short columns rather than one long one. */
+@media (min-width: 48rem) {
+  .engineering-note .engineering-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--engineering-pad);
+  }
 }
 
 /* Tablets and phones: one column, in reading order, photograph first. */
 @media (max-width: 63.99rem) {
-  .engineering-inner {
+  .engineering-frame {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
   }
 
-  /*
-   * Stacked, the photograph is a card of its own above the framed column --
-   * nothing meets it any more, so both pieces get their corners back.
-   */
   .engineering-media {
     min-height: 0;
-    margin-bottom: clamp(1rem, 3vw, 1.75rem);
     aspect-ratio: 4 / 3;
-    border-radius: var(--engineering-radius);
     grid-column: 1;
     grid-row: auto;
-  }
-
-  .engineering-head {
-    border-radius: var(--engineering-radius) var(--engineering-radius) 0 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--engineering-line);
   }
 
   .engineering-head,
@@ -7154,18 +7286,9 @@ button.machining-machine:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .engineering-discipline {
-    min-height: 0;
-    border-left: 0;
+  .engineering-discipline + .engineering-discipline {
     border-top: 1px solid rgba(255, 255, 255, 0.35);
-  }
-
-  .engineering-discipline:first-child {
-    border-top: 0;
-  }
-
-  .engineering-discipline-copy {
-    padding-top: 1.5rem;
+    border-left: 0;
   }
 }
 

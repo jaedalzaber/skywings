@@ -1,0 +1,12 @@
+pnpm payload run scripts/seed-dummy-catalog.ts
+pnpm run import:images
+pnpm run seed:capabilities
+pnpm run seed:product-taxonomy
+pnpm run seed:aviation-catalog
+pnpm run seed:industry-pages
+pnpm run seed:home-services
+pnpm run seed:home-process
+pnpm run seed:home-sections
+pnpm run seed:header-nav
+pnpm run seed:header-menus
+pnpm run seed:articles

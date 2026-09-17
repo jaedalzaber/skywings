@@ -38,7 +38,7 @@ const heroServices = [
   'Construction & Infrastructure',
   'Heavy Equipment & Machinery',
   'Industrial Manufacturing',
-  'Custom Metal Fabrication',
+  'Sheet Metal Fabrication',
   'Architectural & Interior Metalwork',
 ]
 

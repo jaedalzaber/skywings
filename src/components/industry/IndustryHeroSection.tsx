@@ -39,6 +39,12 @@ export function IndustryHeroSection(props: { block: IndustryHeroBlock; priority?
     <HeroMotion
       className={className}
       id={block.anchorId || undefined}
+      /*
+       * The footage runs up behind the bar, as on the home page: clear
+       * background, white type, no border. A light hero keeps the solid bar,
+       * which is what dark type on pale footage needs.
+       */
+      navSurface={(block.theme ?? 'dark') === 'light' ? 'white' : 'hero'}
       overlayAlign={block.overlayAlignment ?? 'left'}
     >
       <div className="industry-hero-canvas">

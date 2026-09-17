@@ -5,7 +5,8 @@ import { TAGS } from '../data/tags'
 import { publishedOrAuthenticated } from '../access'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
-import { makeCollectionRevalidateHooks } from './hooks/revalidate'
+import { notifySubscribersOnPublish } from '../lib/newsletter/autoNotify'
+import { makeCollectionRevalidateHooks, withAfterChange } from './hooks/revalidate'
 
 /**
  * The knowledge hub's articles, published at /resources/<slug>.
@@ -34,10 +35,14 @@ export const BlogPosts: CollectionConfig = {
     drafts: true,
   },
   // The hub and every article page are cached; an edit here clears both.
-  hooks: makeCollectionRevalidateHooks((doc) => [
-    TAGS.blog,
-    ...(doc?.slug ? [TAGS.post(doc.slug)] : []),
-  ]),
+  hooks: withAfterChange(
+    makeCollectionRevalidateHooks((doc) => [
+      TAGS.blog,
+      ...(doc?.slug ? [TAGS.post(doc.slug)] : []),
+    ]),
+    // Emails subscribers the first time an article goes live.
+    notifySubscribersOnPublish('articles'),
+  ),
   fields: [
     {
       name: 'title',

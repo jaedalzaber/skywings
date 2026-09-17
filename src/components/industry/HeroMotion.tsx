@@ -9,7 +9,7 @@ import { type ReactNode, useEffect, useRef } from 'react'
  * out of the bottom edge, headline words rise out of their masks, and the
  * statistics fade in while counting up to their values.
  *
- * Scroll: a scrubbed timeline parallaxes the picture, darkens it, and lifts
+ * Scroll: a scrubbed timeline parallaxes the picture and darkens it, and lifts
  * the caption away as the hero leaves the viewport, so the intro below feels
  * pulled into place rather than simply appearing.
  *
@@ -20,6 +20,8 @@ export function HeroMotion(props: {
   children: ReactNode
   className: string
   id?: string
+  /** Header treatment while the bar is over the hero; see HeaderSurfaceController. */
+  navSurface?: string
   overlayAlign: string
 }) {
   const rootRef = useRef<HTMLElement>(null)
@@ -92,13 +94,21 @@ export function HeroMotion(props: {
         const canvas = root.querySelector<HTMLElement>('.industry-hero-canvas')
         const media = root.querySelector<HTMLElement>('.industry-hero-media')
         const shade = root.querySelector<HTMLElement>('.industry-hero-shade')
-        const foot = root.querySelector<HTMLElement>('.industry-hero-foot')
         const panel = root.querySelector<HTMLElement>('.industry-hero-panel')
         const words = root.querySelectorAll<HTMLElement>('.industry-hero-word')
         const stats = root.querySelectorAll<HTMLElement>('.industry-hero-stat')
 
         // ------------------------------------------------------- entrance
-        const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
+        /*
+         * The hero media waits for this before cutting from the poster to the
+         * video, so the two never animate at the same time; see HeroMedia.
+         */
+        const intro = gsap.timeline({
+          defaults: { ease: 'power3.out' },
+          onComplete: () => {
+            root.dataset.heroEntered = 'true'
+          },
+        })
 
         if (canvas) {
           intro.fromTo(
@@ -170,7 +180,12 @@ export function HeroMotion(props: {
 
         if (media) scrub.to(media, { scale: 1.08, yPercent: 22 }, 0)
         if (shade) scrub.to(shade, { opacity: 0.6 }, 0)
-        if (foot) scrub.to(foot, { autoAlpha: 0, y: -56 }, 0.15)
+        /*
+         * The caption panel is deliberately left out of the scrub. It used to
+         * lift and fade with the scroll, which read as the panel sliding off
+         * its own picture; it now stays where it was drawn, at the foot of
+         * the hero, and simply leaves with the section.
+         */
       }, root)
 
       cleanup = () => context.revert()
@@ -187,6 +202,7 @@ export function HeroMotion(props: {
   return (
     <section
       className={props.className}
+      data-nav-surface={props.navSurface}
       data-overlay-align={props.overlayAlign}
       id={props.id}
       ref={rootRef}

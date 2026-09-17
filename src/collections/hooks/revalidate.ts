@@ -36,6 +36,14 @@ export function makeCollectionRevalidateHooks(buildTags: (doc: any) => string[])
   return { afterChange: [afterChange], afterDelete: [afterDelete] }
 }
 
+/** Adds more afterChange hooks to a hooks object, after the existing ones. */
+export function withAfterChange<T extends { afterChange: CollectionAfterChange[] }>(
+  hooks: T,
+  ...extra: CollectionAfterChange[]
+): T {
+  return { ...hooks, afterChange: [...hooks.afterChange, ...extra] }
+}
+
 export function makeGlobalRevalidateHook(tags: string[]): GlobalAfterChange {
   const afterChange: GlobalAfterChange = ({ doc }) => {
     revalidate(tags)

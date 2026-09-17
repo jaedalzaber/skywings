@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(cleanup)
 
-vi.mock('@/actions/rfq', () => ({ createRFQ: vi.fn() }))
+vi.mock('@/actions/rfq', () => ({ submitRFQ: vi.fn() }))
 
 import { ContactSection } from '@/components/contact/ContactSection'
 import { HomeLocationsSection } from '@/components/home/HomeLocationsSection'
@@ -33,7 +33,7 @@ describe('ContactSection', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Tell us what you need to manufacture.' }),
     ).toBeTruthy()
-    expect(screen.getByText('Request a quote')).toBeTruthy()
+    expect(document.querySelector('.contact-eyebrow')?.textContent).toBe('Request a quote')
     for (const link of screen.getAllByRole('link', { name: 'info@skywings.ae' })) {
       expect(link.getAttribute('href')).toBe('mailto:info@skywings.ae')
     }
@@ -54,20 +54,34 @@ describe('ContactSection', () => {
     const form = container.querySelector('#rfq-form form') as HTMLFormElement
 
     expect(within(form).getByRole('group', { name: 'Your project' })).toBeTruthy()
-    expect(within(form).getByRole('group', { name: 'About you' })).toBeTruthy()
+    expect(within(form).getByRole('group', { name: 'Your details' })).toBeTruthy()
     for (const [label, name] of [
-      [/What do you need\?/, 'message'],
+      [/What do you need made\?/, 'message'],
       [/Name/, 'buyerName'],
       [/Company/, 'company'],
       [/Email/, 'email'],
-      [/Phone/, 'phone'],
     ] as const) {
       expect(within(form).getByLabelText(label).getAttribute('name')).toBe(name)
     }
+    // Required fields carry the mark before the word.
+    for (const label of ['What do you need made?', 'Name', 'Email']) {
+      const span = [...form.querySelectorAll('.rfq-field > span')].find((el) =>
+        el.textContent?.includes(label),
+      )
+      expect(span?.textContent?.trim()).toBe(`* ${label}`)
+    }
+    // The phone number is typed with a country picker and posts as one field.
+    const phone = within(form).getByLabelText('Phone')
+    expect(phone.getAttribute('type')).toBe('tel')
+    expect(
+      form.querySelector('.rfq-phone .react-international-phone-country-selector-button'),
+    ).not.toBeNull()
+    expect(form.querySelector<HTMLInputElement>('input[type="hidden"][name="phone"]')?.value).toBe('')
+    expect(form.querySelector('input[type="hidden"][name="startedAt"]')).not.toBeNull()
     for (const name of ['message', 'buyerName', 'email']) {
       expect(form.querySelector(`[name="${name}"]`)?.hasAttribute('required')).toBe(true)
     }
-    expect(within(form).getByRole('button', { name: 'Send enquiry' })).toBeTruthy()
+    expect(within(form).getByRole('button', { name: 'Request a quote' })).toBeTruthy()
     expect(form.querySelector<HTMLInputElement>('[name="sourcePage"]')?.value).toBe('/contact')
     // The bot trap is out of the accessibility tree and the tab order.
     const trap = form.querySelector('input[name="website"]')
@@ -86,11 +100,11 @@ describe('ContactSection', () => {
 
   test('confirms a sent message, and says when one was refused', () => {
     renderSection({ submitted: true })
-    expect(screen.getByRole('status').textContent).toContain('your message is with us')
+    expect(screen.getByRole('status').textContent).toContain('your enquiry is with our team')
     cleanup()
 
     renderSection({ error: true })
-    expect(screen.getByRole('alert').textContent).toContain('did not go through')
+    expect(screen.getByRole('alert').textContent).toContain('was not sent')
   })
 
   test('is followed by the branches, dark, through to a dark footer', () => {

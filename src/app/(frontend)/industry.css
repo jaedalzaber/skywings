@@ -60,6 +60,21 @@
   margin-inline: auto;
 }
 
+/*
+ * No widows on these pages: a heading balances its lines rather than dropping
+ * one word onto the last row, and body copy takes the looser rule, which only
+ * prevents the single-word last line.
+ */
+.industry-section :is(h1, h2, h3),
+.industry-hero-supporting {
+  text-wrap: balance;
+}
+
+.industry-prose p,
+.industry-section p:not(.industry-hero-supporting) {
+  text-wrap: pretty;
+}
+
 .industry-heading-line {
   display: block;
 }
@@ -275,9 +290,13 @@
   object-fit: cover;
 }
 
+/*
+ * A cut, not a cross-fade: the poster is this video's first frame, so the
+ * swap is invisible. Fading them over one another instead read as a second
+ * animation running after the hero had already settled.
+ */
 .industry-hero-video {
   opacity: 0;
-  transition: opacity 500ms ease;
 }
 
 .industry-hero-video[data-ready='true'] {
@@ -293,12 +312,19 @@
   align-items: stretch;
 }
 
+/*
+ * The caption panel, in the home hero band's treatment: a dark, lightly
+ * blurred glass over the footage with a hairline along its top edge. Its
+ * shape is the industry hero's own -- full width on phones, hugging its copy
+ * beside the statistics from 48rem up.
+ */
 .industry-hero-panel {
   width: 100%;
   padding: 1.25rem var(--ind-pad) 1.5rem;
-  background: rgba(58, 58, 58, 0.92);
-  backdrop-filter: blur(6px);
-  will-change: transform;
+  border-top: 1px solid rgba(255, 255, 255, 0.46);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(0.5rem);
+  -webkit-backdrop-filter: blur(0.5rem);
 }
 
 .industry-hero-panel[data-text-align='center'] {
@@ -842,22 +868,22 @@ a.industry-card:hover .industry-card-media img {
 
 /* ------------------------------------------------------------- Gallery --- */
 
+/*
+ * Product gallery: a dragging, self-advancing rail of product cards under a
+ * centred heading and a row of category filters.
+ *
+ * Cards are the site's white hairline cells rather than floating shadowed
+ * panels: one border, one radius, the picture on a soft grey ground, the
+ * product code in blue mono above the name. The rail bleeds to both screen
+ * edges and pads its start to the text column, so the first card lines up
+ * with the heading and cards leave at the true edges.
+ */
 .industry-gallery {
+  --gallery-gap: clamp(1rem, 2vw, 1.5rem);
+  --gallery-edge: var(--page-inset);
   position: relative;
   overflow: hidden;
   text-align: center;
-}
-
-.industry-gallery::before {
-  position: absolute;
-  top: 48%;
-  left: 50%;
-  width: min(44rem, 90vw);
-  height: 28rem;
-  background: radial-gradient(closest-side, rgba(43, 76, 242, 0.14), rgba(43, 76, 242, 0));
-  content: '';
-  pointer-events: none;
-  transform: translate(-50%, -50%);
 }
 
 .industry-gallery > .industry-container {
@@ -868,6 +894,7 @@ a.industry-card:hover .industry-card-media img {
   font-size: clamp(1.7rem, 3vw, 2.3rem);
   font-weight: 700;
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .industry-gallery-heading .industry-heading-line + .industry-heading-line {
@@ -881,20 +908,20 @@ a.industry-card:hover .industry-card-media img {
 }
 
 .industry-gallery-filters {
-  margin: 1.75rem 0 2rem;
+  margin: 1.75rem 0 2.25rem;
 }
 
 .industry-gallery-filters > div {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.625rem;
   justify-content: center;
 }
 
 .industry-gallery-filters button {
-  padding: 0.55rem 1.4rem;
-  border: 1px solid #cfcfcf;
-  border-radius: 0.3rem;
+  padding: 0.55rem 1.25rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 2rem;
   background: #ffffff;
   color: var(--ind-ink);
   cursor: pointer;
@@ -902,119 +929,242 @@ a.industry-card:hover .industry-card-media img {
   font-size: 0.9rem;
   transition:
     background-color 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
 .industry-gallery-filters button:hover {
-  border-color: #9a9a9a;
+  border-color: #252424;
 }
 
 .industry-gallery-filters button[aria-pressed='true'] {
-  border-color: #d9d9d9;
-  background: #d9d9d9;
+  border-color: #252424;
+  color: #ffffff;
+  background: #252424;
+}
+
+.industry-gallery-filters button:focus-visible {
+  outline: 2px solid var(--ind-blue);
+  outline-offset: 2px;
+}
+
+.industry-gallery-carousel {
+  position: relative;
+  width: 100%;
+}
+
+.industry-gallery-viewport {
+  overflow: hidden;
+  /* The rail is full-bleed: cards leave at the screen edge, not the column. */
+  width: var(--bleed-width);
+  margin-inline: var(--bleed-margin);
+}
+
+/* Cards dissolve at the screen edges instead of being cut off square. */
+@media (min-width: 48rem) {
+  .industry-gallery-viewport {
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  }
 }
 
 /* Qualified with the section so it outranks the `.industry-section ul` reset. */
 .industry-section .industry-gallery-rail {
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-inline: calc(-1 * var(--ind-pad));
-  padding: 1.5rem var(--ind-pad);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-
-.industry-gallery-rail::-webkit-scrollbar {
-  display: none;
+  width: max-content;
+  align-items: stretch;
+  column-gap: var(--gallery-gap);
+  /* Deep enough that a lifted card's shadow is not cut off by the viewport,
+     which has to clip horizontally for the rail to work. */
+  padding: 1.25rem var(--gallery-edge) 2.25rem;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
 }
 
 .industry-gallery-card {
-  flex: 0 0 min(13rem, 62vw);
-  scroll-snap-align: center;
+  display: flex;
+  flex: 0 0 min(74vw, 17.5rem);
   text-align: left;
-}
-
-.industry-gallery-card:first-child {
-  margin-left: auto;
-}
-
-.industry-gallery-card:last-child {
-  margin-right: auto;
 }
 
 .industry-gallery-card-link {
   display: flex;
-  height: 100%;
+  width: 100%;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid #ededed;
+  overflow: hidden;
+  border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: #ffffff;
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 rgba(17, 24, 51, 0);
   color: var(--ind-ink);
   text-decoration: none;
   transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.industry-gallery-card-link:not([data-static]):hover {
-  border-color: #b9c6ff;
-  box-shadow: 0 0.75rem 2rem rgba(43, 76, 242, 0.12);
+/* A clear lift on hover, with the shadow it casts. */
+.industry-gallery-card-link:not([data-static]):hover,
+.industry-gallery-card-link:not([data-static]):focus-visible {
+  border-color: var(--ind-blue);
+  box-shadow: 0 1.25rem 2.5rem rgba(17, 24, 51, 0.16);
+  transform: translateY(-0.625rem);
 }
 
-.industry-gallery-card.is-featured {
-  flex-basis: min(24rem, 84vw);
+.industry-gallery-card-link:focus-visible {
+  outline: 2px solid var(--ind-blue);
+  outline-offset: 2px;
 }
 
+/* One product may be flagged in the admin; it keeps the blue edge at rest. */
 .industry-gallery-card.is-featured .industry-gallery-card-link {
-  padding: 1.25rem 1.5rem 1.5rem;
-  border-color: #9fb1ff;
-  box-shadow: 0 1rem 2.5rem rgba(43, 76, 242, 0.14);
-}
-
-.industry-gallery-card-title {
-  font-family: var(--font-title), Inter, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.industry-gallery-card.is-featured .industry-gallery-card-title {
-  font-size: 1.1rem;
+  border-color: #b9c6ff;
+  box-shadow: 0 0.5rem 1.5rem rgba(43, 76, 242, 0.12);
 }
 
 .industry-gallery-card-media {
   position: relative;
   display: block;
-  aspect-ratio: 1.2;
+  aspect-ratio: 4 / 3;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #fafafa, #f1f1f1);
 }
 
 .industry-gallery-card-media img {
+  padding: 1rem;
   object-fit: contain;
+}
+
+.industry-gallery-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.125rem 1.25rem 1.25rem;
+}
+
+/* Two lines of title on every card, so the descriptions start on one line. */
+.industry-gallery-card-title {
+  min-height: 2.5em;
+}
+
+.industry-gallery-card-title {
+  font-family: var(--font-title), Inter, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .industry-gallery-card-desc {
   color: #5a5a5a;
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
-.industry-gallery-card.is-featured .industry-gallery-card-desc {
   font-size: 0.85rem;
+  line-height: 1.5;
 }
 
-.industry-gallery-card-sku {
+.industry-gallery-card-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: auto;
-  color: #c8d400;
-  font-size: 0.7rem;
-  font-weight: 700;
+  padding-top: 0.75rem;
+  color: var(--ind-blue);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.industry-gallery-card-more svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 180ms ease;
+}
+
+.industry-gallery-card-link:hover .industry-gallery-card-more svg {
+  transform: translateX(3px);
+}
+
+/*
+ * Controls sit under the rail rather than over the cards: a progress line on
+ * the left, the two buttons on the right, both inside the text column.
+ */
+.industry-gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: min(100%, var(--page-content));
+  margin: 1.25rem auto 0;
+}
+
+.industry-gallery-progress {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 22rem;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.industry-gallery-progress > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ind-blue);
+  transform-origin: left center;
+  transition: transform 220ms ease;
+}
+
+.industry-gallery-buttons {
+  display: inline-flex;
+  flex: none;
+  gap: 0.5rem;
+}
+
+.industry-gallery-control {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #252424;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.industry-gallery-control:hover:not(:disabled) {
+  border-color: #252424;
+  color: #ffffff;
+  background: #252424;
+}
+
+.industry-gallery-control:focus-visible {
+  outline: 2px solid var(--ind-blue);
+  outline-offset: 2px;
+}
+
+.industry-gallery-control:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.industry-gallery-control svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.industry-gallery-control.is-prev svg {
+  transform: rotate(180deg);
 }
 
 .industry-gallery-empty {
@@ -1024,7 +1174,7 @@ a.industry-card:hover .industry-card-media img {
 
 .industry-gallery-action {
   justify-content: center;
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
 }
 
 .industry-gallery .button-primary {
@@ -1038,6 +1188,20 @@ a.industry-card:hover .industry-card-media img {
 
 .industry-gallery .button-primary:hover {
   background: #111111;
+}
+
+@media (min-width: 48rem) {
+  /* Sized against the text column, a little narrower than an exact fit so the
+     last visible card peeks past the edge and reads as "there is more". */
+  .industry-gallery-card {
+    flex-basis: calc((var(--page-content) - 3 * var(--gallery-gap)) / 3.4);
+  }
+}
+
+@media (min-width: 64rem) {
+  .industry-gallery-card {
+    flex-basis: calc((var(--page-content) - 3 * var(--gallery-gap)) / 4.2);
+  }
 }
 
 /* ------------------------------------------------------------ Brochure --- */
@@ -1123,18 +1287,46 @@ a.industry-card:hover .industry-card-media img {
 .industry-cta {
   position: relative;
   overflow: hidden;
-  padding-block: clamp(2.5rem, 5vw, 4rem);
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+  isolation: isolate;
 }
 
+/*
+ * The photograph behind the blue: darkened and held back so it reads as
+ * texture rather than as a picture, with the brand colour still the colour of
+ * the section. The layer is taller than the section because it moves inside
+ * it (see CtaParallax) and must never uncover an edge.
+ */
 .industry-cta-backdrop {
   position: absolute;
   inset: 0;
-  opacity: 0.12;
+  z-index: -1;
+  overflow: hidden;
   pointer-events: none;
 }
 
+.industry-cta-backdrop-layer {
+  position: absolute;
+  inset: -14% 0;
+  will-change: transform;
+}
+
 .industry-cta-backdrop img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  opacity: 0.26;
+  filter: grayscale(0.45) brightness(0.42) contrast(1.1);
+}
+
+/* Deepens the edges so the type keeps its contrast wherever the picture is light. */
+.industry-cta-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 100% at 70% 30%, rgba(23, 41, 120, 0) 0%, rgba(17, 32, 96, 0.55) 100%),
+    linear-gradient(180deg, rgba(17, 32, 96, 0.35), rgba(17, 32, 96, 0.15));
+  content: '';
 }
 
 .industry-cta-grid {
@@ -1146,10 +1338,11 @@ a.industry-card:hover .industry-card-media img {
 .industry-cta-media {
   position: relative;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 0.75rem;
   aspect-ratio: 1;
   background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1.5rem 3rem rgba(9, 20, 66, 0.28);
 }
 
 .industry-cta-media img {
@@ -1162,11 +1355,21 @@ a.industry-card:hover .industry-card-media img {
   gap: 1.5rem;
 }
 
+.industry-cta-eyebrow {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .industry-cta-heading {
-  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
   font-weight: 300;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  text-wrap: balance;
 }
 
 .industry-cta-heading strong {
@@ -1174,14 +1377,31 @@ a.industry-card:hover .industry-card-media img {
 }
 
 .industry-cta-description {
-  max-width: 21rem;
-  color: rgba(255, 255, 255, 0.92);
+  max-width: 30rem;
+  color: rgba(255, 255, 255, 0.86);
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .industry-cta .industry-actions {
   margin-top: 0.25rem;
+}
+
+/* The one action reads as the brightest thing in the band. */
+.industry-cta .button-primary {
+  min-height: 3.25rem;
+  padding-inline: 2rem;
+  border-color: #ffffff;
+  border-radius: 0.4rem;
+  color: #17255f;
+  background: #ffffff;
+  font-weight: 700;
+}
+
+.industry-cta .button-primary:hover {
+  border-color: #eef1ff;
+  color: #101b44;
+  background: #eef1ff;
 }
 
 @media (min-width: 48rem) {
@@ -1189,6 +1409,17 @@ a.industry-card:hover .industry-card-media img {
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
     align-items: center;
     gap: clamp(2rem, 6vw, 6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .industry-gallery-card-link:not([data-static]):hover,
+  .industry-gallery-card-link:not([data-static]):focus-visible {
+    transform: none;
+  }
+
+  .industry-cta-backdrop-layer {
+    inset: 0;
   }
 }
 

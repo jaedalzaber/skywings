@@ -114,6 +114,10 @@ describe('SafeImage', () => {
       // Payload admin cells render inside the CMS, not the site, and bring
       // their own fallback: the fallback wrapper is for public pages.
       .filter((file) => !file.includes(join('components', 'admin', '')))
+      // Email bodies are HTML strings sent to an inbox: no React, no
+      // next/image, and a plain <img> is the only thing mail clients render.
+      .filter((file) => !file.includes(join('lib', 'email', '')))
+      .filter((file) => !file.includes(join('lib', 'newsletter', '')))
       .filter((file) => {
         const source = readFileSync(file, 'utf8')
         return /next\/image|<img\b/.test(source)

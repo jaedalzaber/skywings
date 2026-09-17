@@ -2,13 +2,15 @@
 
 import { motion, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
 import { ButtonLink } from '@/components/atoms/ButtonLink'
+import { ChevronRightIcon } from '@/components/atoms/icons'
 import { ProductImage } from '@/components/atoms/ProductImage'
 import type { MediaImage } from '@/data/media'
 
 import { groupVariants, Reveal, REVEAL_VIEWPORT, revealVariants } from './Reveal'
+import { useDraggableRail } from './useDraggableRail'
 
 export type GalleryProduct = {
   familyId: null | string
@@ -17,7 +19,6 @@ export type GalleryProduct = {
   hasPage: boolean
   id: string
   image: MediaImage | null
-  sku: null | string
   slug: string
   summary: null | string
   title: string
@@ -31,14 +32,20 @@ export type GalleryFilter = {
 
 const ALL = '__all__'
 
+/** Long enough to read a card, short enough that the rail clearly moves. */
+const AUTOPLAY_MS = 4200
+
 /**
- * Filterable product rail with a raised, centred "featured" card.
+ * Filterable product carousel.
  *
- * The featured card is moved to the middle of the visible set and the rail is
- * scrolled so it sits centred on screen, which is what gives the design its
- * spotlight composition without any absolute positioning. Filtering happens
- * entirely on the client from the pre-resolved product list, and each new
- * set of cards staggers back in.
+ * One rail, dragged: the same GSAP engine the card carousel above it uses
+ * (useDraggableRail), so mouse, touch, trackpad and keyboard all move through
+ * the same card-edge snap points. It also advances on its own, and waits
+ * whenever the reader is using it -- pointer over the rail, focus inside it,
+ * a drag in progress, the tab hidden, the section off screen.
+ *
+ * Filtering happens on the client from the pre-resolved product list; each
+ * new set of cards staggers back in and the rail re-measures itself.
  */
 export function ProductGallery(props: {
   browse: null | { href: string; label: string; openInNewTab?: boolean | null }
@@ -48,26 +55,21 @@ export function ProductGallery(props: {
   const { browse, filters, products } = props
   const reduced = useReducedMotion() ?? false
   const [active, setActive] = useState(ALL)
-  const railRef = useRef<HTMLUListElement>(null)
 
   const visible = useMemo(() => {
     const filter = filters.find((entry) => entry.id === active)
-    const subset =
-      filter && filter.familyId
-        ? products.filter((product) => product.familyId === filter.familyId)
-        : products
-
-    return spotlight(subset)
+    if (!filter?.familyId) return products
+    return products.filter((product) => product.familyId === filter.familyId)
   }, [active, filters, products])
 
-  useEffect(() => {
-    const rail = railRef.current
-    const featured = rail?.querySelector<HTMLElement>('.industry-gallery-card.is-featured')
-    if (!rail || !featured) return
+  const { edges, progress, step, trackRef, viewportRef } = useDraggableRail({
+    autoplayMs: AUTOPLAY_MS,
+    count: visible.length,
+    itemSelector: '.industry-gallery-card',
+    resetKey: active,
+  })
 
-    const target = featured.offsetLeft + featured.offsetWidth / 2 - rail.clientWidth / 2
-    rail.scrollTo({ behavior: 'auto', left: Math.max(0, target) })
-  }, [visible])
+  const showControls = visible.length > 1
 
   return (
     <div className="industry-gallery-body">
@@ -92,42 +94,79 @@ export function ProductGallery(props: {
       ) : null}
 
       {visible.length > 0 ? (
-        <motion.ul
-          className="industry-gallery-rail"
-          initial="hidden"
-          key={active}
-          ref={railRef}
-          variants={groupVariants(reduced, 0.07, 0.05)}
-          viewport={REVEAL_VIEWPORT}
-          whileInView="visible"
-        >
-          {visible.map((product) => (
-            <motion.li
-              className={['industry-gallery-card', product.featured ? 'is-featured' : '']
-                .filter(Boolean)
-                .join(' ')}
-              key={product.id}
-              variants={revealVariants(product.featured ? 'scale' : 'up', reduced, 0.9)}
-            >
-              <CardLink hasPage={product.hasPage} slug={product.slug}>
-                <h3 className="industry-gallery-card-title">{product.title}</h3>
-                <span className="industry-gallery-card-media">
-                  <ProductImage
-                    alt={product.image?.alt ?? `${product.title} product image`}
-                    sizes="(min-width: 48rem) 24rem, 70vw"
-                    url={product.image?.url ?? null}
-                  />
-                </span>
-                {product.summary ? (
-                  <span className="industry-gallery-card-desc">{product.summary}</span>
-                ) : null}
-                {product.sku ? (
-                  <span className="industry-gallery-card-sku">{product.sku}</span>
-                ) : null}
-              </CardLink>
-            </motion.li>
-          ))}
-        </motion.ul>
+        <div className="industry-gallery-carousel">
+          <motion.div
+            className="industry-gallery-viewport"
+            initial="hidden"
+            ref={viewportRef}
+            variants={groupVariants(reduced, 0.07, 0.05)}
+            viewport={REVEAL_VIEWPORT}
+            whileInView="visible"
+          >
+            <ul className="industry-gallery-rail" key={active} ref={trackRef}>
+              {visible.map((product) => (
+                <motion.li
+                  className={['industry-gallery-card', product.featured ? 'is-featured' : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  key={product.id}
+                  variants={revealVariants('up', reduced, 0.9)}
+                >
+                  <CardLink hasPage={product.hasPage} slug={product.slug}>
+                    <span className="industry-gallery-card-media">
+                      <ProductImage
+                        alt={product.image?.alt ?? `${product.title} product image`}
+                        sizes="(min-width: 64rem) 20rem, (min-width: 48rem) 40vw, 70vw"
+                        url={product.image?.url ?? null}
+                      />
+                    </span>
+                    <span className="industry-gallery-card-body">
+                      <h3 className="industry-gallery-card-title">{product.title}</h3>
+                      {product.summary ? (
+                        <span className="industry-gallery-card-desc">{product.summary}</span>
+                      ) : null}
+                      {product.hasPage ? (
+                        <span className="industry-gallery-card-more">
+                          View product
+                          <ChevronRightIcon />
+                        </span>
+                      ) : null}
+                    </span>
+                  </CardLink>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {showControls ? (
+            <div className="industry-gallery-controls">
+              {/* How far along the rail is, and how much is left. */}
+              <span aria-hidden="true" className="industry-gallery-progress">
+                <span style={{ transform: `scaleX(${Math.max(0.08, progress)})` }} />
+              </span>
+              <span className="industry-gallery-buttons">
+                <button
+                  aria-label="Previous products"
+                  className="industry-gallery-control is-prev"
+                  disabled={edges.atStart}
+                  onClick={() => step(-1)}
+                  type="button"
+                >
+                  <ChevronRightIcon />
+                </button>
+                <button
+                  aria-label="Next products"
+                  className="industry-gallery-control is-next"
+                  disabled={edges.atEnd}
+                  onClick={() => step(1)}
+                  type="button"
+                >
+                  <ChevronRightIcon />
+                </button>
+              </span>
+            </div>
+          ) : null}
+        </div>
       ) : (
         <p className="industry-gallery-empty">No products in this category yet.</p>
       )}
@@ -151,7 +190,7 @@ function CardLink(props: { children: ReactNode; hasPage: boolean; slug: string }
   const { children, hasPage, slug } = props
 
   return hasPage ? (
-    <Link className="industry-gallery-card-link" href={`/products/${slug}`}>
+    <Link className="industry-gallery-card-link" draggable={false} href={`/products/${slug}`}>
       {children}
     </Link>
   ) : (
@@ -159,25 +198,4 @@ function CardLink(props: { children: ReactNode; hasPage: boolean; slug: string }
       {children}
     </div>
   )
-}
-
-/**
- * Puts exactly one featured card at the centre of the list. If the editor
- * flagged none, the middle card is promoted; if several, the first wins.
- */
-function spotlight(products: GalleryProduct[]): GalleryProduct[] {
-  if (products.length === 0) return products
-
-  const flaggedIndex = products.findIndex((product) => product.featured)
-  const middle = Math.floor(products.length / 2)
-  const sourceIndex = flaggedIndex === -1 ? middle : flaggedIndex
-
-  const rest = products
-    .filter((_, index) => index !== sourceIndex)
-    .map((product) => ({ ...product, featured: false }))
-  const star = { ...products[sourceIndex], featured: true }
-
-  rest.splice(middle, 0, star)
-
-  return rest
 }

@@ -112,9 +112,11 @@ describe('header surface theming', () => {
     expect(stylesheet).not.toMatch(/html\[data-nav-surface='hero'\]/)
 
     for (const rule of heroRules) {
-      expect(rule).toContain(
-        ":not([data-nav-ready]):has(main > [data-nav-surface='hero']:first-child)",
-      )
+      expect(rule).toContain(':not([data-nav-ready]):has(')
+      // The hero opens the page, whether it is main's own first child (home)
+      // or the first child of the page wrapper (industry pages).
+      expect(rule).toContain("main > [data-nav-surface='hero']:first-child")
+      expect(rule).toContain("main > :first-child > [data-nav-surface='hero']:first-child")
     }
 
     // The other half of that guard: the controller closes the door behind it.

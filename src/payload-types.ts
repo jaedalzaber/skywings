@@ -88,6 +88,8 @@ export interface Config {
     leads: Lead;
     rfqs: Rfq;
     'form-submissions': FormSubmission;
+    subscribers: Subscriber;
+    'newsletter-campaigns': NewsletterCampaign;
     testimonials: Testimonial;
     faqs: Faq;
     'payload-kv': PayloadKv;
@@ -118,6 +120,8 @@ export interface Config {
     leads: LeadsSelect<false> | LeadsSelect<true>;
     rfqs: RfqsSelect<false> | RfqsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
+    'newsletter-campaigns': NewsletterCampaignsSelect<false> | NewsletterCampaignsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -135,6 +139,7 @@ export interface Config {
     'site-settings': SiteSetting;
     'seo-defaults': SeoDefault;
     'social-links': SocialLink;
+    'newsletter-settings': NewsletterSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -142,6 +147,7 @@ export interface Config {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'seo-defaults': SeoDefaultsSelect<false> | SeoDefaultsSelect<true>;
     'social-links': SocialLinksSelect<false> | SocialLinksSelect<true>;
+    'newsletter-settings': NewsletterSettingsSelect<false> | NewsletterSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -2433,6 +2439,93 @@ export interface FormSubmission {
   createdAt: string;
 }
 /**
+ * Newsletter list. Pending means the confirmation link has not been clicked yet; only Active subscribers receive emails.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  status: 'pending' | 'active' | 'unsubscribed';
+  /**
+   * What this subscriber wants to hear about.
+   */
+  topics?: ('articles' | 'products' | 'news')[] | null;
+  /**
+   * Where they subscribed, e.g. site-footer.
+   */
+  source?: string | null;
+  confirmedAt?: string | null;
+  unsubscribedAt?: string | null;
+  confirmationSentAt?: string | null;
+  token: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Set Status to "Send now" and save to email every Active subscriber who follows the topic.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-campaigns".
+ */
+export interface NewsletterCampaign {
+  id: number;
+  subject: string;
+  /**
+   * The grey preview line shown after the subject in most inboxes.
+   */
+  preheader?: string | null;
+  /**
+   * Only subscribers who follow this topic receive it.
+   */
+  topic: 'articles' | 'products' | 'news';
+  /**
+   * Large title inside the email. Defaults to the subject.
+   */
+  heading?: string | null;
+  image?: (number | null) | Media;
+  /**
+   * Plain text. Leave an empty line between paragraphs.
+   */
+  body: string;
+  ctaLabel?: string | null;
+  /**
+   * A page on the site ("/products/…") or a full https:// address.
+   */
+  ctaUrl?: string | null;
+  /**
+   * Enter an address and save to send one test copy. Change it to send another.
+   */
+  testRecipient?: string | null;
+  /**
+   * Choose "Send now" and save to start. Choose "Cancelled" to stop one that is sending or paused.
+   */
+  status: 'draft' | 'queued' | 'sending' | 'paused' | 'sent' | 'cancelled';
+  /**
+   * The article or product this email announces.
+   */
+  source?:
+    | ({
+        relationTo: 'blog-posts';
+        value: number | BlogPost;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null);
+  sourceKey?: string | null;
+  sentCount?: number | null;
+  failedCount?: number | null;
+  queuedAt?: string | null;
+  finishedAt?: string | null;
+  lastError?: string | null;
+  cursor?: number | null;
+  lockedUntil?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
  */
@@ -2557,6 +2650,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'form-submissions';
         value: number | FormSubmission;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
+      } | null)
+    | ({
+        relationTo: 'newsletter-campaigns';
+        value: number | NewsletterCampaign;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -4193,6 +4294,49 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  topics?: T;
+  source?: T;
+  confirmedAt?: T;
+  unsubscribedAt?: T;
+  confirmationSentAt?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-campaigns_select".
+ */
+export interface NewsletterCampaignsSelect<T extends boolean = true> {
+  subject?: T;
+  preheader?: T;
+  topic?: T;
+  heading?: T;
+  image?: T;
+  body?: T;
+  ctaLabel?: T;
+  ctaUrl?: T;
+  testRecipient?: T;
+  status?: T;
+  source?: T;
+  sourceKey?: T;
+  sentCount?: T;
+  failedCount?: T;
+  queuedAt?: T;
+  finishedAt?: T;
+  lastError?: T;
+  cursor?: T;
+  lockedUntil?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials_select".
  */
 export interface TestimonialsSelect<T extends boolean = true> {
@@ -4517,6 +4661,23 @@ export interface SocialLink {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-settings".
+ */
+export interface NewsletterSetting {
+  id: number;
+  autoNotifyArticles?: boolean | null;
+  autoNotifyProducts?: boolean | null;
+  /**
+   * A campaign that reaches the limit pauses and carries on the next day. Keep this under 450 on a free Gmail account.
+   */
+  dailyLimit: number;
+  sentToday?: number | null;
+  sentTodayDate?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -4686,6 +4847,20 @@ export interface SocialLinksSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-settings_select".
+ */
+export interface NewsletterSettingsSelect<T extends boolean = true> {
+  autoNotifyArticles?: T;
+  autoNotifyProducts?: T;
+  dailyLimit?: T;
+  sentToday?: T;
+  sentTodayDate?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

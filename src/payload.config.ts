@@ -7,6 +7,7 @@ import sharp from 'sharp'
 
 import { collections } from './collections'
 import { Users } from './collections/Users'
+import { gmailEmailAdapter } from './email/gmail'
 import { globals } from './globals'
 import { cloudinaryStorage } from './storage/cloudinary'
 import { localDeliveryManifest, serveLocalCopies } from './storage/localDelivery'
@@ -24,6 +25,8 @@ export default buildConfig({
   collections,
   globals,
   editor: lexicalEditor(),
+  // Gmail SMTP when SMTP_USER and SMTP_PASS are set; see src/email/gmail.ts.
+  email: gmailEmailAdapter(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

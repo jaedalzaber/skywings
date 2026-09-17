@@ -4,6 +4,7 @@ import { makeGlobalRevalidateHook } from '../collections/hooks/revalidate'
 import { TAGS } from '../data/tags'
 import { Footer } from './Footer'
 import { Header } from './Header'
+import { NewsletterSettings } from './NewsletterSettings'
 import { SEODefaults } from './SEODefaults'
 import { SiteSettings } from './SiteSettings'
 import { SocialLinks } from './SocialLinks'
@@ -23,6 +24,6 @@ const withRevalidation = (global: GlobalConfig): GlobalConfig => ({
   },
 })
 
-export const globals = [Header, Footer, SiteSettings, SEODefaults, SocialLinks].map(
+export const globals = [Header, Footer, SiteSettings, SEODefaults, SocialLinks, NewsletterSettings].map(
   withRevalidation,
 )

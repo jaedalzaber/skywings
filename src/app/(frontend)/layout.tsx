@@ -14,6 +14,7 @@ import './product-detail.css'
 import './products-catalog.css'
 import './contact.css'
 import './industry.css'
+import './newsletter.css'
 import './capabilities.css'
 import './resources.css'
 

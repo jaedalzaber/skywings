@@ -81,9 +81,9 @@ export const contactLayout: PageLayout = [
   {
     blockType: 'contactRFQ',
     eyebrow: 'Request a quote',
-    heading: 'Tell us what you need to manufacture.',
+    heading: 'Tell us what you need built.',
     description:
-      'Share drawings, sizes or just the idea. We will come back to you with options and a quote.',
+      'Send a drawing, a sample or just the idea. Our engineers review every enquiry and come back with a clear quote, usually within one working day.',
   },
 ]
 

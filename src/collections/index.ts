@@ -14,10 +14,12 @@ import { LightingPresets } from './LightingPresets'
 import { Machines } from './Machines'
 import { Materials } from './Materials'
 import { Media } from './Media'
+import { NewsletterCampaigns } from './NewsletterCampaigns'
 import { Pages } from './Pages'
 import { ProductFamilies } from './ProductFamilies'
 import { Products } from './Products'
 import { RFQs } from './RFQs'
+import { Subscribers } from './Subscribers'
 import { Testimonials } from './Testimonials'
 import { ThreeDAssets } from './ThreeDAssets'
 import { Users } from './Users'
@@ -44,6 +46,8 @@ export const collections = [
   Leads,
   RFQs,
   FormSubmissions,
+  Subscribers,
+  NewsletterCampaigns,
   Testimonials,
   FAQs,
 ]

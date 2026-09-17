@@ -248,7 +248,7 @@ export const INDUSTRY_FAMILY_FOCUS: Readonly<Record<string, readonly string[]>> 
    *     sold as a service, not as a product family.
    *   Oil & Gas, Marine & Offshore -- served through the same fabrication
    *     families as the sectors above, with no distinct product range yet.
-   *   Custom Metal Fabrication -- a way of working rather than a sector; its
+   *   Sheet Metal Fabrication -- a way of working rather than a sector; its
    *     column was a strict subset of the others.
    *
    * All four keep their industry documents and pages. Giving one a column
@@ -267,7 +267,7 @@ export const INDUSTRY_FAMILY_FOCUS: Readonly<Record<string, readonly string[]>> 
  */
 export const REMOVED_FAMILIES: readonly string[] = [
   'repair-refurbishment-and-spares',
-  // Existed only to give the Custom Metal Fabrication column an identity of
+  // Existed only to give the Sheet Metal Fabrication column an identity of
   // its own; that column is off the menu, and the family held no products.
   'custom-engineered-assemblies',
 ]

@@ -48,10 +48,10 @@ describe('HomeEngineeringSection', () => {
     expect(queries.getByRole('heading', { level: 2 }).textContent).toBe(
       defaultHomeEngineeringIntro.heading,
     )
-    expect(section.querySelector('.engineering-head')).toBeTruthy()
+    expect(section.querySelector('.engineering-head')).not.toBeNull()
   })
 
-  test('sets the disciplines side by side in the accent band, each with its list', () => {
+  test('sets the disciplines side by side in the blue band, each with its list', () => {
     const { section } = renderEngineering()
 
     const disciplines = section.querySelectorAll('.engineering-discipline')
@@ -68,13 +68,24 @@ describe('HomeEngineeringSection', () => {
     })
 
     expect(engineering).toMatch(
-      /\.engineering-disciplines \{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*background:\s*var\(--engineering-accent\);/s,
+      /\.engineering-disciplines \{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s,
+    )
+    // The band is brand blue with white type; the heading and note stay white.
+    expect(engineering).toMatch(/\.engineering-disciplines \{[^}]*color:\s*#ffffff;/s)
+    expect(engineering).toMatch(
+      /\.engineering-discipline \{[^}]*background:\s*var\(--engineering-accent\);/s,
+    )
+    expect(engineering).toMatch(
+      /\.engineering-head,\s*\.engineering-note \{[^}]*background:\s*#ffffff;/s,
+    )
+    expect(engineering).toMatch(
+      /\.engineering-code,\s*\.engineering-discipline-eyebrow \{[^}]*color:\s*var\(--engineering-accent\);/s,
     )
     // Lists line up because the copy is pushed to the bottom of each cell.
     expect(engineering).toMatch(/\.engineering-discipline-copy \{[^}]*margin-top:\s*auto;/s)
   })
 
-  test('carries the photograph and the simulation note under the band', () => {
+  test('carries the photograph and the simulation note in the frame', () => {
     const { queries, section } = renderEngineering()
 
     expect(section.querySelector('.engineering-media-image')?.getAttribute('src')).toBe(
@@ -91,37 +102,41 @@ describe('HomeEngineeringSection', () => {
   })
 
   /*
-   * Only corners on the outside of the composition are rounded: the flush
-   * joins down the copy column stay square, and so does the inside corner
-   * where the photograph meets the heading cell -- the photograph's
-   * bottom-right and the heading cell's top-left. 0.625rem is the 10px floor.
+   * One frame around everything, its cells drawn as 1px gaps over the line
+   * colour so no rule is doubled -- the same construction as the insights
+   * section. The top and bottom rules run edge to edge of the screen; the
+   * vertical ones close the frame at the page's width, with square corners.
    */
-  test('rounds the outer corners of the composition, never under 10px', () => {
+  test('runs its rules edge to edge and closes the frame at the page width', () => {
+    const { section } = renderEngineering()
+
+    const frame = section.querySelector('.engineering-frame') as HTMLElement
+    expect(frame).toBeTruthy()
+    expect(frame.querySelectorAll(':scope > *')).toHaveLength(4)
+
     expect(engineering).toMatch(
-      /--engineering-radius:\s*clamp\(0\.625rem,[^;]*\);/,
+      /\.engineering-inner \{[^}]*border-block:\s*1px solid var\(--engineering-line\);/s,
     )
     expect(engineering).toMatch(
-      /\.engineering-media \{[^}]*border-radius:\s*var\(--engineering-radius\) var\(--engineering-radius\) 0 var\(--engineering-radius\);[^}]*overflow:\s*hidden;/s,
+      /\.engineering-frame \{[^}]*width:\s*min\(100%, var\(--page-content\)\);[^}]*overflow:\s*hidden;[^}]*border-inline:\s*1px solid var\(--engineering-line\);[^}]*background:\s*#ffffff;/s,
+    )
+    expect(engineering).not.toMatch(/\.engineering-frame \{[^}]*border-radius/s)
+    // No 1px gaps over the line colour: hidden cells would show it as a block.
+    expect(engineering).not.toMatch(/\.engineering-frame \{[^}]*gap:/s)
+    expect(engineering).toMatch(
+      /\.engineering-media \{[^}]*border-right:\s*1px solid var\(--engineering-line\);/s,
     )
     expect(engineering).toMatch(
-      /\.engineering-head \{[^}]*border-radius:\s*0 var\(--engineering-radius\) 0 0;/s,
+      /\.engineering-head \{[^}]*border-bottom:\s*1px solid var\(--engineering-line\);/s,
     )
-    expect(engineering).toMatch(
-      /\.engineering-note \{[^}]*border-radius:\s*0 0 var\(--engineering-radius\) var\(--engineering-radius\);/s,
-    )
+    expect(engineering).not.toMatch(/--engineering-radius|--engineering-lift/)
   })
 
   test('stacks into one column on tablets and phones', () => {
     const columns = engineering.slice(engineering.indexOf('@media (max-width: 63.99rem)'))
 
-    expect(columns).toMatch(/\.engineering-inner \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s)
-    // Nothing meets the photograph once stacked, so both corners come back.
-    expect(columns).toMatch(
-      /\.engineering-media \{[^}]*border-radius:\s*var\(--engineering-radius\);/s,
-    )
-    expect(columns).toMatch(
-      /\.engineering-head \{[^}]*border-radius:\s*var\(--engineering-radius\) var\(--engineering-radius\) 0 0;/s,
-    )
+    expect(columns).toMatch(/\.engineering-frame \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s)
+    expect(columns).toMatch(/\.engineering-media \{[^}]*aspect-ratio:\s*4 \/ 3;/s)
     expect(columns).toMatch(
       /@media \(max-width: 47\.99rem\) \{\s*\.engineering-disciplines \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s,
     )

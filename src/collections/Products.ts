@@ -5,7 +5,8 @@ import { TAGS } from '../data/tags'
 import { layoutField } from '../fields/layout'
 import { seoFields } from '../fields/seo'
 import { slugField } from '../fields/slug'
-import { makeCollectionRevalidateHooks } from './hooks/revalidate'
+import { notifySubscribersOnPublish } from '../lib/newsletter/autoNotify'
+import { makeCollectionRevalidateHooks, withAfterChange } from './hooks/revalidate'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -30,10 +31,14 @@ export const Products: CollectionConfig = {
   versions: {
     drafts: true,
   },
-  hooks: makeCollectionRevalidateHooks((doc) => [
-    TAGS.products,
-    ...(doc.slug ? [TAGS.product(doc.slug)] : []),
-  ]),
+  hooks: withAfterChange(
+    makeCollectionRevalidateHooks((doc) => [
+      TAGS.products,
+      ...(doc.slug ? [TAGS.product(doc.slug)] : []),
+    ]),
+    // Emails subscribers the first time a product goes live.
+    notifySubscribersOnPublish('products'),
+  ),
   fields: [
     {
       name: 'title',

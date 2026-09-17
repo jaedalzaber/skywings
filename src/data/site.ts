@@ -103,7 +103,7 @@ const industryNavigationChildren: HeaderNavigationChild[] = [
   link('Heavy Equipment & Machinery', '/industries'),
   link('Architectural & Interior Metalwork', '/industries'),
   link('Industrial Manufacturing', '/industries'),
-  link('Custom Metal Fabrication', '/industries'),
+  link('Sheet Metal Fabrication', '/industries'),
 ]
 
 export const defaultBrandLogoMotion: BrandLogoMotion = {

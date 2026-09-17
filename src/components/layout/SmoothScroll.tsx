@@ -43,6 +43,15 @@ export function SmoothScroll() {
       const lenis = new Lenis({
         duration: 1.1,
         lerp: 0.12,
+        /*
+         * Scroll natively inside anything that scrolls on its own. Lenis takes
+         * every wheel event on the page, so without this the phone field's
+         * country list moved the page behind it instead of its own options.
+         * Our own markup can opt out with a data-lenis-prevent attribute; this
+         * covers lists a library renders, where we cannot add one.
+         */
+        prevent: (node) =>
+          node.classList.contains('react-international-phone-country-selector-dropdown'),
         syncTouch: false,
         wheelMultiplier: 0.92,
       })

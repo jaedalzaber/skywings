@@ -327,7 +327,7 @@ export const defaultHomeLayout: HomeLayout = [
     heading: 'Metalwork built around your industry requirements.',
     description:
       'Browse sector-specific products, assemblies, and fabrication capabilities for the way your projects are bought, built, and delivered.',
-    // Five, and without Custom Metal Fabrication -- matches what
+    // Five, and without Sheet Metal Fabrication -- matches what
     // getHomeIndustryItems fetches, so the fallback and the live data agree.
     items: [
       'Construction & Infrastructure',
@@ -426,7 +426,7 @@ async function getCuratedProductsById(productIds: string[]) {
 }
 
 /*
- * The landing page shows five industries. Custom Metal Fabrication is left out
+ * The landing page shows five industries. Sheet Metal Fabrication is left out
  * because it describes a way of working rather than a sector -- see the note in
  * productTaxonomy.ts -- so it reads oddly beside the five real ones.
  *
