@@ -48,3 +48,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Throwaway debugging scripts and screenshots: never committed, never type-checked
+# by the build.
+/scripts/tmp/
