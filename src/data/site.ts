@@ -72,8 +72,17 @@ export type SiteHeaderData = {
   cta?: HeaderCTA | null
 }
 
+/** A certification badge, and the certificate it opens when there is one. */
+export type FooterCertification = {
+  badge: MediaImageData
+  certificateUrl: string | null
+  id: string
+  label: string
+}
+
 export type SiteFooterData = {
   addresses: FooterAddress[]
+  certifications: FooterCertification[]
   copyright: string
   emailAddress: string
   emailLabel: string
@@ -144,6 +153,7 @@ export const defaultFooterData: SiteFooterData = {
       phone: '+971 505 389 979',
     },
   ],
+  certifications: [],
   copyright: `© ${new Date().getFullYear()} Skywings. All rights reserved.`,
   emailAddress: 'info@skywings.ae',
   emailLabel: 'Send email',
@@ -410,6 +420,33 @@ export async function getSiteHeader(): Promise<SiteHeaderData> {
   }
 }
 
+/**
+ * Rows without a usable badge image are left out rather than shown as a
+ * blank circle; a missing certificate just leaves the badge unlinked.
+ */
+function footerCertifications(rows: Footer['certifications']): FooterCertification[] {
+  return (rows ?? []).flatMap((row, index) => {
+    const badge = getMediaImage(row.badge)
+    if (!badge) return []
+
+    // Through the site's own route: Cloudinary refuses to deliver PDFs directly.
+    const certificate = row.certificate
+    const certificateUrl =
+      certificate && typeof certificate === 'object' && certificate.mimeType === 'application/pdf'
+        ? `/certificates/${certificate.id}`
+        : null
+
+    return [
+      {
+        badge: { ...badge, alt: row.label },
+        certificateUrl,
+        id: row.id ?? `certification-${index}`,
+        label: row.label,
+      },
+    ]
+  })
+}
+
 async function fetchSiteFooter(): Promise<SiteFooterData> {
   const payload = await getPayloadClient()
   const footer = await payload.findGlobal({
@@ -420,6 +457,7 @@ async function fetchSiteFooter(): Promise<SiteFooterData> {
 
   return {
     addresses: footer.addresses?.length ? footer.addresses : defaultFooterData.addresses,
+    certifications: footerCertifications(footer.certifications),
     copyright: footer.copyright || defaultFooterData.copyright,
     emailAddress: footer.emailAddress || defaultFooterData.emailAddress,
     emailLabel: footer.emailLabel || defaultFooterData.emailLabel,

@@ -7,6 +7,7 @@ import * as migration_20260723_122000_home_process_media_uploads from './2026072
 import * as migration_20260723_123000_home_hero_cover_media from './20260723_123000_home_hero_cover_media'
 import * as migration_20260723_124000_home_process_appearance_controls from './20260723_124000_home_process_appearance_controls'
 import * as migration_20260917_000000_newsletter from './20260917_000000_newsletter'
+import * as migration_20260917_120000_footer_certifications from './20260917_120000_footer_certifications'
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260917_000000_newsletter.up,
     down: migration_20260917_000000_newsletter.down,
     name: '20260917_000000_newsletter',
+  },
+  {
+    up: migration_20260917_120000_footer_certifications.up,
+    down: migration_20260917_120000_footer_certifications.down,
+    name: '20260917_120000_footer_certifications',
   },
 ]

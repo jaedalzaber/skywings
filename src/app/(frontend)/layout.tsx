@@ -44,6 +44,17 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+/**
+ * The two numbers the header offers: the first and the last in Footer ->
+ * Phone numbers -- the office landline and the main mobile as that list is
+ * ordered today. Reordering the list in the admin changes what the header
+ * shows, so the numbers live in one place.
+ */
+function headerCallNumbers(numbers: string[]) {
+  const picks = numbers.length > 1 ? [numbers[0], numbers[numbers.length - 1]] : numbers
+  return [...new Set(picks.map((number) => number.trim()).filter(Boolean))]
+}
+
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
   const [footer, header] = await Promise.all([getSiteFooter(), getSiteHeader()])
@@ -66,7 +77,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <SectionSnapController />
         <PageScrollbar />
         <div className="site-shell">
-          <SiteHeader header={header} />
+          <SiteHeader callNumbers={headerCallNumbers(footer.phoneNumbers)} header={header} />
           <main>{children}</main>
           <SiteFooter footer={footer} />
         </div>

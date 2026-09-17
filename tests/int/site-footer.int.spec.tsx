@@ -57,11 +57,14 @@ describe('SiteFooter', () => {
     const top = footer.querySelector('.figma-footer-top') as HTMLElement
     expect(top.querySelector('.figma-footer-groups')).not.toBeNull()
     expect(top.querySelector('.figma-footer-newsletter')).not.toBeNull()
+    // Email and phones sit under the form, in the same half.
+    expect(top.querySelector('.figma-footer-newsletter .figma-footer-contact-list')).not.toBeNull()
 
-    // The ways in share the middle band.
+    // Certifications beside the addresses; no badges set, no empty list.
     const main = footer.querySelector('.figma-footer-main') as HTMLElement
-    expect(main.querySelector('.figma-footer-contact-list')).not.toBeNull()
+    expect(main.querySelector('.figma-footer-contact-list')).toBeNull()
     expect(main.querySelector('.figma-footer-addresses')).not.toBeNull()
+    expect(main.querySelector('.figma-footer-certifications')).toBeNull()
 
     /*
      * The notice under the form is gone with it. It told every visitor the
@@ -79,6 +82,31 @@ describe('SiteFooter', () => {
       (place) => place.textContent,
     )
     expect(places).toEqual(['Sharjah', 'Fujairah'])
+  })
+
+  test('links each certification badge to its PDF in a new tab', () => {
+    const badge = { alt: '', height: 160, url: '/badge.png', width: 160 }
+    const { container } = render(
+      <SiteFooter
+        footer={{
+          ...defaultFooterData,
+          certifications: [
+            { badge, certificateUrl: '/iso-9001.pdf', id: 'a', label: 'ISO 9001:2015' },
+            { badge, certificateUrl: null, id: 'b', label: 'ISO 14001:2015' },
+          ],
+        }}
+      />,
+    )
+    const list = within(container.querySelector('.figma-footer-main .figma-footer-certifications') as HTMLElement)
+
+    const linked = list.getByRole('link', { name: /ISO 9001:2015 certificate/ })
+    expect(linked.getAttribute('href')).toBe('/iso-9001.pdf')
+    expect(linked.getAttribute('target')).toBe('_blank')
+    expect(linked.getAttribute('rel')).toContain('noopener')
+
+    // No PDF yet: the badge still shows, just not as a link.
+    expect(list.getAllByRole('link')).toHaveLength(1)
+    expect(list.getByAltText('ISO 14001:2015')).toBeTruthy()
   })
 
   test('defines the mobile, tablet, and desktop Figma layouts', () => {

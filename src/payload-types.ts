@@ -4567,6 +4567,26 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Badges shown in the footer beside the addresses. Each badge opens its certificate PDF in a new tab.
+   */
+  certifications?:
+    | {
+        /**
+         * For example "ISO 9001:2015". Read out to screen readers.
+         */
+        label: string;
+        /**
+         * Badge image, ideally a square PNG or SVG.
+         */
+        badge: number | Media;
+        /**
+         * Certificate PDF. Without one the badge is not a link.
+         */
+        certificate?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
   legalLinks?:
     | {
         label: string;
@@ -4776,6 +4796,14 @@ export interface FooterSelect<T extends boolean = true> {
     | {
         address?: T;
         phone?: T;
+        id?: T;
+      };
+  certifications?:
+    | T
+    | {
+        label?: T;
+        badge?: T;
+        certificate?: T;
         id?: T;
       };
   legalLinks?:

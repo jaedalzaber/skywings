@@ -165,6 +165,43 @@ export const Footer: GlobalConfig = {
               ],
             },
             {
+              name: 'certifications',
+              type: 'array',
+              admin: {
+                description:
+                  'Badges shown in the footer beside the addresses. Each badge opens its certificate PDF in a new tab.',
+                initCollapsed: true,
+              },
+              labels: { plural: 'Certifications', singular: 'Certification' },
+              fields: [
+                {
+                  name: 'label',
+                  type: 'text',
+                  admin: { description: 'For example "ISO 9001:2015". Read out to screen readers.' },
+                  required: true,
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'badge',
+                      type: 'upload',
+                      admin: { description: 'Badge image, ideally a square PNG or SVG.' },
+                      relationTo: 'media',
+                      required: true,
+                    },
+                    {
+                      name: 'certificate',
+                      type: 'upload',
+                      admin: { description: 'Certificate PDF. Without one the badge is not a link.' },
+                      filterOptions: { mimeType: { equals: 'application/pdf' } },
+                      relationTo: 'media',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
               name: 'legalLinks',
               type: 'array',
               fields: [...linkFields],

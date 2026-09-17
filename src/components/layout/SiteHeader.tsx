@@ -6,6 +6,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
+import { telHref } from '@/components/contact/tel'
 import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import type { SiteHeaderData } from '@/data/site'
 
@@ -13,6 +14,11 @@ import { BrandLogoSpin } from './BrandLogoSpin'
 import { HeaderSurfaceController } from './HeaderSurfaceController'
 
 type SiteHeaderProps = {
+  /**
+   * Numbers for the "Call Anytime" block beside the badge. Taken from the
+   * Footer global rather than stored twice; see the root layout.
+   */
+  callNumbers?: string[]
   header: SiteHeaderData
 }
 
@@ -37,7 +43,7 @@ function DeadLink(props: { children: ReactNode; className?: string }) {
 }
 
 export function SiteHeader(props: SiteHeaderProps) {
-  const { header } = props
+  const { callNumbers = [], header } = props
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -291,6 +297,32 @@ export function SiteHeader(props: SiteHeaderProps) {
                 src="/images/header/proud-of-uae-dark.png"
                 width={512}
               />
+            </RevealItem>
+          ) : null}
+
+          {/*
+           * The phone lines, straight after the badge. Each number is its own
+           * link so a tap on a phone dials that one; the icon and label are
+           * decoration around them.
+           */}
+          {callNumbers.length ? (
+            <RevealItem className="nav-call">
+              <span aria-hidden="true" className="nav-call-icon">
+                <svg fill="none" viewBox="0 0 24 24">
+                  <path
+                    d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              <span className="nav-call-text">
+                <span className="nav-call-label">Call Anytime</span>
+                {callNumbers.map((number) => (
+                  <a className="nav-call-number" href={telHref(number)} key={number}>
+                    {number}
+                  </a>
+                ))}
+              </span>
             </RevealItem>
           ) : null}
 

@@ -4,6 +4,7 @@ import path from 'node:path'
 import type { Adapter, GeneratedAdapter } from '@payloadcms/plugin-cloud-storage/types'
 import { v2 as cloudinary } from 'cloudinary'
 
+import { fetchCloudinaryFile } from './fetchFile'
 import type { CloudinaryResourceType } from './resource'
 import {
   assertWithinPlanLimit,
@@ -226,16 +227,14 @@ export function cloudinaryAdapter(args: CloudinaryAdapterArgs): Adapter {
 
         const { publicId, resourceType } = locate(filename, docPrefix)
         const format = resourceType === 'raw' ? undefined : filename.split('.').pop()
-        const url = cloudinary.url(publicId, {
-          format,
-          resource_type: resourceType,
-          secure: true,
-          type: 'upload',
-        })
 
         try {
-          const range = req.headers.get('range')
-          const upstream = await fetch(url, range ? { headers: { range } } : undefined)
+          const upstream = await fetchCloudinaryFile({
+            format,
+            publicId,
+            range: req.headers.get('range'),
+            resourceType,
+          })
 
           if (!upstream.ok || !upstream.body) {
             // Surface the real upstream status. The Vercel Blob adapter this

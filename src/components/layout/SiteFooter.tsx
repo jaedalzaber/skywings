@@ -1,4 +1,4 @@
-import type { SiteFooterData } from '@/data/site'
+import type { FooterCertification, SiteFooterData } from '@/data/site'
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
 
 import { FooterNewsletterForm } from './FooterNewsletterForm'
@@ -25,16 +25,58 @@ function cityOf(address: string) {
 }
 
 /**
+ * Certification badges, each opening its certificate PDF in a new tab. A
+ * badge with no certificate attached is shown but is not a link.
+ */
+function FooterCertifications(props: { certifications: FooterCertification[] }) {
+  const { certifications } = props
+
+  if (!certifications.length) return null
+
+  return (
+    <ul aria-label="Certifications" className="figma-footer-certifications">
+      {certifications.map((certification) => {
+        const badge = (
+          <Image
+            alt={certification.label}
+            className="figma-footer-certification-badge"
+            height={certification.badge.height ?? 160}
+            sizes="7.2rem"
+            src={certification.badge.url}
+            width={certification.badge.width ?? 160}
+          />
+        )
+
+        return (
+          <li key={certification.id}>
+            {certification.certificateUrl ? (
+              <a
+                aria-label={`${certification.label} certificate (PDF, opens in a new tab)`}
+                href={certification.certificateUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                title={`${certification.label} certificate`}
+              >
+                {badge}
+              </a>
+            ) : (
+              badge
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
  * The foot of every page, in three bands under the wordmark: the site's own
- * sections beside the newsletter, then how to reach the company, then the
- * legal line. Each band is separated by a rule, and each reads on its own --
- * the first is for going somewhere else, the second for getting in touch, and
- * the last is the small print.
+ * sections beside the newsletter and the ways to get in touch, then the
+ * certifications beside the addresses, then the legal line. Each band is
+ * separated by a rule.
  *
- * The newsletter sits up in the first band rather than below it because the
- * sections only fill the left of the page: two columns of links against the
- * width of the footer left a hole in the top right, and the form is the one
- * thing here big enough to fill it.
+ * The email and phones sit under the form in the same right-hand half, split
+ * into its two columns, so they line up with the two addresses below the rule.
  */
 export function SiteFooter(props: { footer: SiteFooterData }) {
   const { footer } = props
@@ -91,28 +133,29 @@ export function SiteFooter(props: { footer: SiteFooterData }) {
               buttonLabel={footer.newsletterButtonLabel}
               placeholder={footer.newsletterPlaceholder}
             />
+            <dl className="figma-footer-contact-list">
+              <div>
+                <dt>{footer.emailLabel}</dt>
+                <dd>
+                  <a href={`mailto:${footer.emailAddress}`}>{footer.emailAddress}</a>
+                </dd>
+              </div>
+              <div>
+                <dt>{footer.phoneLabel}</dt>
+                <dd>
+                  {footer.phoneNumbers.map((phone) => (
+                    <a href={phoneHref(phone)} key={phone}>
+                      {phone}
+                    </a>
+                  ))}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
 
         <div className="figma-footer-main">
-          <dl className="figma-footer-contact-list">
-            <div>
-              <dt>{footer.emailLabel}</dt>
-              <dd>
-                <a href={`mailto:${footer.emailAddress}`}>{footer.emailAddress}</a>
-              </dd>
-            </div>
-            <div>
-              <dt>{footer.phoneLabel}</dt>
-              <dd>
-                {footer.phoneNumbers.map((phone) => (
-                  <a href={phoneHref(phone)} key={phone}>
-                    {phone}
-                  </a>
-                ))}
-              </dd>
-            </div>
-          </dl>
+          <FooterCertifications certifications={footer.certifications} />
 
           <div className="figma-footer-addresses">
             {footer.addresses.map((location) => {
