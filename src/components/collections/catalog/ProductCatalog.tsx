@@ -34,6 +34,14 @@ export type { CatalogSelection }
  */
 const SEARCH_DEBOUNCE_MS = 280
 
+/*
+ * The sort menu is hidden for now, with the hidden attribute rather than left
+ * out: it drops out of sight, the tab order and the accessibility tree, while
+ * everything behind it keeps working -- a ?sort= link is honoured and the
+ * catalogue keeps its default order. Showing it again is this one flag.
+ */
+const SHOW_SORT = false
+
 const SORTS: { label: string; value: CatalogSort }[] = [
   { label: 'Featured', value: 'featured' },
   { label: 'Newest', value: 'newest' },
@@ -443,7 +451,7 @@ export function ProductCatalog(props: {
               ) : null}
             </div>
 
-            <div className="catalogue-sort">
+            <div className="catalogue-sort" hidden={!SHOW_SORT}>
               <label className="catalogue-sort-label" htmlFor={sortId}>
                 Sort by
               </label>

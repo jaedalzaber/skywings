@@ -1,16 +1,20 @@
 import type { IndustryValueBlock } from '@/payload-types'
-
 import { RichText } from '@/components/atoms/RichText'
 import { SafeImage as Image } from '@/components/atoms/SafeImage'
 import { getMediaImage } from '@/data/media'
 
-import { Reveal, RevealGroup, RevealItem } from './Reveal'
-import { SectionShell, SegmentedHeading } from './SectionShell'
+import { ValueCopy, ValueHeading, ValueMedia } from './IndustryValueMotion'
+import { RevealGroup, RevealItem } from './Reveal'
+import { SectionShell } from './SectionShell'
 import { headingId, LogoImage } from './shared'
 
 /**
  * Dark editorial band: emphasised heading and copy beside a feature image,
  * with an optional client-logo strip along the foot of the same surface.
+ *
+ * The heading rises word by word with a rule drawing in beneath it, the
+ * description and its points follow in sequence, and the photograph is
+ * uncovered and then drifts with the scroll; see IndustryValueMotion.
  */
 export function IndustryValueSection(props: { block: IndustryValueBlock }) {
   const { block } = props
@@ -27,19 +31,21 @@ export function IndustryValueSection(props: { block: IndustryValueBlock }) {
       theme={block.theme ?? 'dark'}
     >
       <div className="industry-container industry-value-grid">
-        <Reveal className="industry-value-copy" effect="left">
-          <SegmentedHeading
+        <div className="industry-value-copy">
+          <ValueHeading
             className="industry-value-heading"
             id={id}
             segments={block.headingSegments}
           />
-          <RichText className="industry-prose" value={block.description} />
+          <ValueCopy>
+            <RichText className="industry-prose" value={block.description} />
+          </ValueCopy>
           {block.logosLabel && logos.length > 0 ? (
             <p className="industry-value-logos-label">{block.logosLabel}</p>
           ) : null}
-        </Reveal>
+        </div>
 
-        <Reveal as="figure" className="industry-value-media" delay={0.1} effect="clip">
+        <ValueMedia>
           {image ? (
             <Image
               alt={image.alt}
@@ -49,7 +55,7 @@ export function IndustryValueSection(props: { block: IndustryValueBlock }) {
               src={image.url}
             />
           ) : null}
-        </Reveal>
+        </ValueMedia>
       </div>
 
       {logos.length > 0 ? (

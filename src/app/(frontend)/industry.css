@@ -765,14 +765,114 @@ a.industry-card:hover .industry-card-media img {
   font-weight: 700;
 }
 
-.industry-value .industry-prose {
-  margin-top: clamp(1.5rem, 4vw, 3rem);
+/* Each word rises out of its own line mask; see ValueHeading. */
+.industry-value-word {
+  display: inline-block;
+  overflow: hidden;
+  /* Room for descenders inside the mask, handed back so lines keep their rhythm. */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  vertical-align: top;
+}
+
+.industry-value-word-inner {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* A short brand-blue rule drawn in once the heading has landed. */
+.industry-value-rule {
+  display: block;
+  width: 4.5rem;
+  height: 2px;
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+  background: #7f9cff;
+  transform-origin: left center;
+}
+
+.industry-value-body {
+  margin-top: clamp(1.25rem, 3vw, 2rem);
 }
 
 .industry-value .industry-prose p {
-  max-width: 22rem;
-  font-size: 0.95rem;
+  max-width: 30rem;
+  font-size: 1rem;
   line-height: 1.62;
+}
+
+/* The points under the paragraph: a hairline marker, not a bullet. */
+.industry-value .industry-prose ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.industry-value .industry-prose li {
+  position: relative;
+  padding-left: 2rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.industry-value .industry-prose li::before {
+  position: absolute;
+  top: 0.72em;
+  left: 0;
+  width: 1.125rem;
+  height: 1px;
+  background: #7f9cff;
+  content: '';
+  transform-origin: left center;
+}
+
+.industry-value .industry-prose li p {
+  display: inline;
+  color: inherit;
+}
+
+/*
+ * The sequence: the paragraph first, then each point in turn with its marker
+ * drawing across. Driven by data-in-view (ValueCopy), so it works on any rich
+ * text an editor writes.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .industry-value-body > .industry-prose > *,
+  .industry-value-body li {
+    opacity: 0;
+    transform: translateY(1rem);
+    transition:
+      opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .industry-value-body li::before {
+    transform: scaleX(0);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .industry-value-body[data-in-view='true'] > .industry-prose > *,
+  .industry-value-body[data-in-view='true'] li {
+    opacity: 1;
+    transform: none;
+  }
+
+  .industry-value-body[data-in-view='true'] li::before {
+    transform: scaleX(1);
+  }
+
+  .industry-value-body[data-in-view='true'] > .industry-prose > :nth-child(1) { transition-delay: 450ms; }
+  .industry-value-body[data-in-view='true'] > .industry-prose > :nth-child(2) { transition-delay: 600ms; }
+  .industry-value-body[data-in-view='true'] li:nth-child(1),
+  .industry-value-body[data-in-view='true'] li:nth-child(1)::before { transition-delay: 700ms; }
+  .industry-value-body[data-in-view='true'] li:nth-child(2),
+  .industry-value-body[data-in-view='true'] li:nth-child(2)::before { transition-delay: 820ms; }
+  .industry-value-body[data-in-view='true'] li:nth-child(3),
+  .industry-value-body[data-in-view='true'] li:nth-child(3)::before { transition-delay: 940ms; }
+  .industry-value-body[data-in-view='true'] li:nth-child(n + 4),
+  .industry-value-body[data-in-view='true'] li:nth-child(n + 4)::before { transition-delay: 1060ms; }
 }
 
 .industry-value-logos-label {
@@ -792,7 +892,23 @@ a.industry-card:hover .industry-card-media img {
   overflow: hidden;
   border-radius: 0.625rem;
   aspect-ratio: 1.05;
+}
+
+/* What the reveal uncovers; the placeholder fill sits here so it is
+   uncovered with the picture rather than showing ahead of it. */
+.industry-value-media-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
   background: #3a3a3a;
+}
+
+/* Taller than its frame, so the scroll drift never shows an edge. */
+.industry-value-media-layer {
+  position: absolute;
+  inset: -8% 0;
+  will-change: transform;
 }
 
 .industry-value-media img {
@@ -1292,16 +1408,21 @@ a.industry-card:hover .industry-card-media img {
 }
 
 /*
- * The photograph behind the blue: darkened and held back so it reads as
- * texture rather than as a picture, with the brand colour still the colour of
- * the section. The layer is taller than the section because it moves inside
- * it (see CtaParallax) and must never uncover an edge.
+ * The photograph behind the blue: laid into the brand colour as texture
+ * rather than shown as a picture. It used to be darkened and dimmed over the
+ * blue, which pulled the whole section down to navy; soft-light keeps the
+ * blue at its own brightness and lets the picture only shade it lighter and
+ * darker around that. The blue is repeated here because this layer is its own
+ * stacking context, and the blend only has what is inside it to work against.
+ * The layer is taller than the section because it moves inside it (see
+ * CtaParallax) and must never uncover an edge.
  */
 .industry-cta-backdrop {
   position: absolute;
   inset: 0;
   z-index: -1;
   overflow: hidden;
+  background: var(--ind-blue);
   pointer-events: none;
 }
 
@@ -1315,17 +1436,17 @@ a.industry-card:hover .industry-card-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.26;
-  filter: grayscale(0.45) brightness(0.42) contrast(1.1);
+  opacity: 0.2;
+  filter: grayscale(1) contrast(1.05);
+  mix-blend-mode: soft-light;
 }
 
-/* Deepens the edges so the type keeps its contrast wherever the picture is light. */
+/* A light shade at the edges only, so the type keeps its contrast wherever
+   the picture is light without the section as a whole going dark. */
 .industry-cta-backdrop::after {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(120% 100% at 70% 30%, rgba(23, 41, 120, 0) 0%, rgba(17, 32, 96, 0.55) 100%),
-    linear-gradient(180deg, rgba(17, 32, 96, 0.35), rgba(17, 32, 96, 0.15));
+  background: radial-gradient(120% 100% at 70% 30%, rgba(23, 41, 120, 0) 0%, rgba(23, 41, 120, 0.22) 100%);
   content: '';
 }
 

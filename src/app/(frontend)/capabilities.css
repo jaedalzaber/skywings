@@ -404,10 +404,12 @@ button.capabilities-machine-row {
   background: #d6d6d6;
 }
 
+/* Square at every width, with every photograph -- machines included --
+   filling the frame edge to edge. */
 .capabilities-carousel-frame {
   position: relative;
-  flex: 1 1 auto;
-  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
   overflow: hidden;
 }
 
@@ -418,17 +420,6 @@ button.capabilities-machine-row {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-/* A machine is shown whole, on a light ground, rather than cropped to fill. */
-.capabilities-carousel-frame[data-kind='machine'] {
-  background: #f4f4f4;
-}
-
-.capabilities-carousel-frame[data-kind='machine'] .capabilities-carousel-image {
-  box-sizing: border-box;
-  padding: clamp(1rem, 2.5vw, 2rem);
-  object-fit: contain;
 }
 
 /*
@@ -498,19 +489,26 @@ button.capabilities-machine-row {
 }
 
 /*
- * A row of thumbnails at one shared height rather than a grid of equal-width
- * cells: each card's width is left to its own image's natural proportions --
- * a wide flat part reads wide, a narrow turned one reads narrow -- instead of
- * every photo being cropped to fit a box it was not shot for.
+ * A wrapping row of cards at one fixed photo height. Each card is as wide as
+ * its own photograph at that height, so every part is shown whole, uncropped,
+ * in the proportions it was shot at.
  */
 .capabilities-output-grid {
+  --capabilities-output-height: 200px;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.625rem;
+  align-items: stretch;
+  gap: clamp(0.625rem, 1vw, 0.875rem);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* On a phone 200px left one card to a row; lower, most rows take two. */
+@media (max-width: 39.99rem) {
+  .capabilities-output-grid {
+    --capabilities-output-height: 140px;
+  }
 }
 
 .capabilities-output {
@@ -519,65 +517,82 @@ button.capabilities-machine-row {
   flex-direction: column;
   max-width: 100%;
   overflow: hidden;
-  background: var(--capabilities-card);
+  border-radius: 0.375rem;
+  background: #2c2c2c;
+  box-shadow: 0 1px 2px rgba(23, 23, 23, 0.08);
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
 .capabilities-output-media {
-  /* The only sizing the box carries -- width comes from the image inside it,
-     not a fixed ratio. Kept small so a row reads as one tidy strip. */
-  height: clamp(4.75rem, 6vw, 5.75rem);
-  background: #f7f7f7;
+  position: relative;
+  height: var(--capabilities-output-height);
+  overflow: hidden;
+  background: #f4f4f4;
 }
 
+/* Width follows the photo. Only a photo wider than a phone screen is capped,
+   and that one is cropped at the sides rather than squashed. */
 .capabilities-output-image {
   display: block;
-  height: 100%;
   width: auto;
-  /*
-   * A very wide or very narrow photograph is still capped here rather than
-   * left to size the card by its own extreme ratio -- one flat panel shot
-   * from above, or the odd wide multi-part flatlay, would otherwise dwarf
-   * every square card beside it and read as the row breaking rank. Within
-   * the cap, cover and contain render identically because the box already
-   * is the image's own ratio; only a capped outlier is ever cropped.
-   */
-  max-width: 9.5rem;
+  max-width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* A span has no intrinsic size to size the card from, unlike a real photo --
-   given a width here so an empty slot still holds a visible, roughly square
-   place in the row rather than collapsing to nothing. */
+@media (hover: hover) and (pointer: fine) {
+  .capabilities-output:hover {
+    box-shadow: 0 0.75rem 1.5rem rgba(23, 23, 23, 0.16);
+    transform: translateY(-2px);
+  }
+
+  .capabilities-output:hover .capabilities-output-image {
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capabilities-output,
+  .capabilities-output-image {
+    transition: none;
+  }
+}
+
+/* No photo yet: hold a square place in the row rather than collapsing. */
 .capabilities-output-media .capabilities-image-empty {
   position: static;
-  inset: auto;
-  width: clamp(4.75rem, 6vw, 5.75rem);
+  width: var(--capabilities-output-height);
+  max-width: 100%;
   height: 100%;
 }
 
 /*
- * The profile's dark caption band under each part. Capped to the same width
- * as the photograph above it -- without this, a long label with nowhere to
- * wrap was the thing actually setting a card's width, so a small square photo
- * could sit in a card wider than the image itself, leaving a gap of bare
- * background beside it and unbalancing the row.
+ * The profile's dark caption band under each part, held to a two-line height
+ * so a label that wraps does not make its card taller than the rest of the
+ * row. A one-line label sits centred in the extra room.
  *
- * Held to a fixed two-line height for the same reason: every card's photo is
- * the same height already, so a label that wraps to two lines must not be the
- * one thing left free to make its own card taller than the rest of the row.
- * A one-line label just sits centred in the extra room.
+ * `width: 0; min-width: 100%` keeps the label from setting the card's width:
+ * it takes exactly the photo's width and wraps inside it, so a long label
+ * next to a narrow photo cannot open a bare strip beside the picture.
  */
 .capabilities-output-label {
+  width: 0;
+  min-width: 100%;
   display: flex;
   align-items: center;
-  min-height: 2.875rem;
-  max-width: 9.5rem;
-  padding: 0.5rem 0.625rem;
+  flex: 1 1 auto;
+  min-height: 3.25rem;
+  padding: 0.625rem 0.875rem;
+  border-top: 2px solid var(--capabilities-accent);
   color: #ffffff;
   background: #2c2c2c;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: clamp(0.75rem, 0.9vw, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 
 /*
@@ -677,12 +692,6 @@ button.capabilities-machine-row {
 @media (min-width: 64rem) {
   .capabilities-park {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  }
-
-  /* Beside the list, the photograph stretches to the list's height. */
-  .capabilities-carousel-frame {
-    aspect-ratio: auto;
-    min-height: clamp(12rem, 17vw, 16.5rem);
   }
 }
 

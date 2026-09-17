@@ -858,6 +858,13 @@ html:is(
      only bounds the <img> inside, which the mask hides anyway. */
   transform-style: preserve-3d;
   backface-visibility: visible;
+  /*
+   * Kept on its own compositor layer between turns as well as during them.
+   * Otherwise every turn promoted the mark and every rest dropped it again,
+   * and the bar was re-rastered each time the turn ended -- which is when the
+   * white seam under the bar used to appear.
+   */
+  will-change: transform, opacity;
   transition:
     width 200ms ease,
     height 200ms ease,
@@ -2562,9 +2569,15 @@ h3 {
     --header-height: 5rem;
   }
 
+  /*
+   * Exactly --header-height, not at least it. The dark bands that tuck up
+   * under the bar are pulled up by that same value, and a bar a fraction of a
+   * pixel taller (the logo box plus this padding came to 80.25px) left their
+   * edges off the pixel grid under it -- where Chrome and Edge showed a white
+   * seam below the bar whenever the logo turn ended and the bar was repainted.
+   */
   .topbar {
-    height: auto;
-    min-height: var(--header-height);
+    height: var(--header-height);
     padding-block: 0.477rem;
   }
 
@@ -2581,12 +2594,12 @@ h3 {
   }
 
   html[data-nav-stuck='true'] .topbar {
-    min-height: var(--header-height);
+    height: var(--header-height);
     padding-block: 0.35rem;
     /* Eases the tighten-on-scroll. Only this direction animates -- see the
        note on the base topbar rule. */
     transition:
-      min-height 200ms ease,
+      height 200ms ease,
       padding-block 200ms ease;
   }
 }
@@ -7622,6 +7635,11 @@ button.machining-machine:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+}
+
+/* The display rule above would otherwise win over the hidden attribute. */
+.catalogue-sort[hidden] {
+  display: none;
 }
 
 .catalogue-sort-label {

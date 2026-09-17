@@ -48,5 +48,30 @@ if (cleared.length === 0) {
   for (const target of cleared) {
     console.log(`Cleared ${path.relative(process.cwd(), target)}`)
   }
-  console.log('Restart the dev server to pick up seeded data.')
+}
+
+/*
+ * The files are only half of it: a running server also holds the same entries
+ * in memory. Ask it to drop them through /revalidate, so seeded data shows
+ * without a restart. Nothing listening is fine -- the next start reads the
+ * database fresh.
+ */
+const serverUrl = (process.env.REVALIDATE_URL || 'http://localhost:3000').replace(/\/$/, '')
+const headers = { 'content-type': 'application/json' }
+if (process.env.REVALIDATE_SECRET) headers.authorization = `Bearer ${process.env.REVALIDATE_SECRET}`
+
+try {
+  const response = await fetch(`${serverUrl}/revalidate`, {
+    body: '{}',
+    headers,
+    method: 'POST',
+    signal: AbortSignal.timeout(60_000),
+  })
+  console.log(
+    response.ok
+      ? `Revalidated the running server at ${serverUrl}.`
+      : `The server at ${serverUrl} refused to revalidate (${response.status}); restart it to pick up seeded data.`,
+  )
+} catch {
+  console.log(`No server answered at ${serverUrl}; the next start reads fresh data.`)
 }

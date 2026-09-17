@@ -55,6 +55,13 @@ export function ProductGallery(props: {
   const { browse, filters, products } = props
   const reduced = useReducedMotion() ?? false
   const [active, setActive] = useState(ALL)
+  /*
+   * Whether the section has scrolled into view yet. The viewport reveal fires
+   * once, but a filter swaps in a fresh rail of cards, and those have to play
+   * their own entrance -- otherwise they mount at their hidden starting state
+   * and stay there, leaving an empty row.
+   */
+  const [revealed, setRevealed] = useState(false)
 
   const visible = useMemo(() => {
     const filter = filters.find((entry) => entry.id === active)
@@ -97,13 +104,18 @@ export function ProductGallery(props: {
         <div className="industry-gallery-carousel">
           <motion.div
             className="industry-gallery-viewport"
-            initial="hidden"
+            onViewportEnter={() => setRevealed(true)}
             ref={viewportRef}
-            variants={groupVariants(reduced, 0.07, 0.05)}
             viewport={REVEAL_VIEWPORT}
-            whileInView="visible"
           >
-            <ul className="industry-gallery-rail" key={active} ref={trackRef}>
+            <motion.ul
+              animate={revealed ? 'visible' : 'hidden'}
+              className="industry-gallery-rail"
+              initial="hidden"
+              key={active}
+              ref={trackRef}
+              variants={groupVariants(reduced, 0.07, 0.05)}
+            >
               {visible.map((product) => (
                 <motion.li
                   className={['industry-gallery-card', product.featured ? 'is-featured' : '']
@@ -135,7 +147,7 @@ export function ProductGallery(props: {
                   </CardLink>
                 </motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </motion.div>
 
           {showControls ? (
