@@ -6891,17 +6891,13 @@ button.machining-machine:focus-visible {
   overflow: hidden;
 }
 
+/* Every photograph, machine or process, fills the frame to its edges -- no
+   inset and no letterbox of panel grey around it. */
 .machining-media-image {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-/* A machine is shown whole, on the panel's own ground; the process fills. */
-.machining-media-frame[data-kind='machine'] .machining-media-image {
-  padding: clamp(0.75rem, 2vw, 1.5rem);
-  object-fit: contain;
 }
 
 /* Split control bar under the photograph, as wide as the image. */
